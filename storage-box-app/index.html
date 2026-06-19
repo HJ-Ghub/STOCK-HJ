@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#f7f3ea" />
   <title>보관함 사진정리</title>
   <link rel="manifest" href="./manifest.webmanifest" />
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
       --bg: #f7f3ea;
@@ -553,6 +554,31 @@
             <span class="hint">사진 포함 JSON으로 내보내고 가져옵니다.</span>
           </div>
           <div class="form-grid">
+            <div class="panel" style="box-shadow:none;background:#fbfcfa;">
+              <div class="section-title">
+                <h3>클라우드 동기화</h3>
+                <span class="hint" id="cloudStatus">클라우드 미설정</span>
+              </div>
+              <label>Supabase URL
+                <input id="cloudUrl" autocomplete="off" placeholder="https://xxxx.supabase.co" />
+              </label>
+              <label>Supabase anon key
+                <input id="cloudAnonKey" autocomplete="off" type="password" placeholder="anon public key" />
+              </label>
+              <label>이메일
+                <input id="cloudEmail" autocomplete="username" type="email" />
+              </label>
+              <label>비밀번호
+                <input id="cloudPassword" autocomplete="current-password" type="password" />
+              </label>
+              <div class="actions">
+                <button id="cloudSaveConfigBtn" type="button">설정저장</button>
+                <button id="cloudLoginBtn" type="button">로그인</button>
+                <button id="cloudSyncBtn" class="primary" type="button">동기화</button>
+                <button id="cloudLogoutBtn" type="button">로그아웃</button>
+              </div>
+              <p class="hint">사진까지 JSON으로 저장합니다. 물건 사진이 아주 많아지면 나중에 사진 전용 Storage 방식으로 확장하는 편이 좋습니다.</p>
+            </div>
             <button id="exportBtn" type="button">백업 내보내기</button>
             <button id="importBtn" type="button">백업 가져오기</button>
             <input id="importFile" class="hidden" type="file" accept="application/json,.json" />
@@ -593,6 +619,8 @@
       const DB_VERSION = 1;
       const STORE = 'state';
       const STATE_KEY = 'app';
+      const CLOUD_SETTINGS_KEY = 'storageBoxPhotoApp.cloudSettings.v1';
+      const CLOUD_TABLE = 'storage_box_app_state';
       const DEFAULT_BOX = '미지정';
 
       const $ = (id) => document.getElementById(id);
@@ -629,6 +657,15 @@
         importBtn: $('importBtn'),
         importFile: $('importFile'),
         clearAll: $('clearAllBtn'),
+        cloudStatus: $('cloudStatus'),
+        cloudUrl: $('cloudUrl'),
+        cloudAnonKey: $('cloudAnonKey'),
+        cloudEmail: $('cloudEmail'),
+        cloudPassword: $('cloudPassword'),
+        cloudSaveConfig: $('cloudSaveConfigBtn'),
+        cloudLogin: $('cloudLoginBtn'),
+        cloudSync: $('cloudSyncBtn'),
+        cloudLogout: $('cloudLogoutBtn'),
         detailModal: $('detailModal'),
         detailPhoto: $('detailPhoto'),
         detailName: $('detailName'),
@@ -647,6 +684,8 @@
       let selectedDetailId = '';
       let currentView = 'items';
       let saveTimer = null;
+      let cloudTimer = null;
+      let cloudState = { client: null, user: null, lastSyncAt: '', lastError: '' };
 
       function emptyApp() {
         return {
@@ -694,7 +733,10 @@
       function scheduleSave() {
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
-          writeState().then(updateStatus).catch((err) => {
+          writeState().then(() => {
+            updateStatus();
+            scheduleCloudSave();
+          }).catch((err) => {
             console.error(err);
             els.status.textContent = '저장 실패';
           });
@@ -989,6 +1031,200 @@
         URL.revokeObjectURL(url);
       }
 
+      function loadCloudSettings() {
+        try {
+          return JSON.parse(localStorage.getItem(CLOUD_SETTINGS_KEY) || '{}') || {};
+        } catch {
+          return {};
+        }
+      }
+
+      function saveCloudSettings() {
+        const settings = {
+          url: String(els.cloudUrl.value || '').trim().replace(/\/+$/, ''),
+          anonKey: String(els.cloudAnonKey.value || '').trim(),
+          email: String(els.cloudEmail.value || '').trim()
+        };
+        localStorage.setItem(CLOUD_SETTINGS_KEY, JSON.stringify(settings));
+        return settings;
+      }
+
+      function fillCloudSettings() {
+        const settings = loadCloudSettings();
+        els.cloudUrl.value = settings.url || '';
+        els.cloudAnonKey.value = settings.anonKey || '';
+        els.cloudEmail.value = settings.email || '';
+      }
+
+      function updateCloudStatus(message = '', type = '') {
+        if (!els.cloudStatus) return;
+        if (message) {
+          els.cloudStatus.textContent = message;
+          els.cloudStatus.style.color = type === 'err' ? '#9d321d' : (type === 'ok' ? '#1f7a67' : '#687269');
+          return;
+        }
+        if (cloudState.user) {
+          els.cloudStatus.textContent = `로그인됨: ${cloudState.user.email || ''}${cloudState.lastSyncAt ? ' · ' + cloudState.lastSyncAt : ''}`;
+          els.cloudStatus.style.color = '#1f7a67';
+        } else if (loadCloudSettings().url) {
+          els.cloudStatus.textContent = '설정됨 · 로그인 필요';
+          els.cloudStatus.style.color = '#b98518';
+        } else {
+          els.cloudStatus.textContent = '클라우드 미설정';
+          els.cloudStatus.style.color = '#687269';
+        }
+      }
+
+      function initCloudClient() {
+        const settings = loadCloudSettings();
+        if (!settings.url || !settings.anonKey || !window.supabase || !window.supabase.createClient) {
+          cloudState.client = null;
+          updateCloudStatus();
+          return null;
+        }
+        if (cloudState.client && cloudState.url === settings.url && cloudState.anonKey === settings.anonKey) return cloudState.client;
+        cloudState.client = window.supabase.createClient(settings.url, settings.anonKey, {
+          auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+        });
+        cloudState.url = settings.url;
+        cloudState.anonKey = settings.anonKey;
+        cloudState.client.auth.onAuthStateChange((_event, session) => {
+          cloudState.user = session?.user || null;
+          updateCloudStatus();
+        });
+        return cloudState.client;
+      }
+
+      async function restoreCloudSession() {
+        const client = initCloudClient();
+        if (!client) return;
+        try {
+          const { data, error } = await client.auth.getSession();
+          if (error) throw error;
+          cloudState.user = data?.session?.user || null;
+          updateCloudStatus();
+        } catch (err) {
+          cloudState.lastError = err.message || String(err);
+          updateCloudStatus('세션 확인 실패', 'err');
+        }
+      }
+
+      async function cloudSaveConfig() {
+        const settings = saveCloudSettings();
+        if (!settings.url || !settings.anonKey) {
+          alert('Supabase URL과 anon key를 입력해 주세요.');
+          return;
+        }
+        if (!window.supabase || !window.supabase.createClient) {
+          alert('Supabase 라이브러리를 불러오지 못했습니다. 네트워크/CDN 차단 여부를 확인해 주세요.');
+          return;
+        }
+        initCloudClient();
+        await restoreCloudSession();
+        updateCloudStatus('설정 저장 완료', 'ok');
+      }
+
+      async function cloudLogin() {
+        const settings = saveCloudSettings();
+        if (!settings.url || !settings.anonKey) {
+          alert('Supabase URL과 anon key를 입력해 주세요.');
+          return;
+        }
+        const email = String(els.cloudEmail.value || '').trim();
+        const password = String(els.cloudPassword.value || '');
+        if (!email || !password) {
+          alert('이메일과 비밀번호를 입력해 주세요.');
+          return;
+        }
+        const client = initCloudClient();
+        if (!client) return;
+        try {
+          updateCloudStatus('로그인 중...', 'warn');
+          const { data, error } = await client.auth.signInWithPassword({ email, password });
+          if (error) throw error;
+          cloudState.user = data?.session?.user || data?.user || null;
+          updateCloudStatus('로그인 완료', 'ok');
+          await cloudSyncNow();
+        } catch (err) {
+          updateCloudStatus('로그인 실패', 'err');
+          alert('로그인 실패: ' + (err.message || err));
+        }
+      }
+
+      async function cloudLogout() {
+        const client = initCloudClient();
+        if (!client) return;
+        await client.auth.signOut();
+        cloudState.user = null;
+        updateCloudStatus('로그아웃됨', 'warn');
+      }
+
+      async function cloudSaveNow() {
+        const client = initCloudClient();
+        if (!client || !cloudState.user) return false;
+        const payload = normalizeApp(app);
+        const { error } = await client
+          .from(CLOUD_TABLE)
+          .upsert({ user_id: cloudState.user.id, data: payload, updated_at: new Date().toISOString() }, { onConflict: 'user_id' });
+        if (error) throw error;
+        cloudState.lastSyncAt = new Date().toLocaleString('ko-KR');
+        updateCloudStatus();
+        return true;
+      }
+
+      function scheduleCloudSave() {
+        if (!cloudState.user) return;
+        clearTimeout(cloudTimer);
+        cloudTimer = setTimeout(() => {
+          cloudSaveNow().catch((err) => {
+            console.error(err);
+            cloudState.lastError = err.message || String(err);
+            updateCloudStatus('클라우드 저장 실패', 'err');
+          });
+        }, 900);
+      }
+
+      async function cloudSyncNow() {
+        const client = initCloudClient();
+        if (!client) {
+          alert('먼저 클라우드 설정을 저장해 주세요.');
+          return;
+        }
+        if (!cloudState.user) {
+          const { data } = await client.auth.getSession();
+          cloudState.user = data?.session?.user || null;
+        }
+        if (!cloudState.user) {
+          alert('먼저 로그인해 주세요.');
+          updateCloudStatus();
+          return;
+        }
+        try {
+          updateCloudStatus('클라우드 확인 중...', 'warn');
+          const { data, error } = await client
+            .from(CLOUD_TABLE)
+            .select('data, updated_at')
+            .eq('user_id', cloudState.user.id)
+            .maybeSingle();
+          if (error) throw error;
+          const remote = data?.data ? normalizeApp(data.data) : null;
+          if (remote && remote.items.length > app.items.length) {
+            app = remote;
+            await writeState();
+            resetForm();
+            render();
+            cloudState.lastSyncAt = new Date().toLocaleString('ko-KR');
+            updateCloudStatus('클라우드 데이터 불러오기 완료', 'ok');
+          } else {
+            await cloudSaveNow();
+            updateCloudStatus('클라우드 저장 완료', 'ok');
+          }
+        } catch (err) {
+          updateCloudStatus('동기화 실패', 'err');
+          alert('동기화 실패: ' + (err.message || err));
+        }
+      }
+
       async function importBackup(file) {
         if (!file) return;
         const text = await file.text();
@@ -1079,12 +1315,18 @@
             .finally(() => { els.importFile.value = ''; });
         });
         els.clearAll.addEventListener('click', clearAll);
+        els.cloudSaveConfig.addEventListener('click', cloudSaveConfig);
+        els.cloudLogin.addEventListener('click', cloudLogin);
+        els.cloudSync.addEventListener('click', cloudSyncNow);
+        els.cloudLogout.addEventListener('click', cloudLogout);
       }
 
       async function boot() {
         bindEvents();
         try {
+          fillCloudSettings();
           app = normalizeApp(await readState());
+          await restoreCloudSession();
           render();
           if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
             navigator.serviceWorker.register('./sw.js').catch(console.warn);
