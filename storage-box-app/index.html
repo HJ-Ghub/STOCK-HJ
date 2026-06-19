@@ -634,6 +634,7 @@
               </label>
               <div class="actions">
                 <button id="cloudSaveConfigBtn" type="button">설정저장</button>
+                <button id="cloudSignupBtn" type="button">가입</button>
                 <button id="cloudLoginBtn" type="button">로그인</button>
                 <button id="cloudSyncBtn" class="primary" type="button">동기화</button>
                 <button id="cloudLogoutBtn" type="button">로그아웃</button>
@@ -730,6 +731,7 @@
         cloudEmail: $('cloudEmail'),
         cloudPassword: $('cloudPassword'),
         cloudSaveConfig: $('cloudSaveConfigBtn'),
+        cloudSignup: $('cloudSignupBtn'),
         cloudLogin: $('cloudLoginBtn'),
         cloudSync: $('cloudSyncBtn'),
         cloudLogout: $('cloudLogoutBtn'),
@@ -1320,6 +1322,39 @@
         return cloudState.client;
       }
 
+      function prepareCloudClientFromForm() {
+        const settings = saveCloudSettings();
+        const email = String(els.cloudEmail.value || '').trim();
+        const password = String(els.cloudPassword.value || '');
+        if (!settings.url || !settings.anonKey) {
+          throw new Error('Supabase URL과 anon key를 먼저 입력하고 설정저장을 눌러 주세요.');
+        }
+        if (!window.supabase || !window.supabase.createClient) {
+          throw new Error('Supabase 라이브러리를 불러오지 못했습니다. 인터넷 연결 또는 CDN 차단 여부를 확인해 주세요.');
+        }
+        const client = initCloudClient();
+        if (!client) throw new Error('Supabase 클라이언트를 만들지 못했습니다. URL과 anon key를 확인해 주세요.');
+        if (!email || !password) throw new Error('이메일과 비밀번호를 입력해 주세요.');
+        return { client, email, password };
+      }
+
+      function describeCloudError(err) {
+        const message = err?.message || String(err);
+        if (/Invalid login credentials/i.test(message)) {
+          return '로그인 정보가 맞지 않습니다. Supabase Authentication의 사용자 이메일과 비밀번호를 확인해 주세요. 계정이 없으면 가입을 먼저 눌러 주세요.';
+        }
+        if (/Email not confirmed/i.test(message)) {
+          return '이메일 확인이 아직 끝나지 않았습니다. Supabase에서 보낸 확인 메일을 완료하거나, Authentication 설정에서 이메일 확인 옵션을 확인해 주세요.';
+        }
+        if (/storage_box_app_state|relation .* does not exist|not exist/i.test(message)) {
+          return '보관앱 테이블(storage_box_app_state)이 없거나 접근할 수 없습니다. Supabase SQL Editor에서 보관앱 테이블 생성 SQL을 먼저 실행해 주세요.';
+        }
+        if (/row-level security|policy|permission denied|violates row-level security/i.test(message)) {
+          return 'Supabase RLS 정책 때문에 저장/조회가 막혔습니다. storage_box_app_state 테이블의 RLS 정책을 확인해 주세요.';
+        }
+        return message;
+      }
+
       async function restoreCloudSession() {
         const client = initCloudClient();
         if (!client) return;
@@ -1350,29 +1385,50 @@
       }
 
       async function cloudLogin() {
-        const settings = saveCloudSettings();
-        if (!settings.url || !settings.anonKey) {
-          alert('Supabase URL과 anon key를 입력해 주세요.');
+        let client, email, password;
+        try {
+          ({ client, email, password } = prepareCloudClientFromForm());
+        } catch (err) {
+          updateCloudStatus('클라우드 설정 오류', 'err');
+          alert(describeCloudError(err));
           return;
         }
-        const email = String(els.cloudEmail.value || '').trim();
-        const password = String(els.cloudPassword.value || '');
-        if (!email || !password) {
-          alert('이메일과 비밀번호를 입력해 주세요.');
-          return;
-        }
-        const client = initCloudClient();
-        if (!client) return;
         try {
           updateCloudStatus('로그인 중...', 'warn');
           const { data, error } = await client.auth.signInWithPassword({ email, password });
           if (error) throw error;
           cloudState.user = data?.session?.user || data?.user || null;
+          if (!cloudState.user) {
+            const sessionResult = await client.auth.getSession();
+            cloudState.user = sessionResult.data?.session?.user || null;
+          }
           updateCloudStatus('로그인 완료', 'ok');
           await cloudSyncNow();
         } catch (err) {
           updateCloudStatus('로그인 실패', 'err');
-          alert('로그인 실패: ' + (err.message || err));
+          alert('로그인 실패: ' + describeCloudError(err));
+        }
+      }
+
+      async function cloudSignup() {
+        let client, email, password;
+        try {
+          ({ client, email, password } = prepareCloudClientFromForm());
+        } catch (err) {
+          updateCloudStatus('클라우드 설정 오류', 'err');
+          alert(describeCloudError(err));
+          return;
+        }
+        try {
+          updateCloudStatus('가입 처리 중...', 'warn');
+          const { data, error } = await client.auth.signUp({ email, password });
+          if (error) throw error;
+          cloudState.user = data?.session?.user || data?.user || null;
+          updateCloudStatus('가입 완료 · 이메일 확인이 필요할 수 있습니다.', 'ok');
+          if (cloudState.user) await cloudSyncNow();
+        } catch (err) {
+          updateCloudStatus('가입 실패', 'err');
+          alert('가입 실패: ' + describeCloudError(err));
         }
       }
 
@@ -1450,7 +1506,7 @@
           }
         } catch (err) {
           updateCloudStatus('동기화 실패', 'err');
-          if (!silent) alert('동기화 실패: ' + (err.message || err));
+          if (!silent) alert('동기화 실패: ' + describeCloudError(err));
         }
       }
 
@@ -1566,6 +1622,7 @@
         });
         els.clearAll.addEventListener('click', clearAll);
         els.cloudSaveConfig.addEventListener('click', cloudSaveConfig);
+        els.cloudSignup.addEventListener('click', cloudSignup);
         els.cloudLogin.addEventListener('click', cloudLogin);
         els.cloudSync.addEventListener('click', cloudSyncNow);
         els.cloudLogout.addEventListener('click', cloudLogout);
