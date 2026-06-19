@@ -206,6 +206,7 @@
       border-radius: var(--radius);
       background: #f8faf7;
       overflow: hidden;
+      cursor: pointer;
     }
 
     .photo-box img {
@@ -223,6 +224,7 @@
       text-align: center;
       color: var(--muted);
       padding: 22px;
+      pointer-events: none;
     }
 
     .photo-empty strong {
@@ -233,6 +235,12 @@
     }
 
     .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .photo-actions {
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
@@ -496,10 +504,15 @@
             <img id="photoPreview" alt="선택한 물건 사진 미리보기" />
             <div class="photo-empty">
               <strong>사진을 찍거나 선택</strong>
-              <span>휴대폰에서는 카메라가 바로 열립니다.</span>
+              <span>이 영역을 누르면 사진앨범이 열립니다.</span>
             </div>
           </div>
-          <input id="photoInput" type="file" accept="image/*" capture="environment" />
+          <input id="photoInput" class="hidden" type="file" accept="image/*" />
+          <input id="cameraInput" class="hidden" type="file" accept="image/*" capture="environment" />
+          <div class="photo-actions">
+            <button id="cameraBtn" type="button">카메라</button>
+            <button id="albumBtn" type="button">사진앨범</button>
+          </div>
           <label>물건명
             <input id="itemName" required placeholder="예: 검정 니트, 충전기, 겨울장갑" />
           </label>
@@ -630,8 +643,11 @@
         clearSearch: $('clearSearchBtn'),
         tabs: Array.from(document.querySelectorAll('.tab')),
         photoInput: $('photoInput'),
+        cameraInput: $('cameraInput'),
         photoBox: $('photoBox'),
         photoPreview: $('photoPreview'),
+        cameraBtn: $('cameraBtn'),
+        albumBtn: $('albumBtn'),
         form: $('itemForm'),
         formTitle: $('formTitle'),
         resetForm: $('resetFormBtn'),
@@ -1245,8 +1261,8 @@
       }
 
       function bindEvents() {
-        els.photoInput.addEventListener('change', async () => {
-          const file = els.photoInput.files && els.photoInput.files[0];
+        const handlePhotoFile = async (input) => {
+          const file = input.files && input.files[0];
           if (!file) return;
           try {
             els.status.textContent = '사진 처리 중';
@@ -1256,9 +1272,15 @@
             console.error(err);
             alert('사진을 불러오지 못했습니다.');
           } finally {
-            els.photoInput.value = '';
+            input.value = '';
           }
-        });
+        };
+
+        els.photoBox.addEventListener('click', () => els.photoInput.click());
+        els.albumBtn.addEventListener('click', () => els.photoInput.click());
+        els.cameraBtn.addEventListener('click', () => els.cameraInput.click());
+        els.photoInput.addEventListener('change', () => handlePhotoFile(els.photoInput));
+        els.cameraInput.addEventListener('change', () => handlePhotoFile(els.cameraInput));
 
         els.form.addEventListener('submit', saveItem);
         els.resetForm.addEventListener('click', resetForm);
