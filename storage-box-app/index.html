@@ -758,7 +758,9 @@
       function emptyApp() {
         return {
           boxes: [{ id: makeId('box'), name: DEFAULT_BOX, note: '', createdAt: Date.now() }],
-          items: []
+          items: [],
+          deletedItems: {},
+          updatedAt: Date.now()
         };
       }
 
@@ -799,6 +801,7 @@
       }
 
       function scheduleSave() {
+        app.updatedAt = Date.now();
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
           writeState().then(() => {
@@ -815,9 +818,18 @@
         const next = data && typeof data === 'object' ? data : emptyApp();
         next.boxes = Array.isArray(next.boxes) ? next.boxes : [];
         next.items = Array.isArray(next.items) ? next.items : [];
+        next.deletedItems = next.deletedItems && typeof next.deletedItems === 'object' ? next.deletedItems : {};
+        next.updatedAt = Number(next.updatedAt || Date.now());
         if (!next.boxes.length) next.boxes.push({ id: makeId('box'), name: DEFAULT_BOX, note: '', createdAt: Date.now() });
         const hasDefault = next.boxes.some(b => b.name === DEFAULT_BOX);
         if (!hasDefault) next.boxes.unshift({ id: makeId('box'), name: DEFAULT_BOX, note: '', createdAt: Date.now() });
+        next.boxes = next.boxes.map(box => ({
+          id: box.id || makeId('box'),
+          name: String(box.name || DEFAULT_BOX),
+          note: String(box.note || ''),
+          createdAt: Number(box.createdAt || Date.now()),
+          updatedAt: Number(box.updatedAt || box.createdAt || Date.now())
+        }));
         next.items = next.items.map(item => ({
           id: item.id || makeId('item'),
           name: String(item.name || ''),
@@ -828,7 +840,56 @@
           createdAt: Number(item.createdAt || Date.now()),
           updatedAt: Number(item.updatedAt || item.createdAt || Date.now())
         }));
+        Object.keys(next.deletedItems).forEach((id) => {
+          const deletedAt = Number(next.deletedItems[id] || 0);
+          if (deletedAt > 0) next.deletedItems[id] = deletedAt;
+          else delete next.deletedItems[id];
+        });
         return next;
+      }
+
+      function appSignature(data) {
+        return JSON.stringify(normalizeApp(JSON.parse(JSON.stringify(data || emptyApp()))));
+      }
+
+      function newestByUpdatedAt(left, right) {
+        return Number(left?.updatedAt || left?.createdAt || 0) >= Number(right?.updatedAt || right?.createdAt || 0)
+          ? left
+          : right;
+      }
+
+      function mergeApps(localData, remoteData) {
+        const local = normalizeApp(JSON.parse(JSON.stringify(localData || emptyApp())));
+        const remote = normalizeApp(JSON.parse(JSON.stringify(remoteData || emptyApp())));
+        const deletedItems = { ...local.deletedItems };
+        Object.entries(remote.deletedItems || {}).forEach(([id, deletedAt]) => {
+          deletedItems[id] = Math.max(Number(deletedItems[id] || 0), Number(deletedAt || 0));
+        });
+
+        const boxMap = new Map();
+        [...local.boxes, ...remote.boxes].forEach((box) => {
+          const prev = boxMap.get(box.id);
+          boxMap.set(box.id, prev ? newestByUpdatedAt(prev, box) : box);
+        });
+        const boxes = Array.from(boxMap.values()).sort((a, b) => Number(a.createdAt || 0) - Number(b.createdAt || 0));
+        const hasDefault = boxes.some(box => box.name === DEFAULT_BOX);
+        if (!hasDefault) boxes.unshift({ id: makeId('box'), name: DEFAULT_BOX, note: '', createdAt: Date.now(), updatedAt: Date.now() });
+        const validBoxIds = new Set(boxes.map(box => box.id));
+        const defaultBoxId = (boxes.find(box => box.name === DEFAULT_BOX) || boxes[0]).id;
+
+        const itemMap = new Map();
+        [...local.items, ...remote.items].forEach((item) => {
+          const deletedAt = Number(deletedItems[item.id] || 0);
+          if (deletedAt && deletedAt >= Number(item.updatedAt || item.createdAt || 0)) return;
+          const prev = itemMap.get(item.id);
+          itemMap.set(item.id, prev ? newestByUpdatedAt(prev, item) : item);
+        });
+        const items = Array.from(itemMap.values())
+          .map(item => ({ ...item, boxId: validBoxIds.has(item.boxId) ? item.boxId : defaultBoxId }))
+          .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+
+        const updatedAt = Math.max(Number(local.updatedAt || 0), Number(remote.updatedAt || 0));
+        return normalizeApp({ boxes, items, deletedItems, updatedAt });
       }
 
       function boxByName(name, boxes = app.boxes) {
@@ -1074,7 +1135,8 @@
           alert('이미 있는 보관박스입니다.');
           return;
         }
-        const box = { id: makeId('box'), name, note: '', createdAt: Date.now() };
+        const now = Date.now();
+        const box = { id: makeId('box'), name, note: '', createdAt: now, updatedAt: now };
         app.boxes.push(box);
         els.newBoxName.value = '';
         renderBoxSelect();
@@ -1099,6 +1161,7 @@
           return;
         }
         box.name = name;
+        box.updatedAt = Date.now();
         scheduleSave();
         render();
       }
@@ -1107,6 +1170,8 @@
         if (!editingId) return;
         const item = app.items.find(row => row.id === editingId);
         if (!item || !confirm(`${item.name} 물건을 삭제할까요?`)) return;
+        app.deletedItems = app.deletedItems || {};
+        app.deletedItems[editingId] = Date.now();
         app.items = app.items.filter(row => row.id !== editingId);
         scheduleSave();
         resetForm();
@@ -1344,10 +1409,11 @@
         }, 900);
       }
 
-      async function cloudSyncNow() {
+      async function cloudSyncNow(options = {}) {
+        const silent = Boolean(options.silent);
         const client = initCloudClient();
         if (!client) {
-          alert('먼저 클라우드 설정을 저장해 주세요.');
+          if (!silent) alert('먼저 클라우드 설정을 저장해 주세요.');
           return;
         }
         if (!cloudState.user) {
@@ -1355,7 +1421,7 @@
           cloudState.user = data?.session?.user || null;
         }
         if (!cloudState.user) {
-          alert('먼저 로그인해 주세요.');
+          if (!silent) alert('먼저 로그인해 주세요.');
           updateCloudStatus();
           return;
         }
@@ -1368,20 +1434,23 @@
             .maybeSingle();
           if (error) throw error;
           const remote = data?.data ? normalizeApp(data.data) : null;
-          if (remote && remote.items.length > app.items.length) {
-            app = remote;
+          if (remote) {
+            const before = appSignature(app);
+            app = mergeApps(app, remote);
+            const changed = appSignature(app) !== before;
             await writeState();
             resetForm();
             render();
+            await cloudSaveNow();
             cloudState.lastSyncAt = new Date().toLocaleString('ko-KR');
-            updateCloudStatus('클라우드 데이터 불러오기 완료', 'ok');
+            updateCloudStatus(changed ? '클라우드 병합 완료' : '최신 상태입니다', 'ok');
           } else {
             await cloudSaveNow();
             updateCloudStatus('클라우드 저장 완료', 'ok');
           }
         } catch (err) {
           updateCloudStatus('동기화 실패', 'err');
-          alert('동기화 실패: ' + (err.message || err));
+          if (!silent) alert('동기화 실패: ' + (err.message || err));
         }
       }
 
@@ -1390,16 +1459,28 @@
         const text = await file.text();
         const data = JSON.parse(text);
         if (!confirm('현재 데이터를 가져온 백업으로 교체할까요?')) return;
-        app = normalizeApp(data);
+        const imported = normalizeApp(data);
+        const deletedItems = { ...(app.deletedItems || {}), ...(imported.deletedItems || {}) };
+        const importedIds = new Set(imported.items.map(item => item.id));
+        app.items.forEach((item) => {
+          if (!importedIds.has(item.id)) deletedItems[item.id] = Date.now();
+        });
+        app = normalizeApp({ ...imported, deletedItems, updatedAt: Date.now() });
         await writeState();
+        scheduleCloudSave();
         resetForm();
         render();
       }
 
       async function clearAll() {
         if (!confirm('모든 보관박스와 물건을 삭제할까요?')) return;
+        const deletedItems = { ...(app.deletedItems || {}) };
+        app.items.forEach((item) => { deletedItems[item.id] = Date.now(); });
         app = emptyApp();
+        app.deletedItems = deletedItems;
+        app.updatedAt = Date.now();
         await writeState();
+        scheduleCloudSave();
         resetForm();
         render();
       }
@@ -1488,6 +1569,10 @@
         els.cloudLogin.addEventListener('click', cloudLogin);
         els.cloudSync.addEventListener('click', cloudSyncNow);
         els.cloudLogout.addEventListener('click', cloudLogout);
+        window.addEventListener('focus', () => cloudSyncNow({ silent: true }));
+        document.addEventListener('visibilitychange', () => {
+          if (!document.hidden) cloudSyncNow({ silent: true });
+        });
       }
 
       async function boot() {
@@ -1497,6 +1582,7 @@
           app = normalizeApp(await readState());
           await restoreCloudSession();
           render();
+          if (cloudState.user) cloudSyncNow({ silent: true });
           if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
             navigator.serviceWorker.register('./sw.js').catch(console.warn);
           }
