@@ -965,6 +965,7 @@
               <div class="box-meta">
                 <div class="box-name">${boxBadgeHtml(box.name)}</div>
                 <div class="hint">${items.length}개 보관 중</div>
+                <button type="button" data-action="rename-box" data-box-id="${esc(box.id)}">이름변경</button>
                 <button type="button" data-action="save-box-photos" data-box-id="${esc(box.id)}">사진저장</button>
               </div>
             </article>
@@ -1078,6 +1079,26 @@
         els.newBoxName.value = '';
         renderBoxSelect();
         els.boxSelect.value = box.id;
+        scheduleSave();
+        render();
+      }
+
+      function renameBox(boxId) {
+        const box = app.boxes.find(row => row.id === boxId);
+        if (!box) return;
+        const nextName = prompt('새 보관박스명을 입력하세요.', box.name);
+        if (nextName === null) return;
+        const name = nextName.trim();
+        if (!name) {
+          alert('보관박스명을 입력해 주세요.');
+          return;
+        }
+        const duplicate = app.boxes.some(row => row.id !== boxId && row.name.toLowerCase() === name.toLowerCase());
+        if (duplicate) {
+          alert('이미 있는 보관박스명입니다.');
+          return;
+        }
+        box.name = name;
         scheduleSave();
         render();
       }
@@ -1436,6 +1457,7 @@
           if (action === 'edit') startEdit(target.dataset.id);
           if (action === 'locate') filterByBox(target.dataset.box);
           if (action === 'filter-box') filterByBox(target.dataset.box);
+          if (action === 'rename-box') renameBox(target.dataset.boxId);
           if (action === 'save-box-photos') saveBoxPhotos(target.dataset.boxId);
         });
 
