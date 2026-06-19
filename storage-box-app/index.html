@@ -68,6 +68,7 @@
       min-height: 42px;
       padding: 9px 10px;
       outline: none;
+      font-size: 15px;
     }
 
     textarea {
@@ -193,7 +194,7 @@
       display: grid;
       gap: 5px;
       color: #3d473f;
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 800;
     }
 
@@ -201,7 +202,7 @@
       position: relative;
       display: grid;
       place-items: center;
-      min-height: 210px;
+      min-height: 164px;
       border: 1px dashed #aeb9ad;
       border-radius: var(--radius);
       background: #f8faf7;
@@ -212,7 +213,7 @@
     .photo-box img {
       width: 100%;
       height: 100%;
-      max-height: 320px;
+      max-height: 240px;
       object-fit: cover;
       display: none;
     }
@@ -423,12 +424,14 @@
       background: rgba(0, 0, 0, .42);
       padding: 12px;
       overflow: auto;
+      align-items: start;
     }
 
-    .detail.open { display: grid; place-items: center; }
+    .detail.open { display: grid; place-items: start center; }
 
     .detail-panel {
       width: min(720px, 100%);
+      max-height: calc(100vh - 24px);
       background: #fff;
       border-radius: var(--radius);
       overflow: hidden;
@@ -438,7 +441,7 @@
 
     .detail-panel img {
       width: 100%;
-      max-height: 52vh;
+      max-height: 44vh;
       object-fit: contain;
       background: #f2f3f0;
     }
@@ -447,6 +450,7 @@
       display: grid;
       gap: 9px;
       padding: 12px;
+      overflow: auto;
     }
 
     .detail-head {
@@ -470,6 +474,16 @@
       .head-inner { padding: 10px; }
       h1 { font-size: 19px; }
       .status { font-size: 11px; }
+      .photo-box { min-height: 132px; }
+      .photo-box img { max-height: 190px; }
+      .photo-empty { padding: 14px; }
+      .photo-empty strong { font-size: 15px; }
+      label { font-size: 15px; }
+      input, textarea, select { font-size: 16px; min-height: 44px; }
+      .detail { padding: 8px; }
+      .detail-panel { max-height: calc(100vh - 16px); }
+      .detail-panel img { max-height: 36vh; }
+      .detail-head h2 { font-size: 20px; }
     }
   </style>
 </head>
