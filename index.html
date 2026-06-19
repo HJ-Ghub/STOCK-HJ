@@ -4879,14 +4879,35 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return Number(row.buyPrice || 0) * Number(row.buyQty || 0);
     }
 
+    function rowBuyQuantity(row) {
+      if (!row) return 0;
+      const src = normSource(row.source || '');
+      if (src === 'trade' || row.buyQty !== undefined || row.sellQty !== undefined) return Number(row.buyQty || 0) || Number(row.sellQty || 0) || Number(row.quantity || 0);
+      return Number(row.quantity || 0) || Number(row.buyQty || 0) || Number(row.sellQty || 0);
+    }
+
+    function effectiveBuyAmount(row) {
+      if (!row) return '';
+      if (row.manualBuyAmount !== undefined && row.manualBuyAmount !== null && String(row.manualBuyAmount).trim() !== '') {
+        const manualAmount = parseNumber(row.manualBuyAmount);
+        if (manualAmount > 0) return manualAmount;
+      }
+      if (row.buyAmount !== undefined && row.buyAmount !== null && String(row.buyAmount).trim() !== '') {
+        const storedAmount = parseNumber(row.buyAmount);
+        if (storedAmount > 0) return storedAmount;
+      }
+      const qty = rowBuyQuantity(row);
+      const price = Number(row.buyPrice || 0);
+      return qty && price ? qty * price : '';
+    }
+
     function optionalMoneyDisplay(value) {
       if (value === '' || value === null || value === undefined) return '';
       return fmtNum(value);
     }
 
     function buyAmountDisplay(row) {
-      if (normSource(row?.source || '') === 'trade' && !hasTradeBuyAmount(row)) return '';
-      return fmtNum(Number(row?.buyAmount || 0));
+      return optionalMoneyDisplay(effectiveBuyAmount(row));
     }
 
     function tradeAmount(row) {
@@ -5313,11 +5334,15 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           op2: op.op2,
           status: currentStatus(latest),
           quantity: Number(latest.quantity || 0),
+          buyQty: Number(latest.buyQty || 0),
+          sellQty: Number(latest.sellQty || 0),
+          buyPrice: Number(latest.buyPrice || 0),
           target1: detail.target1 || '',
           target2: detail.target2 || '',
           classTag: getClassTag(row.account, row.stockCode, row.recentDate, source),
           evalAmount: Number(latest.evalAmount || 0),
           buyAmount: Number(latest.buyAmount || 0),
+          manualBuyAmount: latest.manualBuyAmount || '',
           profit: Number(latest.profit || 0),
           returnRate: Number(latest.returnRate || 0),
           dayChangeRate: Number(latest.dayChangeRate || 0),
@@ -6883,8 +6908,10 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     function findStockRowsForEdit(account, code, date = '', source = '') {
       const s = normSource(source);
+      const sourceSet = date ? new Set(sourceVariantsForDate(account, code, date, s).filter(Boolean)) : new Set(s ? [s] : ['trade', 'balance']);
       const out = [];
       const scan = (list, src) => {
+        if (!sourceSet.has(src)) return;
         (list || []).forEach(batch => {
           if (!batch || batch.account !== account) return;
           if (date && batch.date !== date) return;
@@ -6893,8 +6920,8 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           });
         });
       };
-      if (!s || s === 'trade') scan(app.trades, 'trade');
-      if (!s || s === 'balance') scan(app.balances, 'balance');
+      scan(app.trades, 'trade');
+      scan(app.balances, 'balance');
       return out;
     }
 
@@ -6907,24 +6934,27 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const item = ref && ref.item ? ref.item : {};
       const src = ref ? ref.source : normSource(source);
       const isTrade = src === 'trade';
-      const qty = isTrade ? (Number(item.buyQty || 0) || Number(item.sellQty || 0)) : Number(item.quantity || 0);
+      const qty = rowBuyQuantity({ ...item, source: src });
       const buyPrice = Number(item.buyPrice || 0);
-      const buyAmount = isTrade ? (hasTradeBuyAmount(item) ? tradeBuyAmount(item) : '') : Number(item.buyAmount || 0);
+      const buyAmount = effectiveBuyAmount({ ...item, source: src });
       return { ref, source: src, qty, buyPrice, buyAmount };
     }
 
     function saveStockEditValues(account, code, date, source, buyPrice, buyAmount) {
       const refs = findStockRowsForEdit(account, code, date, source);
       refs.forEach(({ item, source: src }) => {
-        const qty = src === 'trade' ? (Number(item.buyQty || 0) || Number(item.sellQty || 0)) : Number(item.quantity || 0);
-        const nextBuyPrice = buyPrice || (qty && buyAmount ? Math.round(buyAmount / qty) : 0);
-        if (nextBuyPrice || buyPrice === 0) item.buyPrice = nextBuyPrice;
+        const qty = rowBuyQuantity({ ...item, source: src });
+        const amountWasEntered = buyAmount !== '' && buyAmount !== null && buyAmount !== undefined && Number(buyAmount) > 0;
+        const priceWasEntered = buyPrice !== '' && buyPrice !== null && buyPrice !== undefined && Number(buyPrice) > 0;
+        const nextBuyAmount = amountWasEntered ? Number(buyAmount) : (priceWasEntered && qty ? Number(buyPrice) * qty : '');
+        const nextBuyPrice = priceWasEntered ? Number(buyPrice) : (amountWasEntered && qty ? Math.round(Number(buyAmount) / qty) : Number(item.buyPrice || 0));
+        if (nextBuyPrice) item.buyPrice = nextBuyPrice;
         if (src === 'trade') {
-          if (buyAmount) item.manualBuyAmount = buyAmount;
+          if (nextBuyAmount !== '') item.manualBuyAmount = nextBuyAmount;
           else delete item.manualBuyAmount;
           if (!Number(item.buyQty || 0) && Number(item.sellQty || 0) && nextBuyPrice) item.buyPrice = nextBuyPrice;
         } else {
-          if (buyAmount || buyAmount === 0) item.buyAmount = buyAmount;
+          if (nextBuyAmount !== '') item.buyAmount = nextBuyAmount;
         }
       });
     }
@@ -6938,19 +6968,19 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         <div class="modal-head">
           <div>
             <h3>📝 ${esc(name || code)} 메모/핵심값 편집</h3>
-            <div class="tiny">${esc(date)} ${sourceLabel(source)} 날짜별 메모 · 목표가 · 매수평단가 · 매입금액</div>
+            <div class="tiny">${esc(date)} ${sourceLabel(source)} 날짜별 메모 · 목표가 · 평단가(1주 가격) · 매입금액(총액)</div>
           </div>
           <button class="btn-small" data-action="close-modal">닫기</button>
         </div>
         <div class="stock-popup-edit-grid" style="margin-bottom:10px">
           <div class="field"><label for="bigMemoTarget1">목표가1</label><input id="bigMemoTarget1" class="auto-fit-money" inputmode="numeric" value="${esc(detail.target1 || '')}" /></div>
           <div class="field"><label for="bigMemoTarget2">목표가2</label><input id="bigMemoTarget2" class="auto-fit-money" inputmode="numeric" value="${esc(detail.target2 || '')}" /></div>
-          <div class="field"><label for="bigMemoBuyPrice">매수평단가</label><input id="bigMemoBuyPrice" class="auto-fit-money" inputmode="numeric" value="${esc(snap.buyPrice ? fmtNum(snap.buyPrice) : '')}" /></div>
-          <div class="field"><label for="bigMemoBuyAmount">매입금액</label><input id="bigMemoBuyAmount" class="auto-fit-money" inputmode="numeric" value="${esc(snap.buyAmount !== '' ? fmtNum(snap.buyAmount) : '')}" placeholder="매수금액 없으면 빈칸" /></div>
+          <div class="field"><label for="bigMemoBuyPrice">평단가(1주)</label><input id="bigMemoBuyPrice" class="auto-fit-money" inputmode="numeric" value="${esc(snap.buyPrice ? fmtNum(snap.buyPrice) : '')}" placeholder="1주 평균단가" /></div>
+          <div class="field"><label for="bigMemoBuyAmount">매입금액(총액)</label><input id="bigMemoBuyAmount" class="auto-fit-money" inputmode="numeric" value="${esc(snap.buyAmount !== '' ? fmtNum(snap.buyAmount) : '')}" placeholder="수량×평단가 또는 직접 총액" /></div>
         </div>
         ${renderFormatToolbarInline()}
         <div id="bigMemo" class="rich-editor memo-rich-editor" contenteditable="true" spellcheck="false" data-placeholder="이 날짜의 종목 메모를 기록하세요. 글자를 드래그한 뒤 Backspace/Delete로 삭제할 수 있습니다.">${renderRichContent(existingHtml, memoOf(account, code, date, source))}</div>
-        <div class="hint">저장하면 같은 날짜·같은 종목의 당일매매/잔고/종목리스트/성과/메모내역 화면에 함께 반영됩니다. Ctrl+Enter 저장 · ESC 닫기</div>
+        <div class="hint">평단가는 1주 가격, 매입금액은 총액입니다. 한쪽만 입력해도 수량이 있으면 다른 값이 자동 보정되고, 같은 날짜의 당일매매/잔고/종목리스트에 함께 반영됩니다. Ctrl+Enter 저장 · ESC 닫기</div>
         <div class="modal-actions">
           <button data-action="close-modal">취소</button>
           <button class="btn-primary" data-action="save-memo">저장</button>
