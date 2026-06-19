@@ -9,17 +9,17 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     :root {
-      --bg: #f7f3ea;
+      --bg: #fff8fb;
       --panel: #ffffff;
-      --panel-2: #f4f7f4;
-      --line: #d9ded5;
-      --text: #202722;
-      --muted: #687269;
-      --accent: #1f7a67;
-      --accent-2: #e05b3f;
-      --warn: #b98518;
-      --shadow: 0 12px 28px rgba(33, 44, 38, .12);
-      --radius: 8px;
+      --panel-2: #f3fbff;
+      --line: #eadfea;
+      --text: #2d2830;
+      --muted: #7a6f7d;
+      --accent: #6aa99c;
+      --accent-2: #f09a9a;
+      --warn: #c8943f;
+      --shadow: 0 12px 28px rgba(132, 105, 128, .13);
+      --radius: 10px;
     }
 
     * { box-sizing: border-box; }
@@ -68,7 +68,7 @@
       min-height: 42px;
       padding: 9px 10px;
       outline: none;
-      font-size: 15px;
+      font-size: 17px;
     }
 
     textarea {
@@ -79,7 +79,7 @@
 
     input:focus, textarea:focus, select:focus {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(31, 122, 103, .16);
+      box-shadow: 0 0 0 3px rgba(106, 169, 156, .18);
     }
 
     .app {
@@ -93,7 +93,7 @@
       position: sticky;
       top: 0;
       z-index: 10;
-      background: rgba(247, 243, 234, .94);
+      background: rgba(255, 248, 251, .94);
       backdrop-filter: blur(10px);
       border-bottom: 1px solid rgba(217, 222, 213, .78);
     }
@@ -140,14 +140,14 @@
     .tab {
       min-height: 34px;
       padding: 6px;
-      font-size: 12px;
-      background: #fafafa;
+      font-size: 14px;
+      background: #fff;
     }
 
     .tab.active {
       border-color: var(--accent);
-      background: #e7f2ee;
-      color: #115848;
+      background: #e8f7f3;
+      color: #30695f;
     }
 
     .layout {
@@ -175,13 +175,13 @@
 
     h2, h3 {
       margin: 0;
-      font-size: 15px;
+      font-size: 17px;
       letter-spacing: 0;
     }
 
     .hint {
       color: var(--muted);
-      font-size: 12px;
+      font-size: 14px;
       line-height: 1.35;
     }
 
@@ -194,7 +194,7 @@
       display: grid;
       gap: 5px;
       color: #3d473f;
-      font-size: 14px;
+      font-size: 16px;
       font-weight: 800;
     }
 
@@ -205,7 +205,7 @@
       min-height: 164px;
       border: 1px dashed #aeb9ad;
       border-radius: var(--radius);
-      background: #f8faf7;
+      background: #fffafd;
       overflow: hidden;
       cursor: pointer;
     }
@@ -302,7 +302,7 @@
 
     .box-cover {
       height: 92px;
-      background: #edf1ed;
+      background: #f2f8ff;
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 2px;
@@ -314,7 +314,7 @@
       height: 100%;
       min-height: 0;
       object-fit: cover;
-      background: #dfe6df;
+      background: #e9f4f7;
     }
 
     .box-cover .empty-cover {
@@ -356,7 +356,7 @@
       width: 100%;
       aspect-ratio: 1 / 1;
       object-fit: cover;
-      background: #edf1ed;
+      background: #f2f8ff;
     }
 
     .item-info {
@@ -372,9 +372,30 @@
     }
 
     .item-place {
-      color: var(--accent);
-      font-size: 12px;
+      font-size: 13px;
       font-weight: 900;
+    }
+
+    .box-badge {
+      display: block;
+      width: 100%;
+      border: 1px solid rgba(255,255,255,.76);
+      border-radius: 999px;
+      padding: 5px 9px;
+      color: #34303a;
+      font-size: 13px;
+      font-weight: 900;
+      line-height: 1.15;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.44);
+    }
+
+    .box-badge.detail-badge {
+      font-size: 15px;
+      padding: 7px 11px;
+      margin-top: 5px;
     }
 
     .tags {
@@ -385,12 +406,12 @@
     }
 
     .tag {
-      background: #eef3ef;
-      border: 1px solid #d8e1d9;
+      background: #f7edf8;
+      border: 1px solid #ead9ee;
       color: #435044;
       border-radius: 999px;
       padding: 3px 7px;
-      font-size: 11px;
+      font-size: 12px;
       font-weight: 800;
     }
 
@@ -409,7 +430,7 @@
 
     .empty {
       border: 1px dashed #b7c0b7;
-      background: #fbfcfa;
+      background: #fffafd;
       border-radius: var(--radius);
       padding: 22px;
       text-align: center;
@@ -439,11 +460,20 @@
       box-shadow: 0 24px 60px rgba(0,0,0,.24);
     }
 
-    .detail-panel img {
+    .detail-photo-frame {
+      margin: 12px 12px 0;
+      border-radius: 14px;
+      overflow: hidden;
+      background: #f8f3fb;
+      border: 1px solid #eee2ee;
+    }
+
+    .detail-photo-frame img {
       width: 100%;
       max-height: 44vh;
       object-fit: contain;
-      background: #f2f3f0;
+      background: #f8f3fb;
+      display: block;
     }
 
     .detail-body {
@@ -477,13 +507,17 @@
       .photo-box { min-height: 132px; }
       .photo-box img { max-height: 190px; }
       .photo-empty { padding: 14px; }
-      .photo-empty strong { font-size: 15px; }
-      label { font-size: 15px; }
-      input, textarea, select { font-size: 16px; min-height: 44px; }
+      .photo-empty strong { font-size: 16px; }
+      label { font-size: 17px; }
+      input, textarea, select { font-size: 18px; min-height: 48px; }
       .detail { padding: 8px; }
       .detail-panel { max-height: calc(100vh - 16px); }
-      .detail-panel img { max-height: 36vh; }
+      .detail-photo-frame { margin: 10px 10px 0; border-radius: 14px; }
+      .detail-photo-frame img { max-height: 34vh; }
       .detail-head h2 { font-size: 20px; }
+      .hint { font-size: 15px; }
+      .tag { font-size: 13px; }
+      .box-badge { font-size: 14px; padding: 6px 10px; }
     }
   </style>
 </head>
@@ -619,7 +653,9 @@
 
   <div class="detail" id="detailModal" role="dialog" aria-modal="true">
     <div class="detail-panel">
-      <img id="detailPhoto" alt="물건 사진" />
+      <div class="detail-photo-frame">
+        <img id="detailPhoto" alt="물건 사진" />
+      </div>
       <div class="detail-body">
         <div class="detail-head">
           <div>
@@ -633,6 +669,7 @@
         <div class="actions">
           <button id="detailEditBtn" type="button">수정</button>
           <button id="detailMoveBtn" type="button">박스보기</button>
+          <button id="detailSavePhotoBtn" class="primary wide-action" type="button">사진 저장</button>
         </div>
       </div>
     </div>
@@ -704,7 +741,8 @@
         detailTags: $('detailTags'),
         closeDetail: $('closeDetailBtn'),
         detailEdit: $('detailEditBtn'),
-        detailMove: $('detailMoveBtn')
+        detailMove: $('detailMoveBtn'),
+        detailSavePhoto: $('detailSavePhotoBtn')
       };
 
       let dbPromise = null;
@@ -801,6 +839,33 @@
         return (app.boxes.find(b => b.id === id) || app.boxes[0] || { name: DEFAULT_BOX }).name;
       }
 
+      function hashText(value) {
+        const text = String(value || '');
+        let hash = 0;
+        for (let i = 0; i < text.length; i += 1) hash = ((hash * 31) + text.charCodeAt(i)) >>> 0;
+        return hash;
+      }
+
+      function boxColorStyle(name) {
+        const colors = [
+          ['#ffe3ec', '#f9b8cd'],
+          ['#e3f5ff', '#a9d9f0'],
+          ['#e8f8de', '#b7df9c'],
+          ['#fff0ca', '#efd38c'],
+          ['#eee5ff', '#cbb9f4'],
+          ['#def7f0', '#9fdccc'],
+          ['#ffe6d8', '#f2b08f'],
+          ['#e9f0ff', '#b9c9ef']
+        ];
+        const [bg, border] = colors[hashText(name) % colors.length];
+        return `background:${bg};border-color:${border};`;
+      }
+
+      function boxBadgeHtml(name, extraClass = '') {
+        const safeName = esc(name || DEFAULT_BOX);
+        return `<span class="box-badge ${extraClass}" style="${boxColorStyle(name)}" title="${safeName}">${safeName}</span>`;
+      }
+
       function splitTags(value) {
         return String(value || '')
           .split(',')
@@ -873,7 +938,7 @@
             <img src="${esc(item.photo || placeholderSvg())}" alt="${esc(item.name)}" data-action="detail" data-id="${esc(item.id)}" />
             <div class="item-info">
               <div class="item-name">${esc(item.name || '이름 없음')}</div>
-              <div class="item-place">${esc(boxName(item.boxId))}</div>
+              <div class="item-place">${boxBadgeHtml(boxName(item.boxId))}</div>
               <div class="tags">${(item.tags || []).slice(0, 4).map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
             </div>
             <div class="card-actions">
@@ -898,8 +963,9 @@
                 ${photos.length ? photos.map(item => `<img src="${esc(item.photo)}" alt="${esc(item.name)}" />`).join('') : '<div class="empty-cover">빈 박스</div>'}
               </div>
               <div class="box-meta">
-                <div class="box-name">${esc(box.name)}</div>
+                <div class="box-name">${boxBadgeHtml(box.name)}</div>
                 <div class="hint">${items.length}개 보관 중</div>
+                <button type="button" data-action="save-box-photos" data-box-id="${esc(box.id)}">사진저장</button>
               </div>
             </article>
           `;
@@ -1032,7 +1098,7 @@
         selectedDetailId = id;
         els.detailPhoto.src = item.photo || placeholderSvg();
         els.detailName.textContent = item.name || '이름 없음';
-        els.detailBox.textContent = boxName(item.boxId);
+        els.detailBox.innerHTML = boxBadgeHtml(boxName(item.boxId), 'detail-badge');
         els.detailDesc.textContent = item.desc || '설명이 없습니다.';
         els.detailTags.innerHTML = (item.tags || []).map(tag => `<span class="tag">${esc(tag)}</span>`).join('');
         els.detailModal.classList.add('open');
@@ -1047,6 +1113,49 @@
         els.search.value = name;
         currentView = 'items';
         render();
+      }
+
+      function safeFileName(value) {
+        return String(value || 'photo')
+          .trim()
+          .replace(/[\\/:*?"<>|]+/g, '_')
+          .replace(/\s+/g, '_')
+          .slice(0, 60) || 'photo';
+      }
+
+      function downloadPhoto(dataUrl, filename) {
+        if (!dataUrl || !dataUrl.startsWith('data:image')) {
+          alert('저장할 사진이 없습니다.');
+          return;
+        }
+        const a = document.createElement('a');
+        a.href = dataUrl;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+      }
+
+      function saveSelectedDetailPhoto() {
+        const item = app.items.find(row => row.id === selectedDetailId);
+        if (!item) return;
+        downloadPhoto(item.photo, `${safeFileName(item.name)}.jpg`);
+      }
+
+      function saveBoxPhotos(boxId) {
+        const box = app.boxes.find(row => row.id === boxId);
+        if (!box) return;
+        const photos = app.items.filter(item => item.boxId === boxId && item.photo);
+        if (!photos.length) {
+          alert('이 보관박스에는 저장할 사진이 없습니다.');
+          return;
+        }
+        alert(`사진 ${photos.length}장을 다운로드합니다. 휴대폰에서는 다운로드 항목에서 사진앨범으로 저장해 주세요.`);
+        photos.forEach((item, index) => {
+          setTimeout(() => {
+            downloadPhoto(item.photo, `${safeFileName(box.name)}_${String(index + 1).padStart(2, '0')}_${safeFileName(item.name)}.jpg`);
+          }, index * 350);
+        });
       }
 
       function exportBackup() {
@@ -1327,6 +1436,7 @@
           if (action === 'edit') startEdit(target.dataset.id);
           if (action === 'locate') filterByBox(target.dataset.box);
           if (action === 'filter-box') filterByBox(target.dataset.box);
+          if (action === 'save-box-photos') saveBoxPhotos(target.dataset.boxId);
         });
 
         els.closeDetail.addEventListener('click', closeDetail);
@@ -1342,6 +1452,7 @@
           if (item) filterByBox(boxName(item.boxId));
           closeDetail();
         });
+        els.detailSavePhoto.addEventListener('click', saveSelectedDetailPhoto);
 
         els.exportBtn.addEventListener('click', exportBackup);
         els.importBtn.addEventListener('click', () => els.importFile.click());
