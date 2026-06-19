@@ -1,4 +1,4 @@
-const CACHE_NAME = 'storage-box-app-v2';
+const CACHE_NAME = 'storage-box-app-v3';
 const ASSETS = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
