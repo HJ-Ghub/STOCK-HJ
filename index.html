@@ -3998,6 +3998,27 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return other && hasUploadSourceItem(account, code, date, other) ? other : '';
     }
 
+    function sourceVariantsForDate(account, code, date, source = '') {
+      const variants = [];
+      const add = (src) => {
+        const s = normSource(src);
+        if (!variants.includes(s)) variants.push(s);
+      };
+      add(source);
+      const linked = linkedIfExists(account, code, date, source);
+      if (linked) add(linked);
+      ['trade', 'balance'].forEach(src => {
+        if (hasUploadSourceItem(account, code, date, src)) add(src);
+      });
+      add('');
+      return variants;
+    }
+
+    function sourceVariantKeysForDate(account, code, date, source = '') {
+      return sourceVariantsForDate(account, code, date, source)
+        .map(src => memoStorageKey(account, code, date, src));
+    }
+
     function buyAndSellProfitTrade(item) {
       return !!(item && Number(item.buyQty || 0) > 0 && Number(item.sellQty || 0) > 0 && Number(item.profit || 0) !== 0);
     }
@@ -4147,12 +4168,9 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     function memoHtmlOf(account, code, date = '', source = '') {
       app.memoHtml = app.memoHtml || {};
-      const datedKey = memoStorageKey(account, code, date, source);
-      if (app.memoHtml[datedKey]) return app.memoHtml[datedKey];
-      const linked = linkedIfExists(account, code, date, source);
-      if (linked && app.memoHtml[memoStorageKey(account, code, date, linked)]) return app.memoHtml[memoStorageKey(account, code, date, linked)];
-      const noSourceKey = source ? memoStorageKey(account, code, date, '') : '';
-      if (noSourceKey && app.memoHtml[noSourceKey]) return app.memoHtml[noSourceKey];
+      for (const key of sourceVariantKeysForDate(account, code, date, source)) {
+        if (app.memoHtml[key]) return app.memoHtml[key];
+      }
       const legacyKey = opKey(account, code);
       if (date && legacyMemoAllowedForDate(account, code, date)) return app.memoHtml[legacyKey] || '';
       return !date ? (app.memoHtml[legacyKey] || '') : '';
@@ -4163,12 +4181,9 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const html = memoHtmlOf(account, code, date, source);
       const textFromHtml = html ? plainFromHtml(html) : '';
       if (textFromHtml) return textFromHtml;
-      const datedKey = memoStorageKey(account, code, date, source);
-      if (app.memos[datedKey]) return app.memos[datedKey];
-      const linked = linkedIfExists(account, code, date, source);
-      if (linked && app.memos[memoStorageKey(account, code, date, linked)]) return app.memos[memoStorageKey(account, code, date, linked)];
-      const noSourceKey = source ? memoStorageKey(account, code, date, '') : '';
-      if (noSourceKey && app.memos[noSourceKey]) return app.memos[noSourceKey];
+      for (const key of sourceVariantKeysForDate(account, code, date, source)) {
+        if (app.memos[key]) return app.memos[key];
+      }
       const legacyKey = opKey(account, code);
       if (date && legacyMemoAllowedForDate(account, code, date)) return app.memos[legacyKey] || '';
       return !date ? (app.memos[legacyKey] || '') : '';
@@ -4183,10 +4198,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         if (memoHtml) app.memoHtml[key] = cleanHtml(memoHtml);
         else delete app.memoHtml[key];
       };
-      writeOneMemo(source);
-      const linked = linkedIfExists(account, code, date, source);
-      if (linked) writeOneMemo(linked);
-      if (source) writeOneMemo('');
+      sourceVariantsForDate(account, code, date, source).forEach(writeOneMemo);
       saveApp();
     }
 
@@ -5484,11 +5496,11 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     function readMemoDetail(account, code, date, source = '') {
       app.memoDetails = app.memoDetails || {};
-      const key = memoDetailKey(account, code, date, source);
-      if (app.memoDetails[key]) return app.memoDetails[key];
-      const linked = linkedIfExists(account, code, date, source);
-      if (linked && app.memoDetails[memoDetailKey(account, code, date, linked)]) return app.memoDetails[memoDetailKey(account, code, date, linked)];
-      return source ? (app.memoDetails[memoDetailKey(account, code, date, '')] || { target1: '', target2: '', target1Color: 'black', target2Color: 'black', extraMemo: '', deleted: false }) : { target1: '', target2: '', target1Color: 'black', target2Color: 'black', extraMemo: '', deleted: false };
+      for (const src of sourceVariantsForDate(account, code, date, source)) {
+        const detail = app.memoDetails[memoDetailKey(account, code, date, src)];
+        if (detail) return detail;
+      }
+      return { target1: '', target2: '', target1Color: 'black', target2Color: 'black', extraMemo: '', deleted: false };
     }
 
     function latestTargetDetailForDisplay(account, code, date, source = '') {
@@ -5508,13 +5520,15 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       app.memoDetails = app.memoDetails || {};
       const prefix = `${account}__${code}__`;
       const s = normSource(source);
-      const foundKey = Object.keys(app.memoDetails)
+      const meaningfulKeys = Object.keys(app.memoDetails)
         .filter(k => k.startsWith(prefix))
-        .filter(k => !s || k.endsWith(`__${s}`))
         .filter(k => {
           const d = app.memoDetails[k] || {};
           return !d.deleted && (String(d.target1 || '').trim() || String(d.target2 || '').trim() || String(d.extraMemo || '').trim());
-        })
+        });
+      const sourceKeys = s ? meaningfulKeys.filter(k => k.endsWith(`__${s}`)) : meaningfulKeys;
+      const noSourceKeys = s ? meaningfulKeys.filter(k => !k.endsWith('__trade') && !k.endsWith('__balance')) : [];
+      const foundKey = (sourceKeys.length ? sourceKeys : noSourceKeys.length ? noSourceKeys : meaningfulKeys)
         .sort()
         .reverse()[0];
       if (foundKey) return app.memoDetails[foundKey];
@@ -5529,10 +5543,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         detail.deleted = false;
         app.memoDetails[memoDetailKey(account, code, date, src)] = detail;
       };
-      writeDetail(source);
-      const linked = linkedIfExists(account, code, date, source);
-      if (linked) writeDetail(linked);
-      if (source) writeDetail('');
+      sourceVariantsForDate(account, code, date, source).forEach(writeDetail);
       saveApp();
     }
 
@@ -5540,14 +5551,16 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const ok = confirm(`${name || code} ${date} ${sourceLabel(source)} 메모내역 행을 삭제할까요?
 원래 종목 메모는 유지되고, 메모내역 화면에서만 숨김 처리됩니다.`);
       if (!ok) return;
-      const detail = getMemoDetail(account, code, date, source);
-      detail.target1 = '';
-      detail.target2 = '';
-      detail.target1Color = 'black';
-      detail.target2Color = 'black';
-      detail.extraMemo = '';
-      detail.deleted = true;
-      app.memoDetails[memoDetailKey(account, code, date, source)] = detail;
+      sourceVariantsForDate(account, code, date, source).forEach(src => {
+        const detail = getMemoDetail(account, code, date, src);
+        detail.target1 = '';
+        detail.target2 = '';
+        detail.target1Color = 'black';
+        detail.target2Color = 'black';
+        detail.extraMemo = '';
+        detail.deleted = true;
+        app.memoDetails[memoDetailKey(account, code, date, src)] = detail;
+      });
       saveApp();
       toast('메모내역 행 삭제 완료');
       render();
@@ -5625,7 +5638,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         const code = item.stockCode;
         if (!code) return;
         const todayMemo = memoOf(batch.account, code, batch.date, source);
-        const detail = getMemoDetail(batch.account, code, batch.date, source);
+        const detail = readMemoDetail(batch.account, code, batch.date, source);
         if (detail.deleted) return;
         if (!String(todayMemo || '').trim() && !String(detail.target1 || '').trim() && !String(detail.target2 || '').trim() && !String(detail.extraMemo || '').trim()) return;
         const key = memoDetailKey(batch.account, code, batch.date, source);
@@ -7117,10 +7130,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         app.memoDetails[memoDetailKey(ctx.account, ctx.code, ctx.date, src)] = detail;
       };
       const src = ctx.source || '';
-      writeExtra(src);
-      const linked = linkedIfExists(ctx.account, ctx.code, ctx.date, src);
-      if (linked) writeExtra(linked);
-      if (src) writeExtra('');
+      sourceVariantsForDate(ctx.account, ctx.code, ctx.date, src).forEach(writeExtra);
       saveApp();
       return true;
     }
