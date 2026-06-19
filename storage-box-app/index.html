@@ -1,0 +1,1103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#f7f3ea" />
+  <title>보관함 사진정리</title>
+  <link rel="manifest" href="./manifest.webmanifest" />
+  <style>
+    :root {
+      --bg: #f7f3ea;
+      --panel: #ffffff;
+      --panel-2: #f4f7f4;
+      --line: #d9ded5;
+      --text: #202722;
+      --muted: #687269;
+      --accent: #1f7a67;
+      --accent-2: #e05b3f;
+      --warn: #b98518;
+      --shadow: 0 12px 28px rgba(33, 44, 38, .12);
+      --radius: 8px;
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+      font-size: 14px;
+    }
+
+    button, input, textarea, select {
+      font: inherit;
+    }
+
+    button {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      min-height: 38px;
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: #fff;
+    }
+
+    button.danger {
+      background: #fff4f0;
+      border-color: #efb6a7;
+      color: #9d321d;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: var(--radius);
+      min-height: 42px;
+      padding: 9px 10px;
+      outline: none;
+    }
+
+    textarea {
+      min-height: 74px;
+      resize: vertical;
+      line-height: 1.45;
+    }
+
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(31, 122, 103, .16);
+    }
+
+    .app {
+      width: min(1160px, 100%);
+      margin: 0 auto;
+      padding: 14px;
+      padding-bottom: 86px;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: rgba(247, 243, 234, .94);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(217, 222, 213, .78);
+    }
+
+    .head-inner {
+      width: min(1160px, 100%);
+      margin: 0 auto;
+      padding: 12px 14px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      letter-spacing: 0;
+    }
+
+    .status {
+      color: var(--muted);
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .search-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 6px;
+    }
+
+    .tab {
+      min-height: 34px;
+      padding: 6px;
+      font-size: 12px;
+      background: #fafafa;
+    }
+
+    .tab.active {
+      border-color: var(--accent);
+      background: #e7f2ee;
+      color: #115848;
+    }
+
+    .layout {
+      display: grid;
+      grid-template-columns: 380px minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 12px;
+    }
+
+    .section-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    h2, h3 {
+      margin: 0;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .form-grid {
+      display: grid;
+      gap: 9px;
+    }
+
+    label {
+      display: grid;
+      gap: 5px;
+      color: #3d473f;
+      font-size: 12px;
+      font-weight: 800;
+    }
+
+    .photo-box {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 210px;
+      border: 1px dashed #aeb9ad;
+      border-radius: var(--radius);
+      background: #f8faf7;
+      overflow: hidden;
+    }
+
+    .photo-box img {
+      width: 100%;
+      height: 100%;
+      max-height: 320px;
+      object-fit: cover;
+      display: none;
+    }
+
+    .photo-box.has-photo img { display: block; }
+    .photo-box.has-photo .photo-empty { display: none; }
+
+    .photo-empty {
+      text-align: center;
+      color: var(--muted);
+      padding: 22px;
+    }
+
+    .photo-empty strong {
+      display: block;
+      color: var(--text);
+      font-size: 16px;
+      margin-bottom: 4px;
+    }
+
+    .actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .wide-action { grid-column: 1 / -1; }
+
+    .box-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+    }
+
+    .content {
+      display: grid;
+      gap: 12px;
+    }
+
+    .summary {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    .metric {
+      background: var(--panel-2);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      padding: 10px;
+      min-height: 68px;
+    }
+
+    .metric .label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .metric .value {
+      margin-top: 4px;
+      font-size: 19px;
+      font-weight: 900;
+    }
+
+    .boxes-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 10px;
+    }
+
+    .box-card {
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .box-cover {
+      height: 92px;
+      background: #edf1ed;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2px;
+      padding: 2px;
+    }
+
+    .box-cover img {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      object-fit: cover;
+      background: #dfe6df;
+    }
+
+    .box-cover .empty-cover {
+      grid-column: 1 / -1;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-weight: 900;
+    }
+
+    .box-meta {
+      padding: 9px;
+      display: grid;
+      gap: 3px;
+    }
+
+    .box-name {
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .items-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(156px, 1fr));
+      gap: 10px;
+    }
+
+    .item-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: grid;
+    }
+
+    .item-card img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      object-fit: cover;
+      background: #edf1ed;
+    }
+
+    .item-info {
+      display: grid;
+      gap: 5px;
+      padding: 9px;
+    }
+
+    .item-name {
+      font-weight: 900;
+      line-height: 1.25;
+      min-height: 34px;
+    }
+
+    .item-place {
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .tags {
+      display: flex;
+      gap: 4px;
+      flex-wrap: wrap;
+      min-height: 22px;
+    }
+
+    .tag {
+      background: #eef3ef;
+      border: 1px solid #d8e1d9;
+      color: #435044;
+      border-radius: 999px;
+      padding: 3px 7px;
+      font-size: 11px;
+      font-weight: 800;
+    }
+
+    .card-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+      padding: 0 9px 9px;
+    }
+
+    .card-actions button {
+      min-height: 32px;
+      padding: 5px;
+      font-size: 12px;
+    }
+
+    .empty {
+      border: 1px dashed #b7c0b7;
+      background: #fbfcfa;
+      border-radius: var(--radius);
+      padding: 22px;
+      text-align: center;
+      color: var(--muted);
+    }
+
+    .detail {
+      position: fixed;
+      inset: 0;
+      z-index: 30;
+      display: none;
+      background: rgba(0, 0, 0, .42);
+      padding: 12px;
+      overflow: auto;
+    }
+
+    .detail.open { display: grid; place-items: center; }
+
+    .detail-panel {
+      width: min(720px, 100%);
+      background: #fff;
+      border-radius: var(--radius);
+      overflow: hidden;
+      display: grid;
+      box-shadow: 0 24px 60px rgba(0,0,0,.24);
+    }
+
+    .detail-panel img {
+      width: 100%;
+      max-height: 52vh;
+      object-fit: contain;
+      background: #f2f3f0;
+    }
+
+    .detail-body {
+      display: grid;
+      gap: 9px;
+      padding: 12px;
+    }
+
+    .detail-head {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .detail-head h2 { font-size: 18px; }
+
+    .hidden { display: none !important; }
+
+    @media (max-width: 860px) {
+      .app { padding: 10px; padding-bottom: 78px; }
+      .layout { grid-template-columns: 1fr; }
+      .summary { grid-template-columns: repeat(2, 1fr); }
+      .panel.form-panel { position: static; }
+      .items-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .boxes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .head-inner { padding: 10px; }
+      h1 { font-size: 19px; }
+      .status { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="head-inner">
+      <div class="title-row">
+        <h1>보관함 사진정리</h1>
+        <span class="status" id="statusText">불러오는 중</span>
+      </div>
+      <div class="search-row">
+        <input id="searchInput" type="search" placeholder="물건명, 설명, 태그, 보관박스 검색" autocomplete="off" />
+        <button id="clearSearchBtn" type="button" title="검색 지우기">지우기</button>
+      </div>
+      <nav class="tabs" aria-label="보기 선택">
+        <button class="tab active" type="button" data-view="items">전체물건</button>
+        <button class="tab" type="button" data-view="boxes">보관박스</button>
+        <button class="tab" type="button" data-view="tools">백업</button>
+      </nav>
+    </div>
+  </header>
+
+  <main class="app">
+    <div class="layout">
+      <section class="panel form-panel" aria-label="물건 등록">
+        <div class="section-title">
+          <h2 id="formTitle">물건 등록</h2>
+          <button id="resetFormBtn" type="button">새로</button>
+        </div>
+        <form class="form-grid" id="itemForm">
+          <div class="photo-box" id="photoBox">
+            <img id="photoPreview" alt="선택한 물건 사진 미리보기" />
+            <div class="photo-empty">
+              <strong>사진을 찍거나 선택</strong>
+              <span>휴대폰에서는 카메라가 바로 열립니다.</span>
+            </div>
+          </div>
+          <input id="photoInput" type="file" accept="image/*" capture="environment" />
+          <label>물건명
+            <input id="itemName" required placeholder="예: 검정 니트, 충전기, 겨울장갑" />
+          </label>
+          <label>설명
+            <textarea id="itemDesc" placeholder="색상, 브랜드, 크기, 특징, 같이 들어있는 물건 등"></textarea>
+          </label>
+          <label>태그
+            <input id="itemTags" placeholder="예: 겨울옷, 검정, 니트" />
+          </label>
+          <label>보관박스
+            <select id="boxSelect"></select>
+          </label>
+          <div class="box-row">
+            <input id="newBoxName" placeholder="새 박스명" />
+            <button id="addBoxBtn" type="button">추가</button>
+          </div>
+          <div class="actions">
+            <button class="primary wide-action" type="submit">저장</button>
+            <button id="cancelEditBtn" class="hidden" type="button">수정취소</button>
+            <button id="deleteEditBtn" class="danger hidden" type="button">삭제</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="content">
+        <section class="summary" aria-label="요약">
+          <div class="metric"><div class="label">전체 물건</div><div class="value" id="metricItems">0</div></div>
+          <div class="metric"><div class="label">보관박스</div><div class="value" id="metricBoxes">0</div></div>
+          <div class="metric"><div class="label">사진 있음</div><div class="value" id="metricPhotos">0</div></div>
+          <div class="metric"><div class="label">검색 결과</div><div class="value" id="metricResults">0</div></div>
+        </section>
+
+        <section id="itemsView" class="panel">
+          <div class="section-title">
+            <h2>전체 물건</h2>
+            <span class="hint" id="itemsHint">최근 등록순</span>
+          </div>
+          <div class="items-grid" id="itemsGrid"></div>
+        </section>
+
+        <section id="boxesView" class="panel hidden">
+          <div class="section-title">
+            <h2>보관박스</h2>
+            <span class="hint">박스를 누르면 해당 물건만 검색됩니다.</span>
+          </div>
+          <div class="boxes-grid" id="boxesGrid"></div>
+        </section>
+
+        <section id="toolsView" class="panel hidden">
+          <div class="section-title">
+            <h2>백업</h2>
+            <span class="hint">사진 포함 JSON으로 내보내고 가져옵니다.</span>
+          </div>
+          <div class="form-grid">
+            <button id="exportBtn" type="button">백업 내보내기</button>
+            <button id="importBtn" type="button">백업 가져오기</button>
+            <input id="importFile" class="hidden" type="file" accept="application/json,.json" />
+            <button id="clearAllBtn" class="danger" type="button">전체 삭제</button>
+            <p class="hint">사진은 브라우저 저장소에 보관됩니다. 휴대폰을 바꾸거나 브라우저 데이터를 지우기 전에는 백업 파일을 만들어 두세요.</p>
+          </div>
+        </section>
+      </section>
+    </div>
+  </main>
+
+  <div class="detail" id="detailModal" role="dialog" aria-modal="true">
+    <div class="detail-panel">
+      <img id="detailPhoto" alt="물건 사진" />
+      <div class="detail-body">
+        <div class="detail-head">
+          <div>
+            <h2 id="detailName"></h2>
+            <div class="item-place" id="detailBox"></div>
+          </div>
+          <button id="closeDetailBtn" type="button">닫기</button>
+        </div>
+        <p id="detailDesc" class="hint"></p>
+        <div class="tags" id="detailTags"></div>
+        <div class="actions">
+          <button id="detailEditBtn" type="button">수정</button>
+          <button id="detailMoveBtn" type="button">박스보기</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    (() => {
+      'use strict';
+
+      const DB_NAME = 'storageBoxPhotoApp.v1';
+      const DB_VERSION = 1;
+      const STORE = 'state';
+      const STATE_KEY = 'app';
+      const DEFAULT_BOX = '미지정';
+
+      const $ = (id) => document.getElementById(id);
+      const els = {
+        status: $('statusText'),
+        search: $('searchInput'),
+        clearSearch: $('clearSearchBtn'),
+        tabs: Array.from(document.querySelectorAll('.tab')),
+        photoInput: $('photoInput'),
+        photoBox: $('photoBox'),
+        photoPreview: $('photoPreview'),
+        form: $('itemForm'),
+        formTitle: $('formTitle'),
+        resetForm: $('resetFormBtn'),
+        itemName: $('itemName'),
+        itemDesc: $('itemDesc'),
+        itemTags: $('itemTags'),
+        boxSelect: $('boxSelect'),
+        newBoxName: $('newBoxName'),
+        addBox: $('addBoxBtn'),
+        cancelEdit: $('cancelEditBtn'),
+        deleteEdit: $('deleteEditBtn'),
+        metricItems: $('metricItems'),
+        metricBoxes: $('metricBoxes'),
+        metricPhotos: $('metricPhotos'),
+        metricResults: $('metricResults'),
+        itemsView: $('itemsView'),
+        boxesView: $('boxesView'),
+        toolsView: $('toolsView'),
+        itemsGrid: $('itemsGrid'),
+        boxesGrid: $('boxesGrid'),
+        itemsHint: $('itemsHint'),
+        exportBtn: $('exportBtn'),
+        importBtn: $('importBtn'),
+        importFile: $('importFile'),
+        clearAll: $('clearAllBtn'),
+        detailModal: $('detailModal'),
+        detailPhoto: $('detailPhoto'),
+        detailName: $('detailName'),
+        detailBox: $('detailBox'),
+        detailDesc: $('detailDesc'),
+        detailTags: $('detailTags'),
+        closeDetail: $('closeDetailBtn'),
+        detailEdit: $('detailEditBtn'),
+        detailMove: $('detailMoveBtn')
+      };
+
+      let dbPromise = null;
+      let app = emptyApp();
+      let currentPhoto = '';
+      let editingId = '';
+      let selectedDetailId = '';
+      let currentView = 'items';
+      let saveTimer = null;
+
+      function emptyApp() {
+        return {
+          boxes: [{ id: makeId('box'), name: DEFAULT_BOX, note: '', createdAt: Date.now() }],
+          items: []
+        };
+      }
+
+      function makeId(prefix) {
+        return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
+      }
+
+      function openDb() {
+        if (dbPromise) return dbPromise;
+        dbPromise = new Promise((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, DB_VERSION);
+          req.onupgradeneeded = () => req.result.createObjectStore(STORE);
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error || new Error('IndexedDB 열기 실패'));
+        });
+        return dbPromise;
+      }
+
+      async function readState() {
+        const db = await openDb();
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE, 'readonly');
+          const req = tx.objectStore(STORE).get(STATE_KEY);
+          req.onsuccess = () => resolve(req.result || null);
+          req.onerror = () => reject(req.error || new Error('데이터 읽기 실패'));
+        });
+      }
+
+      async function writeState() {
+        const db = await openDb();
+        const payload = JSON.parse(JSON.stringify(app));
+        return new Promise((resolve, reject) => {
+          const tx = db.transaction(STORE, 'readwrite');
+          tx.objectStore(STORE).put(payload, STATE_KEY);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error || new Error('데이터 저장 실패'));
+        });
+      }
+
+      function scheduleSave() {
+        clearTimeout(saveTimer);
+        saveTimer = setTimeout(() => {
+          writeState().then(updateStatus).catch((err) => {
+            console.error(err);
+            els.status.textContent = '저장 실패';
+          });
+        }, 120);
+      }
+
+      function normalizeApp(data) {
+        const next = data && typeof data === 'object' ? data : emptyApp();
+        next.boxes = Array.isArray(next.boxes) ? next.boxes : [];
+        next.items = Array.isArray(next.items) ? next.items : [];
+        if (!next.boxes.length) next.boxes.push({ id: makeId('box'), name: DEFAULT_BOX, note: '', createdAt: Date.now() });
+        const hasDefault = next.boxes.some(b => b.name === DEFAULT_BOX);
+        if (!hasDefault) next.boxes.unshift({ id: makeId('box'), name: DEFAULT_BOX, note: '', createdAt: Date.now() });
+        next.items = next.items.map(item => ({
+          id: item.id || makeId('item'),
+          name: String(item.name || ''),
+          desc: String(item.desc || ''),
+          tags: Array.isArray(item.tags) ? item.tags.map(String) : splitTags(item.tags || ''),
+          boxId: item.boxId || boxByName(DEFAULT_BOX, next.boxes).id,
+          photo: String(item.photo || ''),
+          createdAt: Number(item.createdAt || Date.now()),
+          updatedAt: Number(item.updatedAt || item.createdAt || Date.now())
+        }));
+        return next;
+      }
+
+      function boxByName(name, boxes = app.boxes) {
+        return boxes.find(b => b.name === name) || boxes[0];
+      }
+
+      function boxName(id) {
+        return (app.boxes.find(b => b.id === id) || app.boxes[0] || { name: DEFAULT_BOX }).name;
+      }
+
+      function splitTags(value) {
+        return String(value || '')
+          .split(',')
+          .map(v => v.trim())
+          .filter(Boolean)
+          .slice(0, 12);
+      }
+
+      function esc(value) {
+        return String(value ?? '').replace(/[&<>"']/g, ch => ({
+          '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+        }[ch]));
+      }
+
+      function searchable(item) {
+        return [item.name, item.desc, boxName(item.boxId), ...(item.tags || [])].join(' ').toLowerCase();
+      }
+
+      function filteredItems() {
+        const q = els.search.value.trim().toLowerCase();
+        const rows = [...app.items].sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+        return q ? rows.filter(item => searchable(item).includes(q)) : rows;
+      }
+
+      function updateStatus() {
+        els.status.textContent = `물건 ${app.items.length}개 · 박스 ${app.boxes.length}개`;
+      }
+
+      function render() {
+        renderBoxSelect();
+        renderMetrics();
+        renderViews();
+        updateStatus();
+      }
+
+      function renderBoxSelect() {
+        const selected = els.boxSelect.value || app.boxes[0]?.id || '';
+        els.boxSelect.innerHTML = app.boxes
+          .map(box => `<option value="${esc(box.id)}" ${box.id === selected ? 'selected' : ''}>${esc(box.name)}</option>`)
+          .join('');
+        if (!els.boxSelect.value && app.boxes[0]) els.boxSelect.value = app.boxes[0].id;
+      }
+
+      function renderMetrics() {
+        const rows = filteredItems();
+        els.metricItems.textContent = app.items.length;
+        els.metricBoxes.textContent = app.boxes.length;
+        els.metricPhotos.textContent = app.items.filter(item => item.photo).length;
+        els.metricResults.textContent = rows.length;
+      }
+
+      function renderViews() {
+        els.itemsView.classList.toggle('hidden', currentView !== 'items');
+        els.boxesView.classList.toggle('hidden', currentView !== 'boxes');
+        els.toolsView.classList.toggle('hidden', currentView !== 'tools');
+        els.tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.view === currentView));
+        renderItems();
+        renderBoxes();
+      }
+
+      function renderItems() {
+        const rows = filteredItems();
+        els.itemsHint.textContent = els.search.value.trim() ? '검색 결과' : '최근 등록순';
+        if (!rows.length) {
+          els.itemsGrid.innerHTML = '<div class="empty">아직 물건이 없습니다. 왼쪽에서 사진과 보관박스를 등록해 보세요.</div>';
+          return;
+        }
+        els.itemsGrid.innerHTML = rows.map(item => `
+          <article class="item-card">
+            <img src="${esc(item.photo || placeholderSvg())}" alt="${esc(item.name)}" data-action="detail" data-id="${esc(item.id)}" />
+            <div class="item-info">
+              <div class="item-name">${esc(item.name || '이름 없음')}</div>
+              <div class="item-place">${esc(boxName(item.boxId))}</div>
+              <div class="tags">${(item.tags || []).slice(0, 4).map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
+            </div>
+            <div class="card-actions">
+              <button type="button" data-action="edit" data-id="${esc(item.id)}">수정</button>
+              <button type="button" data-action="locate" data-box="${esc(boxName(item.boxId))}">위치</button>
+            </div>
+          </article>
+        `).join('');
+      }
+
+      function renderBoxes() {
+        if (!app.boxes.length) {
+          els.boxesGrid.innerHTML = '<div class="empty">보관박스가 없습니다.</div>';
+          return;
+        }
+        els.boxesGrid.innerHTML = app.boxes.map(box => {
+          const items = app.items.filter(item => item.boxId === box.id);
+          const photos = items.filter(item => item.photo).slice(0, 6);
+          return `
+            <article class="box-card" data-action="filter-box" data-box="${esc(box.name)}">
+              <div class="box-cover">
+                ${photos.length ? photos.map(item => `<img src="${esc(item.photo)}" alt="${esc(item.name)}" />`).join('') : '<div class="empty-cover">빈 박스</div>'}
+              </div>
+              <div class="box-meta">
+                <div class="box-name">${esc(box.name)}</div>
+                <div class="hint">${items.length}개 보관 중</div>
+              </div>
+            </article>
+          `;
+        }).join('');
+      }
+
+      function placeholderSvg() {
+        return 'data:image/svg+xml;utf8,' + encodeURIComponent(
+          '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 300 300"><rect width="300" height="300" fill="#edf1ed"/><path d="M72 190h156l-38-48-28 32-22-24z" fill="#9aa89c"/><circle cx="105" cy="106" r="22" fill="#b9c5ba"/></svg>'
+        );
+      }
+
+      async function compressImage(file) {
+        const bitmap = await loadImageSource(file);
+        const maxSide = 1280;
+        const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', .82);
+      }
+
+      async function loadImageSource(file) {
+        if ('createImageBitmap' in window) return createImageBitmap(file);
+        const dataUrl = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(reader.error || new Error('사진 읽기 실패'));
+          reader.readAsDataURL(file);
+        });
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('사진 표시 실패'));
+          img.src = dataUrl;
+        });
+      }
+
+      function setPhoto(dataUrl) {
+        currentPhoto = dataUrl || '';
+        els.photoPreview.src = currentPhoto || '';
+        els.photoBox.classList.toggle('has-photo', Boolean(currentPhoto));
+      }
+
+      function resetForm() {
+        editingId = '';
+        currentPhoto = '';
+        els.formTitle.textContent = '물건 등록';
+        els.form.reset();
+        renderBoxSelect();
+        setPhoto('');
+        els.cancelEdit.classList.add('hidden');
+        els.deleteEdit.classList.add('hidden');
+      }
+
+      function startEdit(id) {
+        const item = app.items.find(row => row.id === id);
+        if (!item) return;
+        editingId = item.id;
+        els.formTitle.textContent = '물건 수정';
+        els.itemName.value = item.name || '';
+        els.itemDesc.value = item.desc || '';
+        els.itemTags.value = (item.tags || []).join(', ');
+        els.boxSelect.value = item.boxId || app.boxes[0]?.id || '';
+        setPhoto(item.photo || '');
+        els.cancelEdit.classList.remove('hidden');
+        els.deleteEdit.classList.remove('hidden');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function saveItem(event) {
+        event.preventDefault();
+        const name = els.itemName.value.trim();
+        if (!name) {
+          alert('물건명을 입력해 주세요.');
+          return;
+        }
+        const now = Date.now();
+        const payload = {
+          name,
+          desc: els.itemDesc.value.trim(),
+          tags: splitTags(els.itemTags.value),
+          boxId: els.boxSelect.value || app.boxes[0]?.id,
+          photo: currentPhoto,
+          updatedAt: now
+        };
+        if (editingId) {
+          const item = app.items.find(row => row.id === editingId);
+          if (item) Object.assign(item, payload);
+        } else {
+          app.items.push({ id: makeId('item'), createdAt: now, ...payload });
+        }
+        scheduleSave();
+        resetForm();
+        render();
+      }
+
+      function addBox() {
+        const name = els.newBoxName.value.trim();
+        if (!name) return;
+        const exists = app.boxes.some(box => box.name.toLowerCase() === name.toLowerCase());
+        if (exists) {
+          alert('이미 있는 보관박스입니다.');
+          return;
+        }
+        const box = { id: makeId('box'), name, note: '', createdAt: Date.now() };
+        app.boxes.push(box);
+        els.newBoxName.value = '';
+        renderBoxSelect();
+        els.boxSelect.value = box.id;
+        scheduleSave();
+        render();
+      }
+
+      function deleteEditingItem() {
+        if (!editingId) return;
+        const item = app.items.find(row => row.id === editingId);
+        if (!item || !confirm(`${item.name} 물건을 삭제할까요?`)) return;
+        app.items = app.items.filter(row => row.id !== editingId);
+        scheduleSave();
+        resetForm();
+        render();
+      }
+
+      function openDetail(id) {
+        const item = app.items.find(row => row.id === id);
+        if (!item) return;
+        selectedDetailId = id;
+        els.detailPhoto.src = item.photo || placeholderSvg();
+        els.detailName.textContent = item.name || '이름 없음';
+        els.detailBox.textContent = boxName(item.boxId);
+        els.detailDesc.textContent = item.desc || '설명이 없습니다.';
+        els.detailTags.innerHTML = (item.tags || []).map(tag => `<span class="tag">${esc(tag)}</span>`).join('');
+        els.detailModal.classList.add('open');
+      }
+
+      function closeDetail() {
+        els.detailModal.classList.remove('open');
+        selectedDetailId = '';
+      }
+
+      function filterByBox(name) {
+        els.search.value = name;
+        currentView = 'items';
+        render();
+      }
+
+      function exportBackup() {
+        const blob = new Blob([JSON.stringify(app, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `storage-box-backup-${new Date().toISOString().slice(0, 10)}.json`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      }
+
+      async function importBackup(file) {
+        if (!file) return;
+        const text = await file.text();
+        const data = JSON.parse(text);
+        if (!confirm('현재 데이터를 가져온 백업으로 교체할까요?')) return;
+        app = normalizeApp(data);
+        await writeState();
+        resetForm();
+        render();
+      }
+
+      async function clearAll() {
+        if (!confirm('모든 보관박스와 물건을 삭제할까요?')) return;
+        app = emptyApp();
+        await writeState();
+        resetForm();
+        render();
+      }
+
+      function bindEvents() {
+        els.photoInput.addEventListener('change', async () => {
+          const file = els.photoInput.files && els.photoInput.files[0];
+          if (!file) return;
+          try {
+            els.status.textContent = '사진 처리 중';
+            setPhoto(await compressImage(file));
+            updateStatus();
+          } catch (err) {
+            console.error(err);
+            alert('사진을 불러오지 못했습니다.');
+          } finally {
+            els.photoInput.value = '';
+          }
+        });
+
+        els.form.addEventListener('submit', saveItem);
+        els.resetForm.addEventListener('click', resetForm);
+        els.cancelEdit.addEventListener('click', resetForm);
+        els.deleteEdit.addEventListener('click', deleteEditingItem);
+        els.addBox.addEventListener('click', addBox);
+        els.newBoxName.addEventListener('keydown', (event) => {
+          if (event.key === 'Enter') {
+            event.preventDefault();
+            addBox();
+          }
+        });
+
+        els.search.addEventListener('input', render);
+        els.clearSearch.addEventListener('click', () => {
+          els.search.value = '';
+          render();
+        });
+
+        els.tabs.forEach(tab => tab.addEventListener('click', () => {
+          currentView = tab.dataset.view || 'items';
+          render();
+        }));
+
+        document.addEventListener('click', (event) => {
+          const target = event.target.closest('[data-action]');
+          if (!target) return;
+          const action = target.dataset.action;
+          if (action === 'detail') openDetail(target.dataset.id);
+          if (action === 'edit') startEdit(target.dataset.id);
+          if (action === 'locate') filterByBox(target.dataset.box);
+          if (action === 'filter-box') filterByBox(target.dataset.box);
+        });
+
+        els.closeDetail.addEventListener('click', closeDetail);
+        els.detailModal.addEventListener('click', (event) => {
+          if (event.target === els.detailModal) closeDetail();
+        });
+        els.detailEdit.addEventListener('click', () => {
+          if (selectedDetailId) startEdit(selectedDetailId);
+          closeDetail();
+        });
+        els.detailMove.addEventListener('click', () => {
+          const item = app.items.find(row => row.id === selectedDetailId);
+          if (item) filterByBox(boxName(item.boxId));
+          closeDetail();
+        });
+
+        els.exportBtn.addEventListener('click', exportBackup);
+        els.importBtn.addEventListener('click', () => els.importFile.click());
+        els.importFile.addEventListener('change', () => {
+          importBackup(els.importFile.files && els.importFile.files[0])
+            .catch(err => alert('가져오기 실패: ' + (err.message || err)))
+            .finally(() => { els.importFile.value = ''; });
+        });
+        els.clearAll.addEventListener('click', clearAll);
+      }
+
+      async function boot() {
+        bindEvents();
+        try {
+          app = normalizeApp(await readState());
+          render();
+          if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
+            navigator.serviceWorker.register('./sw.js').catch(console.warn);
+          }
+        } catch (err) {
+          console.error(err);
+          els.status.textContent = '시작 실패';
+          alert('앱 데이터를 불러오지 못했습니다: ' + (err.message || err));
+        }
+      }
+
+      boot();
+    })();
+  </script>
+</body>
+</html>

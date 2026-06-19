@@ -1,0 +1,9 @@
+{
+  "name": "보관함 사진정리",
+  "short_name": "보관함",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#f7f3ea",
+  "theme_color": "#f7f3ea",
+  "icons": []
+}
