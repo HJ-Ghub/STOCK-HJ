@@ -4901,6 +4901,20 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return qty && price ? qty * price : '';
     }
 
+    function latestBuyEditFallback(account, code, beforeDate = '') {
+      const rows = getAllStockSourceRows()
+        .filter(row => row.account === account && row.stockCode === code)
+        .filter(row => !beforeDate || !row.date || row.date <= beforeDate)
+        .map(row => ({
+          row,
+          amount: effectiveBuyAmount(row),
+          price: Number(row.buyPrice || 0)
+        }))
+        .filter(item => item.amount !== '' || item.price > 0)
+        .sort((a, b) => compareDateSourceDesc(a.row, b.row));
+      return rows[0] || null;
+    }
+
     function optionalMoneyDisplay(value) {
       if (value === '' || value === null || value === undefined) return '';
       return fmtNum(value);
@@ -5327,6 +5341,8 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         const source = row.source || latest.source || 'balance';
         const op = getOpinion(row.account, row.stockCode, row.recentDate, source);
         const detail = getLatestMemoDetail(row.account, row.stockCode, row.recentDate, source);
+        const buyFallback = latestBuyEditFallback(row.account, row.stockCode, row.recentDate);
+        const fallbackRow = buyFallback ? buyFallback.row : {};
         return {
           ...row,
           source,
@@ -5336,13 +5352,13 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           quantity: Number(latest.quantity || 0),
           buyQty: Number(latest.buyQty || 0),
           sellQty: Number(latest.sellQty || 0),
-          buyPrice: Number(latest.buyPrice || 0),
+          buyPrice: Number(latest.buyPrice || fallbackRow.buyPrice || 0),
           target1: detail.target1 || '',
           target2: detail.target2 || '',
           classTag: getClassTag(row.account, row.stockCode, row.recentDate, source),
           evalAmount: Number(latest.evalAmount || 0),
-          buyAmount: Number(latest.buyAmount || 0),
-          manualBuyAmount: latest.manualBuyAmount || '',
+          buyAmount: Number(latest.buyAmount || fallbackRow.buyAmount || 0),
+          manualBuyAmount: latest.manualBuyAmount || fallbackRow.manualBuyAmount || '',
           profit: Number(latest.profit || 0),
           returnRate: Number(latest.returnRate || 0),
           dayChangeRate: Number(latest.dayChangeRate || 0),
@@ -6941,13 +6957,17 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     }
 
     function saveStockEditValues(account, code, date, source, buyPrice, buyAmount) {
+      const buyPriceText = String(buyPrice ?? '').trim();
+      const buyAmountText = String(buyAmount ?? '').trim();
+      const parsedBuyPrice = parseNumber(buyPriceText);
+      const parsedBuyAmount = parseNumber(buyAmountText);
       const refs = findStockRowsForEdit(account, code, date, source);
       refs.forEach(({ item, source: src }) => {
         const qty = rowBuyQuantity({ ...item, source: src });
-        const amountWasEntered = buyAmount !== '' && buyAmount !== null && buyAmount !== undefined && Number(buyAmount) > 0;
-        const priceWasEntered = buyPrice !== '' && buyPrice !== null && buyPrice !== undefined && Number(buyPrice) > 0;
-        const nextBuyAmount = amountWasEntered ? Number(buyAmount) : (priceWasEntered && qty ? Number(buyPrice) * qty : '');
-        const nextBuyPrice = priceWasEntered ? Number(buyPrice) : (amountWasEntered && qty ? Math.round(Number(buyAmount) / qty) : Number(item.buyPrice || 0));
+        const amountWasEntered = buyAmountText !== '' && parsedBuyAmount > 0;
+        const priceWasEntered = buyPriceText !== '' && parsedBuyPrice > 0;
+        const nextBuyAmount = amountWasEntered ? parsedBuyAmount : (priceWasEntered && qty ? parsedBuyPrice * qty : '');
+        const nextBuyPrice = priceWasEntered ? parsedBuyPrice : (amountWasEntered && qty ? Math.round(parsedBuyAmount / qty) : Number(item.buyPrice || 0));
         if (nextBuyPrice) item.buyPrice = nextBuyPrice;
         if (src === 'trade') {
           if (nextBuyAmount !== '') item.manualBuyAmount = nextBuyAmount;
@@ -7001,7 +7021,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const source = modalMemoContext.source || '';
       setMemoDetail(account, code, memoDate, 'target1', document.getElementById('bigMemoTarget1')?.value || '', source);
       setMemoDetail(account, code, memoDate, 'target2', document.getElementById('bigMemoTarget2')?.value || '', source);
-      saveStockEditValues(account, code, memoDate, source, parseNumber(document.getElementById('bigMemoBuyPrice')?.value || 0), parseNumber(document.getElementById('bigMemoBuyAmount')?.value || 0));
+      saveStockEditValues(account, code, memoDate, source, document.getElementById('bigMemoBuyPrice')?.value || '', document.getElementById('bigMemoBuyAmount')?.value || '');
       setMemo(account, code, memoDate, text, html, source);
       updateMemoCellsInDom(account, code, memoDate, text, source);
       saveApp();
