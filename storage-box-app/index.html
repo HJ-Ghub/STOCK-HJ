@@ -638,7 +638,7 @@
         <section id="boxesView" class="panel hidden">
           <div class="section-title">
             <h2>보관박스</h2>
-            <span class="hint">박스를 누르면 해당 물건만 검색됩니다.</span>
+            <span class="hint">보관박스 이름을 변경할 수 있습니다.</span>
           </div>
           <div class="boxes-grid" id="boxesGrid"></div>
         </section>
@@ -736,6 +736,7 @@
           <button id="detailCancelEditBtn" class="hidden" type="button">이전</button>
           <button id="detailSavePhotoBtn" class="primary wide-action" type="button">사진 저장</button>
           <button id="detailRemovePhotoBtn" class="danger wide-action" type="button">사진 삭제</button>
+          <button id="detailDeleteItemBtn" class="danger wide-action hidden" type="button">삭제</button>
         </div>
       </div>
     </div>
@@ -826,7 +827,8 @@
         detailSaveEdit: $('detailSaveEditBtn'),
         detailCancelEdit: $('detailCancelEditBtn'),
         detailSavePhoto: $('detailSavePhotoBtn'),
-        detailRemovePhoto: $('detailRemovePhotoBtn')
+        detailRemovePhoto: $('detailRemovePhotoBtn'),
+        detailDeleteItem: $('detailDeleteItemBtn')
       };
 
       let dbPromise = null;
@@ -834,6 +836,7 @@
       let currentPhoto = '';
       let detailEditPhoto = '';
       let detailEditing = false;
+      let detailMode = 'view';
       let editingId = '';
       let selectedDetailId = '';
       let currentView = 'items';
@@ -1090,6 +1093,8 @@
             </div>
             <div class="card-actions">
               <button type="button" data-action="edit" data-id="${esc(item.id)}">수정</button>
+              <button type="button" data-action="photo-store" data-id="${esc(item.id)}">사진보관</button>
+              <button type="button" class="danger" data-action="delete-item" data-id="${esc(item.id)}">삭제</button>
             </div>
           </article>
         `).join('');
@@ -1104,7 +1109,7 @@
           const items = app.items.filter(item => item.boxId === box.id);
           const photos = items.filter(item => item.photo).slice(0, 6);
           return `
-            <article class="box-card" data-action="filter-box" data-box="${esc(box.name)}">
+            <article class="box-card">
               <div class="box-cover">
                 ${photos.length ? photos.map(item => `<img src="${esc(item.photo)}" alt="${esc(item.name)}" />`).join('') : '<div class="empty-cover">빈 박스</div>'}
               </div>
@@ -1112,7 +1117,6 @@
                 <div class="box-name">${boxBadgeHtml(box.name)}</div>
                 <div class="hint">${items.length}개 보관 중</div>
                 <button type="button" data-action="rename-box" data-box-id="${esc(box.id)}">이름변경</button>
-                <button type="button" data-action="save-box-photos" data-box-id="${esc(box.id)}">사진저장</button>
               </div>
             </article>
           `;
@@ -1264,19 +1268,27 @@
         render();
       }
 
-      function setDetailEditMode(isEditing) {
-        detailEditing = Boolean(isEditing);
+      function setDetailMode(mode = 'view') {
+        detailMode = mode;
+        detailEditing = mode === 'edit';
+        const item = app.items.find(row => row.id === selectedDetailId);
+        const hasPhoto = Boolean(item?.photo || detailEditPhoto);
         els.detailModal.classList.toggle('editing', detailEditing);
         els.detailViewFields.classList.toggle('hidden', detailEditing);
         els.detailEditForm.classList.toggle('hidden', !detailEditing);
         els.detailBoxLabel.classList.toggle('hidden', !detailEditing);
         els.detailMoveBox.classList.add('hidden');
-        els.detailEdit.classList.toggle('hidden', detailEditing);
-        els.detailMove.classList.toggle('hidden', detailEditing);
-        els.detailSavePhoto.classList.toggle('hidden', detailEditing || !detailEditPhoto);
-        els.detailRemovePhoto.classList.toggle('hidden', detailEditing || !detailEditPhoto);
-        els.detailSaveEdit.classList.toggle('hidden', !detailEditing);
-        els.detailCancelEdit.classList.toggle('hidden', !detailEditing);
+        els.detailEdit.classList.toggle('hidden', mode !== 'view');
+        els.detailMove.classList.toggle('hidden', mode !== 'view');
+        els.detailSavePhoto.classList.toggle('hidden', !((mode === 'view' || mode === 'photo') && hasPhoto));
+        els.detailRemovePhoto.classList.toggle('hidden', !(mode === 'view' && hasPhoto));
+        els.detailSaveEdit.classList.toggle('hidden', mode !== 'edit');
+        els.detailCancelEdit.classList.toggle('hidden', mode === 'view');
+        els.detailDeleteItem.classList.toggle('hidden', mode !== 'delete');
+      }
+
+      function setDetailEditMode(isEditing) {
+        setDetailMode(isEditing ? 'edit' : 'view');
       }
 
       function fillDetailEditForm(item) {
@@ -1310,6 +1322,7 @@
         selectedDetailId = '';
         detailEditPhoto = '';
         detailEditing = false;
+        detailMode = 'view';
       }
 
       function startDetailEdit() {
@@ -1324,6 +1337,22 @@
         const item = app.items.find(row => row.id === selectedDetailId);
         if (!item) return closeDetail();
         openDetail(item.id);
+      }
+
+      function startPhotoStore() {
+        const item = app.items.find(row => row.id === selectedDetailId);
+        if (!item) return;
+        els.detailDesc.textContent = item.photo ? '사진을 기기에 저장할 수 있습니다.' : '저장할 사진이 없습니다. 수정에서 사진을 먼저 등록해 주세요.';
+        els.detailTags.innerHTML = '';
+        setDetailMode('photo');
+      }
+
+      function startDeleteItem() {
+        const item = app.items.find(row => row.id === selectedDetailId);
+        if (!item) return;
+        els.detailDesc.textContent = `${item.name || '이 물건'}을 삭제할까요? 삭제하면 다른 기기에도 동기화됩니다.`;
+        els.detailTags.innerHTML = '';
+        setDetailMode('delete');
       }
 
       async function handleDetailPhotoFile(input) {
@@ -1364,6 +1393,17 @@
         item.boxId = els.detailBoxSelect.value || app.boxes[0]?.id || item.boxId;
         item.photo = detailEditPhoto || '';
         item.updatedAt = Date.now();
+        scheduleSave();
+        render();
+        closeDetail();
+      }
+
+      function deleteSelectedDetailItem() {
+        const item = app.items.find(row => row.id === selectedDetailId);
+        if (!item) return;
+        app.deletedItems = app.deletedItems || {};
+        app.deletedItems[item.id] = Date.now();
+        app.items = app.items.filter(row => row.id !== item.id);
         scheduleSave();
         render();
         closeDetail();
@@ -1797,6 +1837,14 @@
             openDetail(target.dataset.id);
             startDetailEdit();
           }
+          if (action === 'photo-store') {
+            openDetail(target.dataset.id);
+            startPhotoStore();
+          }
+          if (action === 'delete-item') {
+            openDetail(target.dataset.id);
+            startDeleteItem();
+          }
           if (action === 'filter-box') filterByBox(target.dataset.box);
           if (action === 'rename-box') renameBox(target.dataset.boxId);
           if (action === 'save-box-photos') saveBoxPhotos(target.dataset.boxId);
@@ -1826,6 +1874,7 @@
         els.detailCameraInput.addEventListener('change', () => handleDetailPhotoFile(els.detailCameraInput));
         els.detailSavePhoto.addEventListener('click', saveSelectedDetailPhoto);
         els.detailRemovePhoto.addEventListener('click', removeSelectedDetailPhoto);
+        els.detailDeleteItem.addEventListener('click', deleteSelectedDetailItem);
 
         els.exportBtn.addEventListener('click', exportBackup);
         els.importBtn.addEventListener('click', () => els.importFile.click());
