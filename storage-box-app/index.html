@@ -293,6 +293,7 @@
       border-radius: var(--radius);
       background: #fff;
       page-break-inside: avoid;
+      cursor: pointer;
     }
 
     .qr-label-card h4 {
@@ -302,15 +303,15 @@
     }
 
     .qr-code {
-      width: 160px;
-      height: 160px;
+      width: 3cm;
+      height: 3cm;
       display: grid;
       place-items: center;
     }
 
     .qr-code img, .qr-code canvas {
-      width: 160px;
-      height: 160px;
+      width: 3cm;
+      height: 3cm;
     }
 
     .qr-url {
@@ -614,6 +615,34 @@
       text-align: center;
     }
 
+    .qr-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 70;
+      display: none;
+      place-items: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, .42);
+    }
+
+    .qr-modal.open { display: grid; }
+
+    .qr-modal-panel {
+      width: min(360px, 100%);
+      display: grid;
+      gap: 12px;
+      justify-items: center;
+      padding: 16px;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .qr-modal-panel h2 {
+      text-align: center;
+    }
+
     .hidden { display: none !important; }
 
     @media print {
@@ -910,6 +939,18 @@
     </div>
   </div>
 
+  <div class="qr-modal" id="qrModal" role="dialog" aria-modal="true">
+    <div class="qr-modal-panel">
+      <h2 id="qrModalTitle">QR 라벨</h2>
+      <div class="qr-code" id="qrModalCode"></div>
+      <div class="qr-url" id="qrModalUrl"></div>
+      <div class="actions">
+        <button id="qrSinglePrintBtn" class="primary" type="button">이 라벨 인쇄</button>
+        <button id="qrModalCloseBtn" type="button">닫기</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (() => {
       'use strict';
@@ -981,6 +1022,12 @@
         appLockDisable: $('appLockDisableBtn'),
         appLockOverlay: $('appLockOverlay'),
         appLockOverlayUnlock: $('appLockOverlayUnlockBtn'),
+        qrModal: $('qrModal'),
+        qrModalTitle: $('qrModalTitle'),
+        qrModalCode: $('qrModalCode'),
+        qrModalUrl: $('qrModalUrl'),
+        qrSinglePrint: $('qrSinglePrintBtn'),
+        qrModalClose: $('qrModalCloseBtn'),
         detailModal: $('detailModal'),
         detailPhoto: $('detailPhoto'),
         detailName: $('detailName'),
@@ -1023,6 +1070,7 @@
       let cloudTimer = null;
       let cloudState = { client: null, user: null, lastSyncAt: '', lastError: '' };
       let urlBoxFilterApplied = false;
+      let selectedQrBoxId = '';
 
       function emptyApp() {
         return {
@@ -1319,7 +1367,7 @@
         els.qrLabelsGrid.innerHTML = app.boxes.map(box => {
           const url = boxQrUrl(box);
           return `
-            <article class="qr-label-card">
+            <article class="qr-label-card" data-action="qr-label" data-box-id="${esc(box.id)}">
               <h4>${esc(box.name)}</h4>
               <div class="qr-code" data-qr-url="${esc(url)}"></div>
               <div class="qr-url">${esc(url)}</div>
@@ -1345,6 +1393,153 @@
             node.appendChild(img);
           }
         });
+      }
+
+      function qrImageUrl(value) {
+        return `https://api.qrserver.com/v1/create-qr-code/?size=360x360&margin=0&data=${encodeURIComponent(value)}`;
+      }
+
+      function qrDataUrl(value) {
+        if (!window.QRCode) return qrImageUrl(value);
+        const node = document.createElement('div');
+        node.style.position = 'fixed';
+        node.style.left = '-9999px';
+        node.style.top = '-9999px';
+        document.body.appendChild(node);
+        new QRCode(node, {
+          text: value,
+          width: 360,
+          height: 360,
+          colorDark: '#111111',
+          colorLight: '#ffffff',
+          correctLevel: QRCode.CorrectLevel.M
+        });
+        const canvas = node.querySelector('canvas');
+        const img = node.querySelector('img');
+        const src = canvas ? canvas.toDataURL('image/png') : (img ? img.src : qrImageUrl(value));
+        node.remove();
+        return src;
+      }
+
+      function printQrBoxes(boxes) {
+        if (!boxes.length) {
+          alert('인쇄할 보관박스가 없습니다.');
+          return;
+        }
+        const rows = boxes.map(box => {
+          const url = boxQrUrl(box);
+          return `
+            <article class="label">
+              <h1>${esc(box.name)}</h1>
+              <img src="${qrDataUrl(url)}" alt="${esc(box.name)} QR" />
+              <p>${esc(url)}</p>
+            </article>
+          `;
+        }).join('');
+        const frame = document.createElement('iframe');
+        frame.style.position = 'fixed';
+        frame.style.right = '0';
+        frame.style.bottom = '0';
+        frame.style.width = '0';
+        frame.style.height = '0';
+        frame.style.border = '0';
+        document.body.appendChild(frame);
+        const doc = frame.contentDocument || frame.contentWindow.document;
+        doc.open();
+        doc.write(`<!doctype html>
+          <html lang="ko">
+          <head>
+            <meta charset="utf-8" />
+            <title>보관박스 QR 라벨</title>
+            <style>
+              @page { margin: 10mm; }
+              * { box-sizing: border-box; }
+              body {
+                margin: 0;
+                font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
+                color: #111;
+              }
+              .labels {
+                display: grid;
+                grid-template-columns: repeat(auto-fill, minmax(45mm, 1fr));
+                gap: 7mm;
+                align-items: start;
+              }
+              .label {
+                display: grid;
+                justify-items: center;
+                gap: 2mm;
+                padding: 4mm;
+                border: 1px solid #222;
+                break-inside: avoid;
+                page-break-inside: avoid;
+              }
+              h1 {
+                margin: 0;
+                font-size: 12pt;
+                line-height: 1.2;
+                text-align: center;
+              }
+              img {
+                width: 3cm;
+                height: 3cm;
+                display: block;
+              }
+              p {
+                width: 100%;
+                margin: 0;
+                font-size: 6pt;
+                line-height: 1.2;
+                overflow-wrap: anywhere;
+                text-align: center;
+              }
+            </style>
+          </head>
+          <body><main class="labels">${rows}</main></body>
+          </html>`);
+        doc.close();
+        setTimeout(() => {
+          frame.contentWindow.focus();
+          frame.contentWindow.print();
+          setTimeout(() => frame.remove(), 1000);
+        }, 800);
+      }
+
+      function openQrLabel(boxId) {
+        const box = app.boxes.find(row => row.id === boxId);
+        if (!box) return;
+        selectedQrBoxId = box.id;
+        const url = boxQrUrl(box);
+        els.qrModalTitle.textContent = `${box.name} QR 라벨`;
+        els.qrModalUrl.textContent = url;
+        els.qrModalCode.innerHTML = '';
+        if (window.QRCode) {
+          new QRCode(els.qrModalCode, {
+            text: url,
+            width: 180,
+            height: 180,
+            colorDark: '#111111',
+            colorLight: '#ffffff',
+            correctLevel: QRCode.CorrectLevel.M
+          });
+        } else {
+          const img = document.createElement('img');
+          img.alt = `${box.name} QR`;
+          img.src = qrImageUrl(url);
+          els.qrModalCode.appendChild(img);
+        }
+        els.qrModal.classList.add('open');
+      }
+
+      function closeQrLabel() {
+        selectedQrBoxId = '';
+        els.qrModal.classList.remove('open');
+      }
+
+      function printSelectedQrLabel() {
+        const box = app.boxes.find(row => row.id === selectedQrBoxId);
+        if (!box) return;
+        printQrBoxes([box]);
       }
 
       function placeholderSvg() {
@@ -1664,13 +1859,7 @@
       }
 
       function printQrLabels() {
-        currentView = 'tools';
-        render();
-        document.body.classList.add('qr-print');
-        setTimeout(() => {
-          window.print();
-          setTimeout(() => document.body.classList.remove('qr-print'), 500);
-        }, 100);
+        printQrBoxes(app.boxes);
       }
 
       function safeFileName(value) {
@@ -2247,6 +2436,7 @@
           if (action === 'filter-box') filterByBox(target.dataset.box);
           if (action === 'rename-box') renameBox(target.dataset.boxId);
           if (action === 'save-box-photos') saveBoxPhotos(target.dataset.boxId);
+          if (action === 'qr-label') openQrLabel(target.dataset.boxId);
         });
 
         els.closeDetail.addEventListener('click', closeDetail);
@@ -2274,6 +2464,11 @@
         els.detailSavePhoto.addEventListener('click', saveSelectedDetailPhoto);
         els.detailRemovePhoto.addEventListener('click', removeSelectedDetailPhoto);
         els.detailDeleteItem.addEventListener('click', deleteSelectedDetailItem);
+        els.qrModalClose.addEventListener('click', closeQrLabel);
+        els.qrSinglePrint.addEventListener('click', printSelectedQrLabel);
+        els.qrModal.addEventListener('click', (event) => {
+          if (event.target === els.qrModal) closeQrLabel();
+        });
 
         els.exportBtn.addEventListener('click', exportBackup);
         els.importBtn.addEventListener('click', () => els.importFile.click());
