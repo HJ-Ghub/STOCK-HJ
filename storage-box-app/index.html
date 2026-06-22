@@ -113,6 +113,19 @@
       gap: 10px;
     }
 
+    .title-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .home-btn {
+      min-height: 32px;
+      padding: 5px 10px;
+      border-color: var(--accent);
+      color: #30695f;
+    }
+
     h1 {
       margin: 0;
       font-size: 21px;
@@ -424,7 +437,7 @@
 
     .card-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: 1fr;
       gap: 6px;
       padding: 0 9px 9px;
     }
@@ -559,7 +572,10 @@
     <div class="head-inner">
       <div class="title-row">
         <h1>보관함 사진정리</h1>
-        <span class="status" id="statusText">불러오는 중</span>
+        <div class="title-tools">
+          <button id="homeBtn" class="home-btn" type="button">홈</button>
+          <span class="status" id="statusText">불러오는 중</span>
+        </div>
       </div>
       <div class="search-row">
         <input id="searchInput" type="search" placeholder="물건명, 설명, 태그, 보관박스 검색" autocomplete="off" />
@@ -734,7 +750,7 @@
           <button id="detailMoveBtn" type="button">박스보기</button>
           <button id="detailSaveEditBtn" class="primary hidden" type="button">수정 저장</button>
           <button id="detailCancelEditBtn" class="hidden" type="button">이전</button>
-          <button id="detailSavePhotoBtn" class="primary wide-action" type="button">사진 저장</button>
+          <button id="detailSavePhotoBtn" class="primary wide-action" type="button">사진보관</button>
           <button id="detailRemovePhotoBtn" class="danger wide-action" type="button">사진 삭제</button>
           <button id="detailDeleteItemBtn" class="danger wide-action hidden" type="button">삭제</button>
         </div>
@@ -757,6 +773,7 @@
       const $ = (id) => document.getElementById(id);
       const els = {
         status: $('statusText'),
+        home: $('homeBtn'),
         search: $('searchInput'),
         clearSearch: $('clearSearchBtn'),
         tabs: Array.from(document.querySelectorAll('.tab')),
@@ -1092,8 +1109,6 @@
               <div class="tags">${(item.tags || []).slice(0, 4).map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
             </div>
             <div class="card-actions">
-              <button type="button" data-action="edit" data-id="${esc(item.id)}">수정</button>
-              <button type="button" data-action="photo-store" data-id="${esc(item.id)}">사진보관</button>
               <button type="button" class="danger" data-action="delete-item" data-id="${esc(item.id)}">삭제</button>
             </div>
           </article>
@@ -1413,6 +1428,14 @@
         els.search.value = name;
         currentView = 'items';
         render();
+      }
+
+      function goHome() {
+        if (selectedDetailId) closeDetail();
+        els.search.value = '';
+        currentView = 'items';
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
 
       function safeFileName(value) {
@@ -1818,6 +1841,7 @@
         });
 
         els.search.addEventListener('input', render);
+        els.home.addEventListener('click', goHome);
         els.clearSearch.addEventListener('click', () => {
           els.search.value = '';
           render();
