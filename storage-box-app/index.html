@@ -733,7 +733,7 @@
           <button id="detailEditBtn" type="button">수정</button>
           <button id="detailMoveBtn" type="button">박스보기</button>
           <button id="detailSaveEditBtn" class="primary hidden" type="button">수정 저장</button>
-          <button id="detailCancelEditBtn" class="hidden" type="button">취소</button>
+          <button id="detailCancelEditBtn" class="hidden" type="button">이전</button>
           <button id="detailSavePhotoBtn" class="primary wide-action" type="button">사진 저장</button>
           <button id="detailRemovePhotoBtn" class="danger wide-action" type="button">사진 삭제</button>
         </div>
@@ -1366,7 +1366,7 @@
         item.updatedAt = Date.now();
         scheduleSave();
         render();
-        openDetail(item.id);
+        closeDetail();
       }
 
       function filterByBox(name) {
