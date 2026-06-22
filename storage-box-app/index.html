@@ -460,10 +460,12 @@
     .detail-panel {
       width: min(720px, 100%);
       max-height: calc(100vh - 24px);
+      max-height: calc(100dvh - 24px);
       background: #fff;
       border-radius: var(--radius);
       overflow: hidden;
       display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
       box-shadow: 0 24px 60px rgba(0,0,0,.24);
     }
 
@@ -488,6 +490,9 @@
       gap: 9px;
       padding: 12px;
       overflow: auto;
+      min-height: 0;
+      align-content: start;
+      overscroll-behavior: contain;
     }
 
     .detail-head {
@@ -506,6 +511,11 @@
 
     .detail-edit-form .photo-actions {
       grid-template-columns: 1fr 1fr;
+    }
+
+    .detail.editing .detail-photo-frame img {
+      max-height: 24vh;
+      max-height: 24dvh;
     }
 
     .hidden { display: none !important; }
@@ -527,9 +537,16 @@
       label { font-size: 17px; }
       input, textarea, select { font-size: 18px; min-height: 48px; }
       .detail { padding: 8px; }
-      .detail-panel { max-height: calc(100vh - 16px); }
+      .detail-panel {
+        max-height: calc(100vh - 16px);
+        max-height: calc(100dvh - 16px);
+      }
       .detail-photo-frame { margin: 10px 10px 0; border-radius: 14px; }
       .detail-photo-frame img { max-height: 34vh; }
+      .detail.editing .detail-photo-frame img {
+        max-height: 18vh;
+        max-height: 18dvh;
+      }
       .detail-head h2 { font-size: 20px; }
       .hint { font-size: 15px; }
       .tag { font-size: 13px; }
@@ -1249,6 +1266,7 @@
 
       function setDetailEditMode(isEditing) {
         detailEditing = Boolean(isEditing);
+        els.detailModal.classList.toggle('editing', detailEditing);
         els.detailViewFields.classList.toggle('hidden', detailEditing);
         els.detailEditForm.classList.toggle('hidden', !detailEditing);
         els.detailBoxLabel.classList.toggle('hidden', !detailEditing);
@@ -1288,6 +1306,7 @@
 
       function closeDetail() {
         els.detailModal.classList.remove('open');
+        els.detailModal.classList.remove('editing');
         selectedDetailId = '';
         detailEditPhoto = '';
         detailEditing = false;
