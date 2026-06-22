@@ -1025,7 +1025,7 @@
             </div>
             <div class="card-actions">
               <button type="button" data-action="edit" data-id="${esc(item.id)}">수정</button>
-              <button type="button" data-action="locate" data-box="${esc(boxName(item.boxId))}">위치</button>
+              <button type="button" data-action="move-item" data-id="${esc(item.id)}">위치변경</button>
             </div>
           </article>
         `).join('');
@@ -1647,7 +1647,10 @@
           const action = target.dataset.action;
           if (action === 'detail') openDetail(target.dataset.id);
           if (action === 'edit') startEdit(target.dataset.id);
-          if (action === 'locate') filterByBox(target.dataset.box);
+          if (action === 'move-item') {
+            openDetail(target.dataset.id);
+            setTimeout(() => els.detailBoxSelect.focus(), 0);
+          }
           if (action === 'filter-box') filterByBox(target.dataset.box);
           if (action === 'rename-box') renameBox(target.dataset.boxId);
           if (action === 'save-box-photos') saveBoxPhotos(target.dataset.boxId);
