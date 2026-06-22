@@ -247,6 +247,13 @@
       gap: 8px;
     }
 
+    .detail-move-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+    }
+
     .wide-action { grid-column: 1 / -1; }
 
     .box-row {
@@ -560,6 +567,7 @@
           <div class="photo-actions">
             <button id="cameraBtn" type="button">카메라</button>
             <button id="albumBtn" type="button">사진앨범</button>
+            <button id="removePhotoBtn" class="danger wide-action hidden" type="button">사진 삭제</button>
           </div>
           <label>물건명
             <input id="itemName" required placeholder="예: 검정 니트, 충전기, 겨울장갑" />
@@ -667,10 +675,17 @@
         </div>
         <p id="detailDesc" class="hint"></p>
         <div class="tags" id="detailTags"></div>
+        <label>보관 위치
+          <div class="detail-move-row">
+            <select id="detailBoxSelect"></select>
+            <button id="detailMoveBoxBtn" type="button">위치 이동</button>
+          </div>
+        </label>
         <div class="actions">
           <button id="detailEditBtn" type="button">수정</button>
           <button id="detailMoveBtn" type="button">박스보기</button>
           <button id="detailSavePhotoBtn" class="primary wide-action" type="button">사진 저장</button>
+          <button id="detailRemovePhotoBtn" class="danger wide-action" type="button">사진 삭제</button>
         </div>
       </div>
     </div>
@@ -700,6 +715,7 @@
         photoPreview: $('photoPreview'),
         cameraBtn: $('cameraBtn'),
         albumBtn: $('albumBtn'),
+        removePhoto: $('removePhotoBtn'),
         form: $('itemForm'),
         formTitle: $('formTitle'),
         resetForm: $('resetFormBtn'),
@@ -741,10 +757,13 @@
         detailBox: $('detailBox'),
         detailDesc: $('detailDesc'),
         detailTags: $('detailTags'),
+        detailBoxSelect: $('detailBoxSelect'),
         closeDetail: $('closeDetailBtn'),
         detailEdit: $('detailEditBtn'),
         detailMove: $('detailMoveBtn'),
-        detailSavePhoto: $('detailSavePhotoBtn')
+        detailMoveBox: $('detailMoveBoxBtn'),
+        detailSavePhoto: $('detailSavePhotoBtn'),
+        detailRemovePhoto: $('detailRemovePhotoBtn')
       };
 
       let dbPromise = null;
@@ -1074,6 +1093,7 @@
         currentPhoto = dataUrl || '';
         els.photoPreview.src = currentPhoto || '';
         els.photoBox.classList.toggle('has-photo', Boolean(currentPhoto));
+        els.removePhoto.classList.toggle('hidden', !currentPhoto);
       }
 
       function resetForm() {
@@ -1189,6 +1209,11 @@
         els.detailBox.innerHTML = boxBadgeHtml(boxName(item.boxId), 'detail-badge');
         els.detailDesc.textContent = item.desc || '설명이 없습니다.';
         els.detailTags.innerHTML = (item.tags || []).map(tag => `<span class="tag">${esc(tag)}</span>`).join('');
+        els.detailBoxSelect.innerHTML = app.boxes
+          .map(box => `<option value="${esc(box.id)}" ${box.id === item.boxId ? 'selected' : ''}>${esc(box.name)}</option>`)
+          .join('');
+        els.detailSavePhoto.classList.toggle('hidden', !item.photo);
+        els.detailRemovePhoto.classList.toggle('hidden', !item.photo);
         els.detailModal.classList.add('open');
       }
 
@@ -1228,6 +1253,35 @@
         const item = app.items.find(row => row.id === selectedDetailId);
         if (!item) return;
         downloadPhoto(item.photo, `${safeFileName(item.name)}.jpg`);
+      }
+
+      function removeCurrentPhoto() {
+        if (!currentPhoto) return;
+        if (!confirm('현재 선택한 사진을 삭제할까요?')) return;
+        setPhoto('');
+      }
+
+      function removeSelectedDetailPhoto() {
+        const item = app.items.find(row => row.id === selectedDetailId);
+        if (!item || !item.photo) return;
+        if (!confirm(`${item.name || '이 물건'}의 사진만 삭제할까요?`)) return;
+        item.photo = '';
+        item.updatedAt = Date.now();
+        scheduleSave();
+        openDetail(item.id);
+        render();
+      }
+
+      function moveSelectedDetailItem() {
+        const item = app.items.find(row => row.id === selectedDetailId);
+        if (!item) return;
+        const nextBoxId = els.detailBoxSelect.value || app.boxes[0]?.id || '';
+        if (!nextBoxId || item.boxId === nextBoxId) return;
+        item.boxId = nextBoxId;
+        item.updatedAt = Date.now();
+        scheduleSave();
+        openDetail(item.id);
+        render();
       }
 
       function saveBoxPhotos(boxId) {
@@ -1560,6 +1614,7 @@
         els.photoBox.addEventListener('click', () => els.photoInput.click());
         els.albumBtn.addEventListener('click', () => els.photoInput.click());
         els.cameraBtn.addEventListener('click', () => els.cameraInput.click());
+        els.removePhoto.addEventListener('click', removeCurrentPhoto);
         els.photoInput.addEventListener('change', () => handlePhotoFile(els.photoInput));
         els.cameraInput.addEventListener('change', () => handlePhotoFile(els.cameraInput));
 
@@ -1611,7 +1666,9 @@
           if (item) filterByBox(boxName(item.boxId));
           closeDetail();
         });
+        els.detailMoveBox.addEventListener('click', moveSelectedDetailItem);
         els.detailSavePhoto.addEventListener('click', saveSelectedDetailPhoto);
+        els.detailRemovePhoto.addEventListener('click', removeSelectedDetailPhoto);
 
         els.exportBtn.addEventListener('click', exportBackup);
         els.importBtn.addEventListener('click', () => els.importFile.click());
