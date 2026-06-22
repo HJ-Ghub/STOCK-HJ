@@ -7,6 +7,7 @@
   <title>보관함 사진정리</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     :root {
       --bg: #fff8fb;
@@ -275,6 +276,50 @@
       display: grid;
       grid-template-columns: 1fr auto;
       gap: 8px;
+    }
+
+    .qr-labels-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 10px;
+    }
+
+    .qr-label-card {
+      display: grid;
+      gap: 8px;
+      justify-items: center;
+      padding: 12px;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      background: #fff;
+      page-break-inside: avoid;
+    }
+
+    .qr-label-card h4 {
+      margin: 0;
+      font-size: 16px;
+      text-align: center;
+    }
+
+    .qr-code {
+      width: 160px;
+      height: 160px;
+      display: grid;
+      place-items: center;
+    }
+
+    .qr-code img, .qr-code canvas {
+      width: 160px;
+      height: 160px;
+    }
+
+    .qr-url {
+      width: 100%;
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+      text-align: center;
     }
 
     .content {
@@ -571,6 +616,37 @@
 
     .hidden { display: none !important; }
 
+    @media print {
+      body.qr-print header,
+      body.qr-print .form-panel,
+      body.qr-print .summary,
+      body.qr-print #itemsView,
+      body.qr-print #boxesView,
+      body.qr-print #toolsView > .section-title,
+      body.qr-print #toolsView > .form-grid > :not(#qrLabelsPanel) {
+        display: none !important;
+      }
+
+      body.qr-print {
+        background: #fff;
+      }
+
+      body.qr-print .app {
+        width: 100%;
+        padding: 0;
+      }
+
+      body.qr-print .layout {
+        display: block;
+      }
+
+      body.qr-print #toolsView {
+        display: block !important;
+        box-shadow: none;
+        border: 0;
+      }
+    }
+
     @media (max-width: 860px) {
       .app { padding: 10px; padding-bottom: 78px; }
       .layout { grid-template-columns: 1fr; }
@@ -751,6 +827,14 @@
               </div>
               <p class="hint">휴대폰에 등록된 지문, Face ID 또는 화면잠금으로 앱 화면을 열 수 있습니다.</p>
             </div>
+            <div class="panel" id="qrLabelsPanel" style="box-shadow:none;background:#fbfcfa;">
+              <div class="section-title">
+                <h3>보관박스 QR 라벨</h3>
+                <button id="qrPrintBtn" type="button">라벨인쇄</button>
+              </div>
+              <p class="hint">QR을 찍으면 보관앱이 열리고 해당 보관박스 물건만 검색됩니다.</p>
+              <div class="qr-labels-grid" id="qrLabelsGrid"></div>
+            </div>
             <button id="exportBtn" type="button">백업 내보내기</button>
             <button id="importBtn" type="button">백업 가져오기</button>
             <input id="importFile" class="hidden" type="file" accept="application/json,.json" />
@@ -874,6 +958,8 @@
         itemsGrid: $('itemsGrid'),
         boxesGrid: $('boxesGrid'),
         itemsHint: $('itemsHint'),
+        qrLabelsGrid: $('qrLabelsGrid'),
+        qrPrint: $('qrPrintBtn'),
         exportBtn: $('exportBtn'),
         importBtn: $('importBtn'),
         importFile: $('importFile'),
@@ -936,6 +1022,7 @@
       let saveTimer = null;
       let cloudTimer = null;
       let cloudState = { client: null, user: null, lastSyncAt: '', lastError: '' };
+      let urlBoxFilterApplied = false;
 
       function emptyApp() {
         return {
@@ -1109,6 +1196,14 @@
         return `<span class="box-badge ${extraClass}" style="${boxColorStyle(name)}" title="${safeName}">${safeName}</span>`;
       }
 
+      function boxQrUrl(box) {
+        const url = new URL(location.href);
+        url.hash = '';
+        url.search = '';
+        url.searchParams.set('box', box.id);
+        return url.toString();
+      }
+
       function splitTags(value) {
         return String(value || '')
           .split(',')
@@ -1167,6 +1262,7 @@
         els.tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.view === currentView));
         renderItems();
         renderBoxes();
+        renderQrLabels();
       }
 
       function renderItems() {
@@ -1212,6 +1308,43 @@
             </article>
           `;
         }).join('');
+      }
+
+      function renderQrLabels() {
+        if (!els.qrLabelsGrid) return;
+        if (!app.boxes.length) {
+          els.qrLabelsGrid.innerHTML = '<div class="empty">보관박스가 없습니다.</div>';
+          return;
+        }
+        els.qrLabelsGrid.innerHTML = app.boxes.map(box => {
+          const url = boxQrUrl(box);
+          return `
+            <article class="qr-label-card">
+              <h4>${esc(box.name)}</h4>
+              <div class="qr-code" data-qr-url="${esc(url)}"></div>
+              <div class="qr-url">${esc(url)}</div>
+            </article>
+          `;
+        }).join('');
+        els.qrLabelsGrid.querySelectorAll('.qr-code').forEach((node) => {
+          const url = node.dataset.qrUrl || '';
+          node.innerHTML = '';
+          if (window.QRCode) {
+            new QRCode(node, {
+              text: url,
+              width: 160,
+              height: 160,
+              colorDark: '#111111',
+              colorLight: '#ffffff',
+              correctLevel: QRCode.CorrectLevel.M
+            });
+          } else {
+            const img = document.createElement('img');
+            img.alt = 'QR 코드';
+            img.src = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(url)}`;
+            node.appendChild(img);
+          }
+        });
       }
 
       function placeholderSvg() {
@@ -1506,12 +1639,38 @@
         render();
       }
 
+      function applyUrlBoxFilter() {
+        if (urlBoxFilterApplied) return;
+        const params = new URLSearchParams(location.search);
+        const boxValue = params.get('box') || params.get('boxName') || '';
+        if (!boxValue) {
+          urlBoxFilterApplied = true;
+          return;
+        }
+        const box = app.boxes.find(row => row.id === boxValue || row.name === boxValue);
+        if (!box) return;
+        urlBoxFilterApplied = true;
+        filterByBox(box.name);
+      }
+
       function goHome() {
         if (selectedDetailId) closeDetail();
         els.search.value = '';
         currentView = 'items';
+        urlBoxFilterApplied = true;
+        if (location.search) history.replaceState(null, '', location.pathname);
         render();
         window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function printQrLabels() {
+        currentView = 'tools';
+        render();
+        document.body.classList.add('qr-print');
+        setTimeout(() => {
+          window.print();
+          setTimeout(() => document.body.classList.remove('qr-print'), 500);
+        }, 100);
       }
 
       function safeFileName(value) {
@@ -1975,6 +2134,7 @@
             await writeState();
             resetForm();
             render();
+            applyUrlBoxFilter();
             await cloudSaveNow();
             cloudState.lastSyncAt = new Date().toLocaleString('ko-KR');
             updateCloudStatus(changed ? '클라우드 병합 완료' : '최신 상태입니다', 'ok');
@@ -2056,6 +2216,7 @@
 
         els.search.addEventListener('input', render);
         els.home.addEventListener('click', goHome);
+        els.qrPrint.addEventListener('click', printQrLabels);
         els.clearSearch.addEventListener('click', () => {
           els.search.value = '';
           render();
@@ -2146,6 +2307,7 @@
           await restoreCloudSession();
           await autoCloudLoginIfSaved();
           render();
+          applyUrlBoxFilter();
           if (cloudState.user) cloudSyncNow({ silent: true });
           if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
             navigator.serviceWorker.register('./sw.js').catch(console.warn);
