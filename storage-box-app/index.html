@@ -499,6 +499,15 @@
 
     .detail-head h2 { font-size: 18px; }
 
+    .detail-edit-form {
+      display: grid;
+      gap: 9px;
+    }
+
+    .detail-edit-form .photo-actions {
+      grid-template-columns: 1fr 1fr;
+    }
+
     .hidden { display: none !important; }
 
     @media (max-width: 860px) {
@@ -673,9 +682,31 @@
           </div>
           <button id="closeDetailBtn" type="button">닫기</button>
         </div>
-        <p id="detailDesc" class="hint"></p>
-        <div class="tags" id="detailTags"></div>
-        <label>보관 위치
+        <div id="detailViewFields">
+          <p id="detailDesc" class="hint"></p>
+          <div class="tags" id="detailTags"></div>
+        </div>
+        <form class="detail-edit-form hidden" id="detailEditForm">
+          <label>사진
+            <div class="photo-actions">
+              <button id="detailCameraBtn" type="button">카메라</button>
+              <button id="detailAlbumBtn" type="button">사진앨범</button>
+              <button id="detailClearPhotoBtn" class="danger wide-action" type="button">사진 삭제</button>
+            </div>
+          </label>
+          <input id="detailPhotoInput" class="hidden" type="file" accept="image/*" />
+          <input id="detailCameraInput" class="hidden" type="file" accept="image/*" capture="environment" />
+          <label>물건명
+            <input id="detailItemName" required />
+          </label>
+          <label>설명
+            <textarea id="detailItemDesc"></textarea>
+          </label>
+          <label>태그
+            <input id="detailItemTags" />
+          </label>
+        </form>
+        <label id="detailBoxLabel">보관 위치
           <div class="detail-move-row">
             <select id="detailBoxSelect"></select>
             <button id="detailMoveBoxBtn" type="button">위치 이동</button>
@@ -684,6 +715,8 @@
         <div class="actions">
           <button id="detailEditBtn" type="button">수정</button>
           <button id="detailMoveBtn" type="button">박스보기</button>
+          <button id="detailSaveEditBtn" class="primary hidden" type="button">수정 저장</button>
+          <button id="detailCancelEditBtn" class="hidden" type="button">취소</button>
           <button id="detailSavePhotoBtn" class="primary wide-action" type="button">사진 저장</button>
           <button id="detailRemovePhotoBtn" class="danger wide-action" type="button">사진 삭제</button>
         </div>
@@ -755,13 +788,26 @@
         detailPhoto: $('detailPhoto'),
         detailName: $('detailName'),
         detailBox: $('detailBox'),
+        detailViewFields: $('detailViewFields'),
         detailDesc: $('detailDesc'),
         detailTags: $('detailTags'),
+        detailEditForm: $('detailEditForm'),
+        detailPhotoInput: $('detailPhotoInput'),
+        detailCameraInput: $('detailCameraInput'),
+        detailCameraBtn: $('detailCameraBtn'),
+        detailAlbumBtn: $('detailAlbumBtn'),
+        detailClearPhoto: $('detailClearPhotoBtn'),
+        detailItemName: $('detailItemName'),
+        detailItemDesc: $('detailItemDesc'),
+        detailItemTags: $('detailItemTags'),
+        detailBoxLabel: $('detailBoxLabel'),
         detailBoxSelect: $('detailBoxSelect'),
         closeDetail: $('closeDetailBtn'),
         detailEdit: $('detailEditBtn'),
         detailMove: $('detailMoveBtn'),
         detailMoveBox: $('detailMoveBoxBtn'),
+        detailSaveEdit: $('detailSaveEditBtn'),
+        detailCancelEdit: $('detailCancelEditBtn'),
         detailSavePhoto: $('detailSavePhotoBtn'),
         detailRemovePhoto: $('detailRemovePhotoBtn')
       };
@@ -769,6 +815,8 @@
       let dbPromise = null;
       let app = emptyApp();
       let currentPhoto = '';
+      let detailEditPhoto = '';
+      let detailEditing = false;
       let editingId = '';
       let selectedDetailId = '';
       let currentView = 'items';
@@ -1025,7 +1073,6 @@
             </div>
             <div class="card-actions">
               <button type="button" data-action="edit" data-id="${esc(item.id)}">수정</button>
-              <button type="button" data-action="move-item" data-id="${esc(item.id)}">위치변경</button>
             </div>
           </article>
         `).join('');
@@ -1200,6 +1247,28 @@
         render();
       }
 
+      function setDetailEditMode(isEditing) {
+        detailEditing = Boolean(isEditing);
+        els.detailViewFields.classList.toggle('hidden', detailEditing);
+        els.detailEditForm.classList.toggle('hidden', !detailEditing);
+        els.detailBoxLabel.classList.toggle('hidden', !detailEditing);
+        els.detailMoveBox.classList.add('hidden');
+        els.detailEdit.classList.toggle('hidden', detailEditing);
+        els.detailMove.classList.toggle('hidden', detailEditing);
+        els.detailSavePhoto.classList.toggle('hidden', detailEditing || !detailEditPhoto);
+        els.detailRemovePhoto.classList.toggle('hidden', detailEditing || !detailEditPhoto);
+        els.detailSaveEdit.classList.toggle('hidden', !detailEditing);
+        els.detailCancelEdit.classList.toggle('hidden', !detailEditing);
+      }
+
+      function fillDetailEditForm(item) {
+        detailEditPhoto = item.photo || '';
+        els.detailItemName.value = item.name || '';
+        els.detailItemDesc.value = item.desc || '';
+        els.detailItemTags.value = (item.tags || []).join(', ');
+        els.detailClearPhoto.classList.toggle('hidden', !detailEditPhoto);
+      }
+
       function openDetail(id) {
         const item = app.items.find(row => row.id === id);
         if (!item) return;
@@ -1212,14 +1281,73 @@
         els.detailBoxSelect.innerHTML = app.boxes
           .map(box => `<option value="${esc(box.id)}" ${box.id === item.boxId ? 'selected' : ''}>${esc(box.name)}</option>`)
           .join('');
-        els.detailSavePhoto.classList.toggle('hidden', !item.photo);
-        els.detailRemovePhoto.classList.toggle('hidden', !item.photo);
+        fillDetailEditForm(item);
+        setDetailEditMode(false);
         els.detailModal.classList.add('open');
       }
 
       function closeDetail() {
         els.detailModal.classList.remove('open');
         selectedDetailId = '';
+        detailEditPhoto = '';
+        detailEditing = false;
+      }
+
+      function startDetailEdit() {
+        const item = app.items.find(row => row.id === selectedDetailId);
+        if (!item) return;
+        fillDetailEditForm(item);
+        setDetailEditMode(true);
+        setTimeout(() => els.detailItemName.focus(), 0);
+      }
+
+      function cancelDetailEdit() {
+        const item = app.items.find(row => row.id === selectedDetailId);
+        if (!item) return closeDetail();
+        openDetail(item.id);
+      }
+
+      async function handleDetailPhotoFile(input) {
+        const file = input.files && input.files[0];
+        if (!file) return;
+        try {
+          detailEditPhoto = await compressImage(file);
+          els.detailPhoto.src = detailEditPhoto || placeholderSvg();
+          els.detailClearPhoto.classList.toggle('hidden', !detailEditPhoto);
+        } catch (err) {
+          console.error(err);
+          alert('사진을 불러오지 못했습니다.');
+        } finally {
+          input.value = '';
+        }
+      }
+
+      function clearDetailEditPhoto() {
+        if (!detailEditPhoto) return;
+        if (!confirm('사진을 삭제할까요?')) return;
+        detailEditPhoto = '';
+        els.detailPhoto.src = placeholderSvg();
+        els.detailClearPhoto.classList.add('hidden');
+      }
+
+      function saveDetailEdit() {
+        const item = app.items.find(row => row.id === selectedDetailId);
+        if (!item) return;
+        const name = els.detailItemName.value.trim();
+        if (!name) {
+          alert('물건명을 입력해 주세요.');
+          els.detailItemName.focus();
+          return;
+        }
+        item.name = name;
+        item.desc = els.detailItemDesc.value.trim();
+        item.tags = splitTags(els.detailItemTags.value);
+        item.boxId = els.detailBoxSelect.value || app.boxes[0]?.id || item.boxId;
+        item.photo = detailEditPhoto || '';
+        item.updatedAt = Date.now();
+        scheduleSave();
+        render();
+        openDetail(item.id);
       }
 
       function filterByBox(name) {
@@ -1646,10 +1774,9 @@
           if (!target) return;
           const action = target.dataset.action;
           if (action === 'detail') openDetail(target.dataset.id);
-          if (action === 'edit') startEdit(target.dataset.id);
-          if (action === 'move-item') {
+          if (action === 'edit') {
             openDetail(target.dataset.id);
-            setTimeout(() => els.detailBoxSelect.focus(), 0);
+            startDetailEdit();
           }
           if (action === 'filter-box') filterByBox(target.dataset.box);
           if (action === 'rename-box') renameBox(target.dataset.boxId);
@@ -1660,16 +1787,24 @@
         els.detailModal.addEventListener('click', (event) => {
           if (event.target === els.detailModal) closeDetail();
         });
-        els.detailEdit.addEventListener('click', () => {
-          if (selectedDetailId) startEdit(selectedDetailId);
-          closeDetail();
-        });
+        els.detailEdit.addEventListener('click', startDetailEdit);
         els.detailMove.addEventListener('click', () => {
           const item = app.items.find(row => row.id === selectedDetailId);
           if (item) filterByBox(boxName(item.boxId));
           closeDetail();
         });
         els.detailMoveBox.addEventListener('click', moveSelectedDetailItem);
+        els.detailSaveEdit.addEventListener('click', saveDetailEdit);
+        els.detailCancelEdit.addEventListener('click', cancelDetailEdit);
+        els.detailEditForm.addEventListener('submit', (event) => {
+          event.preventDefault();
+          saveDetailEdit();
+        });
+        els.detailCameraBtn.addEventListener('click', () => els.detailCameraInput.click());
+        els.detailAlbumBtn.addEventListener('click', () => els.detailPhotoInput.click());
+        els.detailClearPhoto.addEventListener('click', clearDetailEditPhoto);
+        els.detailPhotoInput.addEventListener('change', () => handleDetailPhotoFile(els.detailPhotoInput));
+        els.detailCameraInput.addEventListener('change', () => handleDetailPhotoFile(els.detailCameraInput));
         els.detailSavePhoto.addEventListener('click', saveSelectedDetailPhoto);
         els.detailRemovePhoto.addEventListener('click', removeSelectedDetailPhoto);
 
