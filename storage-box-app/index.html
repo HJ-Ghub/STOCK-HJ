@@ -2423,8 +2423,23 @@
         }
       }
 
-      function describeAiError(err) {
-        const message = err?.message || err?.error || String(err);
+      async function describeAiError(err) {
+        let message = err?.message || err?.error || String(err);
+        const response = err?.context || err?.response;
+        if (response && typeof response.text === 'function') {
+          try {
+            const text = await response.clone().text();
+            if (text) {
+              try {
+                const parsed = JSON.parse(text);
+                message = parsed?.error || parsed?.message || text;
+              } catch {
+                message = text;
+              }
+            }
+            if (response.status) message = `${response.status}: ${message}`;
+          } catch {}
+        }
         if (/Missing OPENAI_API_KEY|OPENAI_API_KEY/i.test(message)) {
           return 'Supabase Edge Function Secrets에 OPENAI_API_KEY가 아직 설정되지 않았습니다.';
         }
@@ -2573,7 +2588,7 @@
           openAiModal(target, suggestion);
         } catch (err) {
           console.error(err);
-          const message = describeAiError(err);
+          const message = await describeAiError(err);
           if (auto && /OPENAI_API_KEY|Edge Function|배포|접근/.test(message)) aiAutoDisabled = true;
           if (!auto || !/로그인|설정/.test(message)) alert('AI 확인 실패: ' + message);
         } finally {
