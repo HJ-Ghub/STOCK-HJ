@@ -2574,14 +2574,21 @@
           const aiClient = await prepareAiClient(auto);
           if (!aiClient) return;
           const imageDataUrl = await aiImagePayload(source);
-          const { data, error } = await aiClient.client.functions.invoke(AI_FUNCTION_NAME, {
-            headers: { Authorization: `Bearer ${aiClient.accessToken}` },
-            body: {
+          const settings = loadCloudSettings();
+          const response = await fetch(`${settings.url}/functions/v1/${AI_FUNCTION_NAME}`, {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${aiClient.accessToken}`,
+              apikey: settings.anonKey,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
               imageDataUrl,
               boxes: app.boxes.map(box => ({ id: box.id, name: box.name }))
-            }
+            })
           });
-          if (error) throw error;
+          const data = await response.json().catch(() => ({}));
+          if (!response.ok) throw new Error(data?.error || data?.message || `${response.status}: Edge Function 요청 실패`);
           const suggestion = data?.suggestion || data;
           if (!suggestion || typeof suggestion !== 'object') throw new Error('AI 분석 결과가 비어 있습니다.');
           aiAutoDisabled = false;
