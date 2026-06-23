@@ -263,6 +263,12 @@
       gap: 8px;
     }
 
+    .ai-btn {
+      background: #eef8ff;
+      border-color: #b9d8ec;
+      color: #285e72;
+    }
+
     .detail-move-row {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -643,6 +649,36 @@
       text-align: center;
     }
 
+    .ai-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 80;
+      display: none;
+      place-items: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, .42);
+    }
+
+    .ai-modal.open { display: grid; }
+
+    .ai-modal-panel {
+      width: min(520px, 100%);
+      max-height: calc(100vh - 32px);
+      max-height: calc(100dvh - 32px);
+      display: grid;
+      gap: 10px;
+      padding: 16px;
+      overflow: auto;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .ai-modal-panel .section-title {
+      margin-bottom: 0;
+    }
+
     .hidden { display: none !important; }
 
     @media print {
@@ -758,6 +794,7 @@
           <div class="photo-actions">
             <button id="cameraBtn" type="button">카메라</button>
             <button id="albumBtn" type="button">사진앨범</button>
+            <button id="aiAnalyzeBtn" class="ai-btn wide-action hidden" type="button">AI 물건 확인</button>
             <button id="removePhotoBtn" class="danger wide-action hidden" type="button">사진 삭제</button>
           </div>
           <label>물건명
@@ -897,6 +934,7 @@
             <div class="photo-actions">
               <button id="detailCameraBtn" type="button">카메라</button>
               <button id="detailAlbumBtn" type="button">사진앨범</button>
+              <button id="detailAiAnalyzeBtn" class="ai-btn wide-action hidden" type="button">AI 물건 확인</button>
               <button id="detailClearPhotoBtn" class="danger wide-action" type="button">사진 삭제</button>
             </div>
           </label>
@@ -951,6 +989,33 @@
     </div>
   </div>
 
+  <div class="ai-modal" id="aiModal" role="dialog" aria-modal="true">
+    <div class="ai-modal-panel">
+      <div class="section-title">
+        <h2>AI 확인 결과</h2>
+        <span class="hint" id="aiConfidence">확인 필요</span>
+      </div>
+      <label>물건명
+        <input id="aiItemName" />
+      </label>
+      <label>설명
+        <textarea id="aiItemDesc"></textarea>
+      </label>
+      <label>태그
+        <input id="aiItemTags" />
+      </label>
+      <label>보관박스
+        <select id="aiBoxSelect"></select>
+      </label>
+      <p class="hint" id="aiNotice">확인 후 적용하세요.</p>
+      <div class="actions">
+        <button id="aiApplyBtn" class="primary" type="button">적용</button>
+        <button id="aiRetryBtn" type="button">다시 확인</button>
+        <button id="aiCloseBtn" class="wide-action" type="button">닫기</button>
+      </div>
+    </div>
+  </div>
+
   <script>
     (() => {
       'use strict';
@@ -962,6 +1027,8 @@
       const CLOUD_SETTINGS_KEY = 'storageBoxPhotoApp.cloudSettings.v1';
       const CLOUD_TABLE = 'storage_box_app_state';
       const APP_LOCK_KEY = 'storageBoxPhotoApp.appLock.v1';
+      const AI_FUNCTION_NAME = 'storage-box-ai';
+      const AI_MAX_DATA_URL_CHARS = 3500000;
       const DEFAULT_BOX = '미지정';
 
       const $ = (id) => document.getElementById(id);
@@ -977,6 +1044,7 @@
         photoPreview: $('photoPreview'),
         cameraBtn: $('cameraBtn'),
         albumBtn: $('albumBtn'),
+        aiAnalyze: $('aiAnalyzeBtn'),
         removePhoto: $('removePhotoBtn'),
         form: $('itemForm'),
         formTitle: $('formTitle'),
@@ -1028,6 +1096,16 @@
         qrModalUrl: $('qrModalUrl'),
         qrSinglePrint: $('qrSinglePrintBtn'),
         qrModalClose: $('qrModalCloseBtn'),
+        aiModal: $('aiModal'),
+        aiConfidence: $('aiConfidence'),
+        aiName: $('aiItemName'),
+        aiDesc: $('aiItemDesc'),
+        aiTags: $('aiItemTags'),
+        aiBoxSelect: $('aiBoxSelect'),
+        aiNotice: $('aiNotice'),
+        aiApply: $('aiApplyBtn'),
+        aiRetry: $('aiRetryBtn'),
+        aiClose: $('aiCloseBtn'),
         detailModal: $('detailModal'),
         detailPhoto: $('detailPhoto'),
         detailName: $('detailName'),
@@ -1040,6 +1118,7 @@
         detailCameraInput: $('detailCameraInput'),
         detailCameraBtn: $('detailCameraBtn'),
         detailAlbumBtn: $('detailAlbumBtn'),
+        detailAiAnalyze: $('detailAiAnalyzeBtn'),
         detailClearPhoto: $('detailClearPhotoBtn'),
         detailItemName: $('detailItemName'),
         detailItemDesc: $('detailItemDesc'),
@@ -1071,6 +1150,8 @@
       let cloudState = { client: null, user: null, lastSyncAt: '', lastError: '' };
       let urlBoxFilterApplied = false;
       let selectedQrBoxId = '';
+      let aiState = { target: 'main', busy: false, suggestion: null };
+      let aiAutoDisabled = false;
 
       function emptyApp() {
         return {
@@ -1581,6 +1662,7 @@
         els.photoPreview.src = currentPhoto || '';
         els.photoBox.classList.toggle('has-photo', Boolean(currentPhoto));
         els.removePhoto.classList.toggle('hidden', !currentPhoto);
+        els.aiAnalyze.classList.toggle('hidden', !currentPhoto);
       }
 
       function resetForm() {
@@ -1716,6 +1798,7 @@
         els.detailItemDesc.value = item.desc || '';
         els.detailItemTags.value = (item.tags || []).join(', ');
         els.detailClearPhoto.classList.toggle('hidden', !detailEditPhoto);
+        els.detailAiAnalyze.classList.toggle('hidden', !detailEditPhoto);
       }
 
       function openDetail(id) {
@@ -1781,6 +1864,8 @@
           detailEditPhoto = await compressImage(file);
           els.detailPhoto.src = detailEditPhoto || placeholderSvg();
           els.detailClearPhoto.classList.toggle('hidden', !detailEditPhoto);
+          els.detailAiAnalyze.classList.toggle('hidden', !detailEditPhoto);
+          analyzePhoto('detail', { auto: true });
         } catch (err) {
           console.error(err);
           alert('사진을 불러오지 못했습니다.');
@@ -1795,6 +1880,7 @@
         detailEditPhoto = '';
         els.detailPhoto.src = placeholderSvg();
         els.detailClearPhoto.classList.add('hidden');
+        els.detailAiAnalyze.classList.add('hidden');
       }
 
       function saveDetailEdit() {
@@ -2337,6 +2423,165 @@
         }
       }
 
+      function describeAiError(err) {
+        const message = err?.message || err?.error || String(err);
+        if (/Missing OPENAI_API_KEY|OPENAI_API_KEY/i.test(message)) {
+          return 'Supabase Edge Function Secrets에 OPENAI_API_KEY가 아직 설정되지 않았습니다.';
+        }
+        if (/FunctionsFetchError|Failed to fetch|not found|404|storage-box-ai/i.test(message)) {
+          return 'Supabase Edge Function(storage-box-ai)이 아직 배포되지 않았거나 접근할 수 없습니다.';
+        }
+        if (/JWT|401|403|Unauthorized|로그인/i.test(message)) {
+          return '클라우드 로그인 후 다시 시도해 주세요.';
+        }
+        if (/image|사진|too large|large/i.test(message)) {
+          return '사진이 너무 크거나 분석할 수 없는 형식입니다. 다시 촬영하거나 다른 사진을 선택해 주세요.';
+        }
+        return message;
+      }
+
+      function canAutoAnalyze() {
+        const settings = loadCloudSettings();
+        return Boolean(!aiAutoDisabled && settings.url && settings.anonKey && cloudState.user);
+      }
+
+      async function prepareAiClient(auto = false) {
+        const settings = loadCloudSettings();
+        if (!settings.url || !settings.anonKey) {
+          if (auto) return null;
+          throw new Error('Supabase 클라우드 설정을 저장하고 로그인해 주세요.');
+        }
+        const client = initCloudClient();
+        if (!client) throw new Error('Supabase 클라이언트를 만들지 못했습니다.');
+        if (!cloudState.user) {
+          const { data, error } = await client.auth.getSession();
+          if (error) throw error;
+          cloudState.user = data?.session?.user || null;
+        }
+        if (!cloudState.user) {
+          if (auto) return null;
+          throw new Error('클라우드 로그인 후 AI 확인을 사용할 수 있습니다.');
+        }
+        return client;
+      }
+
+      function loadDataUrlImage(dataUrl) {
+        return new Promise((resolve, reject) => {
+          const img = new Image();
+          img.onload = () => resolve(img);
+          img.onerror = () => reject(new Error('사진 표시 실패'));
+          img.src = dataUrl;
+        });
+      }
+
+      async function resizeDataUrl(dataUrl, maxSide = 960, quality = .72) {
+        const img = await loadDataUrlImage(dataUrl);
+        const width = img.naturalWidth || img.width || 1;
+        const height = img.naturalHeight || img.height || 1;
+        const scale = Math.min(1, maxSide / Math.max(width, height));
+        const canvas = document.createElement('canvas');
+        canvas.width = Math.max(1, Math.round(width * scale));
+        canvas.height = Math.max(1, Math.round(height * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        return canvas.toDataURL('image/jpeg', quality);
+      }
+
+      async function aiImagePayload(dataUrl) {
+        let payload = await resizeDataUrl(dataUrl, 960, .72);
+        if (payload.length > AI_MAX_DATA_URL_CHARS) payload = await resizeDataUrl(dataUrl, 720, .64);
+        if (payload.length > AI_MAX_DATA_URL_CHARS) throw new Error('사진이 너무 큽니다.');
+        return payload;
+      }
+
+      function findBoxByName(name) {
+        const normalized = String(name || '').trim().toLowerCase();
+        return app.boxes.find(box => box.name.toLowerCase() === normalized)
+          || app.boxes.find(box => normalized && box.name.toLowerCase().includes(normalized))
+          || app.boxes.find(box => box.name === DEFAULT_BOX)
+          || app.boxes[0];
+      }
+
+      function openAiModal(target, suggestion) {
+        aiState = { target, busy: false, suggestion };
+        const selectedBox = findBoxByName(suggestion.boxName);
+        const currentBoxId = target === 'detail' ? els.detailBoxSelect.value : els.boxSelect.value;
+        const boxId = selectedBox?.id || currentBoxId || app.boxes[0]?.id || '';
+        els.aiName.value = suggestion.name || '';
+        els.aiDesc.value = suggestion.description || '';
+        els.aiTags.value = Array.isArray(suggestion.tags) ? suggestion.tags.join(', ') : '';
+        els.aiBoxSelect.innerHTML = app.boxes
+          .map(box => `<option value="${esc(box.id)}" ${box.id === boxId ? 'selected' : ''}>${esc(box.name)}</option>`)
+          .join('');
+        const confidence = Math.round(Number(suggestion.confidence || 0) * 100);
+        els.aiConfidence.textContent = confidence ? `정확도 ${confidence}%` : '확인 필요';
+        els.aiNotice.textContent = suggestion.needsUserCheck ? '확인이 더 필요합니다.' : '확인 후 적용하세요.';
+        els.aiModal.classList.add('open');
+      }
+
+      function closeAiModal() {
+        els.aiModal.classList.remove('open');
+        aiState.suggestion = null;
+      }
+
+      function applyAiSuggestion() {
+        const name = els.aiName.value.trim();
+        const desc = els.aiDesc.value.trim();
+        const tags = els.aiTags.value.trim();
+        const boxId = els.aiBoxSelect.value || app.boxes[0]?.id || '';
+        if (aiState.target === 'detail') {
+          if (!detailEditing) startDetailEdit();
+          els.detailItemName.value = name;
+          els.detailItemDesc.value = desc;
+          els.detailItemTags.value = tags;
+          if (boxId) els.detailBoxSelect.value = boxId;
+        } else {
+          els.itemName.value = name;
+          els.itemDesc.value = desc;
+          els.itemTags.value = tags;
+          if (boxId) els.boxSelect.value = boxId;
+        }
+        closeAiModal();
+      }
+
+      async function analyzePhoto(target = 'main', options = {}) {
+        const auto = Boolean(options.auto);
+        const source = target === 'detail' ? detailEditPhoto : currentPhoto;
+        if (!source) {
+          if (!auto) alert('먼저 사진을 찍거나 선택해 주세요.');
+          return;
+        }
+        if (aiState.busy) return;
+        if (auto && !canAutoAnalyze()) return;
+        aiState.busy = true;
+        const prevStatus = els.status.textContent;
+        try {
+          els.status.textContent = 'AI 확인 중';
+          const client = await prepareAiClient(auto);
+          if (!client) return;
+          const imageDataUrl = await aiImagePayload(source);
+          const { data, error } = await client.functions.invoke(AI_FUNCTION_NAME, {
+            body: {
+              imageDataUrl,
+              boxes: app.boxes.map(box => ({ id: box.id, name: box.name }))
+            }
+          });
+          if (error) throw error;
+          const suggestion = data?.suggestion || data;
+          if (!suggestion || typeof suggestion !== 'object') throw new Error('AI 분석 결과가 비어 있습니다.');
+          aiAutoDisabled = false;
+          openAiModal(target, suggestion);
+        } catch (err) {
+          console.error(err);
+          const message = describeAiError(err);
+          if (auto && /OPENAI_API_KEY|Edge Function|배포|접근/.test(message)) aiAutoDisabled = true;
+          if (!auto || !/로그인|설정/.test(message)) alert('AI 확인 실패: ' + message);
+        } finally {
+          aiState.busy = false;
+          els.status.textContent = prevStatus;
+        }
+      }
+
       async function importBackup(file) {
         if (!file) return;
         const text = await file.text();
@@ -2376,6 +2621,7 @@
             els.status.textContent = '사진 처리 중';
             setPhoto(await compressImage(file));
             updateStatus();
+            analyzePhoto('main', { auto: true });
           } catch (err) {
             console.error(err);
             alert('사진을 불러오지 못했습니다.');
@@ -2387,6 +2633,7 @@
         els.photoBox.addEventListener('click', () => els.photoInput.click());
         els.albumBtn.addEventListener('click', () => els.photoInput.click());
         els.cameraBtn.addEventListener('click', () => els.cameraInput.click());
+        els.aiAnalyze.addEventListener('click', () => analyzePhoto('main'));
         els.removePhoto.addEventListener('click', removeCurrentPhoto);
         els.photoInput.addEventListener('change', () => handlePhotoFile(els.photoInput));
         els.cameraInput.addEventListener('change', () => handlePhotoFile(els.cameraInput));
@@ -2458,6 +2705,7 @@
         });
         els.detailCameraBtn.addEventListener('click', () => els.detailCameraInput.click());
         els.detailAlbumBtn.addEventListener('click', () => els.detailPhotoInput.click());
+        els.detailAiAnalyze.addEventListener('click', () => analyzePhoto('detail'));
         els.detailClearPhoto.addEventListener('click', clearDetailEditPhoto);
         els.detailPhotoInput.addEventListener('change', () => handleDetailPhotoFile(els.detailPhotoInput));
         els.detailCameraInput.addEventListener('change', () => handleDetailPhotoFile(els.detailCameraInput));
@@ -2468,6 +2716,12 @@
         els.qrSinglePrint.addEventListener('click', printSelectedQrLabel);
         els.qrModal.addEventListener('click', (event) => {
           if (event.target === els.qrModal) closeQrLabel();
+        });
+        els.aiApply.addEventListener('click', applyAiSuggestion);
+        els.aiRetry.addEventListener('click', () => analyzePhoto(aiState.target || 'main'));
+        els.aiClose.addEventListener('click', closeAiModal);
+        els.aiModal.addEventListener('click', (event) => {
+          if (event.target === els.aiModal) closeAiModal();
         });
 
         els.exportBtn.addEventListener('click', exportBackup);
