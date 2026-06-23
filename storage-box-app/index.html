@@ -2453,16 +2453,15 @@
         }
         const client = initCloudClient();
         if (!client) throw new Error('Supabase 클라이언트를 만들지 못했습니다.');
-        if (!cloudState.user) {
-          const { data, error } = await client.auth.getSession();
-          if (error) throw error;
-          cloudState.user = data?.session?.user || null;
-        }
-        if (!cloudState.user) {
+        const { data, error } = await client.auth.getSession();
+        if (error) throw error;
+        const session = data?.session || null;
+        cloudState.user = session?.user || cloudState.user || null;
+        if (!cloudState.user || !session?.access_token) {
           if (auto) return null;
           throw new Error('클라우드 로그인 후 AI 확인을 사용할 수 있습니다.');
         }
-        return client;
+        return { client, accessToken: session.access_token };
       }
 
       function loadDataUrlImage(dataUrl) {
@@ -2557,10 +2556,11 @@
         const prevStatus = els.status.textContent;
         try {
           els.status.textContent = 'AI 확인 중';
-          const client = await prepareAiClient(auto);
-          if (!client) return;
+          const aiClient = await prepareAiClient(auto);
+          if (!aiClient) return;
           const imageDataUrl = await aiImagePayload(source);
-          const { data, error } = await client.functions.invoke(AI_FUNCTION_NAME, {
+          const { data, error } = await aiClient.client.functions.invoke(AI_FUNCTION_NAME, {
+            headers: { Authorization: `Bearer ${aiClient.accessToken}` },
             body: {
               imageDataUrl,
               boxes: app.boxes.map(box => ({ id: box.id, name: box.name }))
