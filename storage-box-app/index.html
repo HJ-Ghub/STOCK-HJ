@@ -1151,7 +1151,6 @@
       let urlBoxFilterApplied = false;
       let selectedQrBoxId = '';
       let aiState = { target: 'main', busy: false, suggestion: null };
-      let aiAutoDisabled = false;
 
       function emptyApp() {
         return {
@@ -1865,7 +1864,6 @@
           els.detailPhoto.src = detailEditPhoto || placeholderSvg();
           els.detailClearPhoto.classList.toggle('hidden', !detailEditPhoto);
           els.detailAiAnalyze.classList.toggle('hidden', !detailEditPhoto);
-          analyzePhoto('detail', { auto: true });
         } catch (err) {
           console.error(err);
           alert('사진을 불러오지 못했습니다.');
@@ -2455,11 +2453,6 @@
         return message;
       }
 
-      function canAutoAnalyze() {
-        const settings = loadCloudSettings();
-        return Boolean(!aiAutoDisabled && settings.url && settings.anonKey && cloudState.user);
-      }
-
       async function prepareAiClient(auto = false) {
         const settings = loadCloudSettings();
         if (!settings.url || !settings.anonKey) {
@@ -2566,7 +2559,6 @@
           return;
         }
         if (aiState.busy) return;
-        if (auto && !canAutoAnalyze()) return;
         aiState.busy = true;
         const prevStatus = els.status.textContent;
         try {
@@ -2591,12 +2583,10 @@
           if (!response.ok) throw new Error(data?.error || data?.message || `${response.status}: Edge Function 요청 실패`);
           const suggestion = data?.suggestion || data;
           if (!suggestion || typeof suggestion !== 'object') throw new Error('AI 분석 결과가 비어 있습니다.');
-          aiAutoDisabled = false;
           openAiModal(target, suggestion);
         } catch (err) {
           console.error(err);
           const message = await describeAiError(err);
-          if (auto && /OPENAI_API_KEY|Edge Function|배포|접근/.test(message)) aiAutoDisabled = true;
           if (!auto || !/로그인|설정/.test(message)) alert('AI 확인 실패: ' + message);
         } finally {
           aiState.busy = false;
@@ -2643,7 +2633,6 @@
             els.status.textContent = '사진 처리 중';
             setPhoto(await compressImage(file));
             updateStatus();
-            analyzePhoto('main', { auto: true });
           } catch (err) {
             console.error(err);
             alert('사진을 불러오지 못했습니다.');
