@@ -37,7 +37,7 @@
       font: inherit;
     }
 
-    button {
+    button, .picker-btn {
       border: 1px solid var(--line);
       background: #fff;
       color: var(--text);
@@ -46,15 +46,17 @@
       padding: 8px 10px;
       font-weight: 800;
       cursor: pointer;
+      text-align: center;
+      user-select: none;
     }
 
-    button.primary {
+    button.primary, .picker-btn.primary {
       background: var(--accent);
       border-color: var(--accent);
       color: #fff;
     }
 
-    button.danger {
+    button.danger, .picker-btn.danger {
       background: #fff4f0;
       border-color: #efb6a7;
       color: #9d321d;
@@ -206,7 +208,7 @@
       gap: 9px;
     }
 
-    label {
+    label, .field-title {
       display: grid;
       gap: 5px;
       color: #3d473f;
@@ -261,6 +263,16 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
+    }
+
+    .file-picker-input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      opacity: 0;
+      overflow: hidden;
+      clip-path: inset(50%);
     }
 
     .ai-btn {
@@ -789,11 +801,11 @@
               <span>이 영역을 누르면 사진앨범이 열립니다.</span>
             </div>
           </div>
-          <input id="photoInput" class="hidden" type="file" accept="image/*" />
-          <input id="cameraInput" class="hidden" type="file" accept="image/*" capture="environment" />
+          <input id="photoInput" class="file-picker-input" type="file" accept="image/jpeg,image/png,image/webp" />
+          <input id="cameraInput" class="file-picker-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
           <div class="photo-actions">
-            <button id="cameraBtn" type="button">카메라</button>
-            <button id="albumBtn" type="button">사진앨범</button>
+            <label id="cameraBtn" class="picker-btn" for="cameraInput">카메라</label>
+            <label id="albumBtn" class="picker-btn" for="photoInput">사진앨범</label>
             <button id="aiAnalyzeBtn" class="ai-btn wide-action hidden" type="button">AI 물건 확인</button>
             <button id="removePhotoBtn" class="danger wide-action hidden" type="button">사진 삭제</button>
           </div>
@@ -930,16 +942,17 @@
           <div class="tags" id="detailTags"></div>
         </div>
         <form class="detail-edit-form hidden" id="detailEditForm">
-          <label>사진
+          <div>
+            <div class="field-title">사진</div>
             <div class="photo-actions">
-              <button id="detailCameraBtn" type="button">카메라</button>
-              <button id="detailAlbumBtn" type="button">사진앨범</button>
+              <label id="detailCameraBtn" class="picker-btn" for="detailCameraInput">카메라</label>
+              <label id="detailAlbumBtn" class="picker-btn" for="detailPhotoInput">사진앨범</label>
               <button id="detailAiAnalyzeBtn" class="ai-btn wide-action hidden" type="button">AI 물건 확인</button>
               <button id="detailClearPhotoBtn" class="danger wide-action" type="button">사진 삭제</button>
             </div>
-          </label>
-          <input id="detailPhotoInput" class="hidden" type="file" accept="image/*" />
-          <input id="detailCameraInput" class="hidden" type="file" accept="image/*" capture="environment" />
+          </div>
+          <input id="detailPhotoInput" class="file-picker-input" type="file" accept="image/jpeg,image/png,image/webp" />
+          <input id="detailCameraInput" class="file-picker-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
           <label>물건명
             <input id="detailItemName" required />
           </label>
@@ -1151,6 +1164,7 @@
       let urlBoxFilterApplied = false;
       let selectedQrBoxId = '';
       let aiState = { target: 'main', busy: false, suggestion: null };
+      let photoProcessing = false;
 
       function emptyApp() {
         return {
@@ -1628,16 +1642,33 @@
         );
       }
 
+      function nextFrame() {
+        return new Promise(resolve => requestAnimationFrame(() => resolve()));
+      }
+
       async function compressImage(file) {
+        if (!file || !file.type || !/^image\/(?:jpeg|jpg|png|webp)$/i.test(file.type)) {
+          throw new Error('JPG, PNG, WebP 사진만 등록할 수 있습니다.');
+        }
+        await nextFrame();
         const bitmap = await loadImageSource(file);
-        const maxSide = 1280;
-        const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
-        const canvas = document.createElement('canvas');
-        canvas.width = Math.max(1, Math.round(bitmap.width * scale));
-        canvas.height = Math.max(1, Math.round(bitmap.height * scale));
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-        return canvas.toDataURL('image/jpeg', .82);
+        try {
+          const maxSide = 960;
+          const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
+          const canvas = document.createElement('canvas');
+          canvas.width = Math.max(1, Math.round(bitmap.width * scale));
+          canvas.height = Math.max(1, Math.round(bitmap.height * scale));
+          const ctx = canvas.getContext('2d');
+          if (!ctx) throw new Error('사진 변환을 시작하지 못했습니다.');
+          ctx.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+          return canvas.toDataURL('image/jpeg', .74);
+        } finally {
+          if (typeof bitmap.close === 'function') bitmap.close();
+        }
+      }
+
+      async function preparePhotoDataUrl(file) {
+        return compressImage(file);
       }
 
       function readFileAsDataUrl(file) {
@@ -1665,13 +1696,20 @@
       }
 
       async function loadImageSource(file) {
-        try {
-          return await loadImageFromUrl(await readFileAsDataUrl(file));
-        } catch (err) {
-          console.warn('FileReader image load failed; retrying with object URL', err);
+        if (window.createImageBitmap) {
+          try {
+            return await createImageBitmap(file, { imageOrientation: 'from-image' });
+          } catch (err) {
+            console.warn('createImageBitmap failed; retrying with image element', err);
+          }
         }
-        const dataUrl = URL.createObjectURL(file);
-        return loadImageFromUrl(dataUrl, () => URL.revokeObjectURL(dataUrl));
+        const objectUrl = URL.createObjectURL(file);
+        try {
+          return await loadImageFromUrl(objectUrl, () => URL.revokeObjectURL(objectUrl));
+        } catch (objectUrlErr) {
+          console.warn('Object URL image load failed; retrying with FileReader', objectUrlErr);
+        }
+        return loadImageFromUrl(await readFileAsDataUrl(file));
       }
 
       function photoLoadErrorMessage(file, err) {
@@ -1679,7 +1717,7 @@
         const name = file?.name || '이름 없음';
         const size = file?.size ? `${Math.round(file.size / 1024)}KB` : '크기 알 수 없음';
         const reason = err?.message || String(err || '');
-        return `사진을 불러오지 못했습니다.\n파일: ${name}\n형식: ${type}\n크기: ${size}\n원인: ${reason}\n\n카메라 설정에서 HEIC 대신 JPG/JPEG로 저장하도록 바꾸거나, 촬영 후 사진앨범에서 선택해 주세요.`;
+        return `사진을 불러오지 못했습니다.\n파일: ${name}\n형식: ${type}\n크기: ${size}\n원인: ${reason}\n\nJPG/JPEG, PNG, WebP 사진만 등록됩니다. 휴대폰 카메라 설정에서 HEIC 대신 JPG/JPEG로 저장하도록 바꾼 뒤 다시 촬영해 주세요.`;
       }
 
       function setPhoto(dataUrl) {
@@ -1885,15 +1923,24 @@
       async function handleDetailPhotoFile(input) {
         const file = input.files && input.files[0];
         if (!file) return;
+        if (photoProcessing) {
+          input.value = '';
+          return;
+        }
+        photoProcessing = true;
         try {
-          detailEditPhoto = await compressImage(file);
+          els.status.textContent = '사진 처리 중';
+          detailEditPhoto = await preparePhotoDataUrl(file);
           els.detailPhoto.src = detailEditPhoto || placeholderSvg();
           els.detailClearPhoto.classList.toggle('hidden', !detailEditPhoto);
           els.detailAiAnalyze.classList.toggle('hidden', !detailEditPhoto);
+          updateStatus();
         } catch (err) {
           console.error(err);
           alert(photoLoadErrorMessage(file, err));
+          updateStatus();
         } finally {
+          photoProcessing = false;
           input.value = '';
         }
       }
@@ -2655,22 +2702,28 @@
         const handlePhotoFile = async (input) => {
           const file = input.files && input.files[0];
           if (!file) return;
+          if (photoProcessing) {
+            input.value = '';
+            return;
+          }
+          photoProcessing = true;
           try {
             els.status.textContent = '사진 처리 중';
-            setPhoto(await compressImage(file));
+            setPhoto(await preparePhotoDataUrl(file));
             updateStatus();
           } catch (err) {
             console.error(err);
             alert(photoLoadErrorMessage(file, err));
             updateStatus();
           } finally {
+            photoProcessing = false;
             input.value = '';
           }
         };
 
-        els.photoBox.addEventListener('click', () => els.photoInput.click());
-        els.albumBtn.addEventListener('click', () => els.photoInput.click());
-        els.cameraBtn.addEventListener('click', () => els.cameraInput.click());
+        els.photoBox.addEventListener('click', () => {
+          if (!photoProcessing) els.photoInput.click();
+        });
         els.aiAnalyze.addEventListener('click', () => analyzePhoto('main'));
         els.removePhoto.addEventListener('click', removeCurrentPhoto);
         els.photoInput.addEventListener('change', () => handlePhotoFile(els.photoInput));
@@ -2741,8 +2794,6 @@
           event.preventDefault();
           saveDetailEdit();
         });
-        els.detailCameraBtn.addEventListener('click', () => els.detailCameraInput.click());
-        els.detailAlbumBtn.addEventListener('click', () => els.detailPhotoInput.click());
         els.detailAiAnalyze.addEventListener('click', () => analyzePhoto('detail'));
         els.detailClearPhoto.addEventListener('click', clearDetailEditPhoto);
         els.detailPhotoInput.addEventListener('change', () => handleDetailPhotoFile(els.detailPhotoInput));
