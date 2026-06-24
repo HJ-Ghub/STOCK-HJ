@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#f7f3ea" />
-  <title>보관함 사진정리</title>
+  <title>(보관함)</title>
   <link rel="manifest" href="./manifest.webmanifest" />
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -24,9 +24,16 @@
     }
 
     * { box-sizing: border-box; }
+    html {
+      min-height: 100%;
+      overscroll-behavior-y: contain;
+    }
+
     body {
       margin: 0;
       min-height: 100vh;
+      min-height: 100dvh;
+      overscroll-behavior-y: contain;
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
@@ -119,13 +126,17 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex: 1 1 560px;
+      min-width: 0;
+      justify-content: flex-end;
     }
 
     .home-btn {
       min-height: 32px;
       padding: 5px 10px;
-      border-color: var(--accent);
-      color: #30695f;
+      background: #ffe5ef;
+      border-color: #f5b8cf;
+      color: #843653;
       flex: 0 0 auto;
     }
 
@@ -143,8 +154,20 @@
 
     .search-row {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: minmax(120px, 1fr) auto;
       gap: 8px;
+      flex: 1 1 360px;
+      min-width: 0;
+    }
+
+    .search-row input {
+      min-height: 36px;
+      font-size: 14px;
+    }
+
+    .search-row button {
+      min-height: 36px;
+      white-space: nowrap;
     }
 
     .tabs {
@@ -154,16 +177,67 @@
     }
 
     .tab {
-      min-height: 34px;
+      min-height: 42px;
       padding: 6px;
       font-size: 14px;
-      background: #fff;
+      display: grid;
+      place-items: center;
+      gap: 0;
+      line-height: 1.05;
+      white-space: normal;
+    }
+
+    .tab span {
+      display: block;
+    }
+
+    .tab[data-view="register"] {
+      background: #fff0f6;
+      border-color: #f5bfd4;
+      color: #7e3652;
+    }
+
+    .tab[data-view="items"] {
+      background: #edf7ff;
+      border-color: #b8d9f2;
+      color: #2a5b77;
+    }
+
+    .tab[data-view="boxes"] {
+      background: #f2f8e8;
+      border-color: #cde5a8;
+      color: #4d6e25;
+    }
+
+    .tab[data-view="backup"] {
+      background: #fff5dd;
+      border-color: #efd392;
+      color: #765715;
+    }
+
+    .tab[data-view="qr"] {
+      background: #f0ebff;
+      border-color: #cfc2f4;
+      color: #544187;
     }
 
     .tab.active {
-      border-color: var(--accent);
-      background: #e8f7f3;
-      color: #30695f;
+      box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .82), 0 2px 8px rgba(86, 70, 92, .12);
+      filter: saturate(1.08);
+    }
+
+    #itemName,
+    #itemDesc,
+    #itemTags {
+      color: #8f9692;
+      font-size: 14px;
+    }
+
+    #itemName::placeholder,
+    #itemDesc::placeholder,
+    #itemTags::placeholder {
+      color: #aeb8b2;
+      opacity: 1;
     }
 
     .layout {
@@ -714,9 +788,10 @@
       .title-row { align-items: start; }
       .title-tools {
         width: 100%;
-        justify-content: space-between;
+        justify-content: flex-start;
       }
       .home-btn { min-width: 70px; }
+      .search-row { flex: 1 1 auto; }
       h1 { font-size: 19px; }
       .status { font-size: 11px; }
       .photo-box { min-height: 132px; }
@@ -725,6 +800,11 @@
       .photo-empty strong { font-size: 16px; }
       label { font-size: 17px; }
       input, textarea, select { font-size: 18px; min-height: 48px; }
+      #itemName,
+      #itemDesc,
+      #itemTags {
+        font-size: 14px;
+      }
       .detail { padding: 8px; }
       .detail-panel {
         max-height: calc(100vh - 16px);
@@ -747,22 +827,22 @@
   <header>
     <div class="head-inner">
       <div class="title-row">
-        <h1>보관함 사진정리</h1>
+        <h1>(보관함)</h1>
         <div class="title-tools">
           <button id="homeBtn" class="home-btn" type="button">홈</button>
+          <div class="search-row">
+            <input id="searchInput" type="search" placeholder="물건명, 설명, 태그, 보관박스 검색" autocomplete="off" />
+            <button id="clearSearchBtn" type="button" title="검색 지우기">지우기</button>
+          </div>
           <span class="status" id="statusText">불러오는 중</span>
         </div>
       </div>
-      <div class="search-row">
-        <input id="searchInput" type="search" placeholder="물건명, 설명, 태그, 보관박스 검색" autocomplete="off" />
-        <button id="clearSearchBtn" type="button" title="검색 지우기">지우기</button>
-      </div>
       <nav class="tabs" aria-label="보기 선택">
-        <button class="tab active" type="button" data-view="register">등록</button>
-        <button class="tab" type="button" data-view="items">전체물건</button>
-        <button class="tab" type="button" data-view="boxes">보관박스</button>
-        <button class="tab" type="button" data-view="backup">백업</button>
-        <button class="tab" type="button" data-view="qr">QR</button>
+        <button class="tab active" type="button" data-view="register"><span>등록</span></button>
+        <button class="tab" type="button" data-view="items"><span>전체</span><span>물건</span></button>
+        <button class="tab" type="button" data-view="boxes"><span>보관</span><span>박스</span></button>
+        <button class="tab" type="button" data-view="backup"><span>백업</span></button>
+        <button class="tab" type="button" data-view="qr"><span>QR</span></button>
       </nav>
     </div>
   </header>
@@ -1129,6 +1209,7 @@
       let urlBoxFilterApplied = false;
       let selectedQrBoxId = '';
       let skipAutoCloudSyncUntil = 0;
+      let backGuardInstalled = false;
 
       function emptyApp() {
         return {
@@ -1980,6 +2061,7 @@
 
       function goHome() {
         if (selectedDetailId) closeDetail();
+        if (els.qrModal.classList.contains('open')) closeQrLabel();
         els.search.value = '';
         selectedBoxDetailId = '';
         currentView = 'register';
@@ -1987,6 +2069,40 @@
         if (location.search) history.replaceState(null, '', location.pathname);
         render();
         window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function returnToHomeView() {
+        if (selectedDetailId) closeDetail();
+        if (els.qrModal.classList.contains('open')) closeQrLabel();
+        els.search.value = '';
+        selectedBoxDetailId = '';
+        currentView = 'register';
+        urlBoxFilterApplied = true;
+        if (location.search) history.replaceState(null, '', location.pathname);
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function installBackButtonGuard() {
+        if (backGuardInstalled || !window.history || !history.pushState) return;
+        const mobileLike =
+          (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) ||
+          navigator.maxTouchPoints > 0 ||
+          (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+        if (!mobileLike) return;
+        backGuardInstalled = true;
+        try {
+          history.replaceState({ storageBoxApp: true }, '', location.href);
+          history.pushState({ storageBoxApp: true, guard: true }, '', location.href);
+        } catch {
+          return;
+        }
+        window.addEventListener('popstate', () => {
+          returnToHomeView();
+          try {
+            history.pushState({ storageBoxApp: true, guard: true }, '', location.href);
+          } catch {}
+        });
       }
 
       function printQrLabels() {
@@ -2230,7 +2346,7 @@
           const credential = await navigator.credentials.create({
             publicKey: {
               challenge: randomBytes(),
-              rp: { name: '보관함 사진정리' },
+              rp: { name: '(보관함)' },
               user: {
                 id: randomBytes(16),
                 name: 'storage-box-app',
@@ -2639,6 +2755,7 @@
           await restoreCloudSession();
           await autoCloudLoginIfSaved();
           render();
+          installBackButtonGuard();
           applyUrlBoxFilter();
           if (cloudState.user) cloudSyncNow({ silent: true });
           if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
