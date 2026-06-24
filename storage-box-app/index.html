@@ -265,14 +265,28 @@
       gap: 8px;
     }
 
-    .file-picker-input {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      margin: -1px;
-      opacity: 0;
+    .picker-control {
+      position: relative;
+      display: grid;
+      min-height: 38px;
       overflow: hidden;
-      clip-path: inset(50%);
+    }
+
+    .picker-control .picker-btn {
+      display: grid;
+      place-items: center;
+      min-height: 100%;
+    }
+
+    .picker-control input[type="file"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      font-size: 100px;
     }
 
     .ai-btn {
@@ -801,11 +815,15 @@
               <span>이 영역을 누르면 사진앨범이 열립니다.</span>
             </div>
           </div>
-          <input id="photoInput" class="file-picker-input" type="file" accept="image/jpeg,image/png,image/webp" />
-          <input id="cameraInput" class="file-picker-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
           <div class="photo-actions">
-            <label id="cameraBtn" class="picker-btn" for="cameraInput">카메라</label>
-            <label id="albumBtn" class="picker-btn" for="photoInput">사진앨범</label>
+            <span id="cameraBtn" class="picker-control">
+              <span class="picker-btn">카메라</span>
+              <input id="cameraInput" type="file" accept="image/*" capture="environment" />
+            </span>
+            <span id="albumBtn" class="picker-control">
+              <span class="picker-btn">사진앨범</span>
+              <input id="photoInput" type="file" accept="image/*" />
+            </span>
             <button id="aiAnalyzeBtn" class="ai-btn wide-action hidden" type="button">AI 물건 확인</button>
             <button id="removePhotoBtn" class="danger wide-action hidden" type="button">사진 삭제</button>
           </div>
@@ -945,14 +963,18 @@
           <div>
             <div class="field-title">사진</div>
             <div class="photo-actions">
-              <label id="detailCameraBtn" class="picker-btn" for="detailCameraInput">카메라</label>
-              <label id="detailAlbumBtn" class="picker-btn" for="detailPhotoInput">사진앨범</label>
+              <span id="detailCameraBtn" class="picker-control">
+                <span class="picker-btn">카메라</span>
+                <input id="detailCameraInput" type="file" accept="image/*" capture="environment" />
+              </span>
+              <span id="detailAlbumBtn" class="picker-control">
+                <span class="picker-btn">사진앨범</span>
+                <input id="detailPhotoInput" type="file" accept="image/*" />
+              </span>
               <button id="detailAiAnalyzeBtn" class="ai-btn wide-action hidden" type="button">AI 물건 확인</button>
               <button id="detailClearPhotoBtn" class="danger wide-action" type="button">사진 삭제</button>
             </div>
           </div>
-          <input id="detailPhotoInput" class="file-picker-input" type="file" accept="image/jpeg,image/png,image/webp" />
-          <input id="detailCameraInput" class="file-picker-input" type="file" accept="image/jpeg,image/png,image/webp" capture="environment" />
           <label>물건명
             <input id="detailItemName" required />
           </label>
@@ -1646,9 +1668,15 @@
         return new Promise(resolve => requestAnimationFrame(() => resolve()));
       }
 
+      function isProbablyImageFile(file) {
+        if (!file) return false;
+        if (file.type && /^image\//i.test(file.type)) return true;
+        return /\.(jpe?g|png|webp|gif|heic|heif)$/i.test(file.name || '');
+      }
+
       async function compressImage(file) {
-        if (!file || !file.type || !/^image\/(?:jpeg|jpg|png|webp)$/i.test(file.type)) {
-          throw new Error('JPG, PNG, WebP 사진만 등록할 수 있습니다.');
+        if (!isProbablyImageFile(file)) {
+          throw new Error('사진 파일만 등록할 수 있습니다.');
         }
         await nextFrame();
         const bitmap = await loadImageSource(file);
@@ -1717,7 +1745,7 @@
         const name = file?.name || '이름 없음';
         const size = file?.size ? `${Math.round(file.size / 1024)}KB` : '크기 알 수 없음';
         const reason = err?.message || String(err || '');
-        return `사진을 불러오지 못했습니다.\n파일: ${name}\n형식: ${type}\n크기: ${size}\n원인: ${reason}\n\nJPG/JPEG, PNG, WebP 사진만 등록됩니다. 휴대폰 카메라 설정에서 HEIC 대신 JPG/JPEG로 저장하도록 바꾼 뒤 다시 촬영해 주세요.`;
+        return `사진을 불러오지 못했습니다.\n파일: ${name}\n형식: ${type}\n크기: ${size}\n원인: ${reason}\n\n다시 촬영하거나 사진앨범에서 선택해 주세요. 계속 실패하면 휴대폰 카메라 설정에서 HEIC 대신 JPG/JPEG로 저장하도록 바꾼 뒤 다시 시도해 주세요.`;
       }
 
       function setPhoto(dataUrl) {
