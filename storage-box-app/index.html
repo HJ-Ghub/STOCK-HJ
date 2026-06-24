@@ -206,7 +206,7 @@
       gap: 9px;
     }
 
-    label {
+    label, .field-title {
       display: grid;
       gap: 5px;
       color: #3d473f;
@@ -263,35 +263,24 @@
       gap: 8px;
     }
 
-    .picker-control {
-      position: relative;
+    .native-file-field {
       display: grid;
-      min-height: 38px;
-      overflow: hidden;
+      gap: 5px;
+      align-content: start;
+      color: #3d473f;
+      font-size: 14px;
+      font-weight: 800;
     }
 
-    .picker-control .picker-label {
-      display: grid;
-      place-items: center;
+    .native-file-field input[type="file"] {
+      width: 100%;
+      min-height: 44px;
+      padding: 8px;
       border: 1px solid var(--line);
+      border-radius: var(--radius);
       background: #fff;
       color: var(--text);
-      min-height: 38px;
-      border-radius: var(--radius);
-      padding: 8px 10px;
-      font-weight: 800;
-      text-align: center;
-    }
-
-    .picker-control input[type="file"] {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      min-height: 100%;
-      opacity: 0;
-      cursor: pointer;
-      font-size: 100px;
+      font-size: 14px;
     }
 
     .detail-move-row {
@@ -781,18 +770,16 @@
             <img id="photoPreview" alt="선택한 물건 사진 미리보기" />
             <div class="photo-empty">
               <strong>사진을 찍거나 선택</strong>
-              <span>이 영역을 누르면 사진앨범이 열립니다.</span>
+              <span>아래 카메라 또는 사진앨범 입력창을 눌러 주세요.</span>
             </div>
           </div>
           <div class="photo-actions">
-            <span id="cameraBtn" class="picker-control">
-              <span class="picker-label">카메라</span>
+            <label id="cameraBtn" class="native-file-field">카메라 촬영
               <input id="cameraInput" type="file" accept="image/*" capture="environment" />
-            </span>
-            <span id="albumBtn" class="picker-control">
-              <span class="picker-label">사진앨범</span>
+            </label>
+            <label id="albumBtn" class="native-file-field">사진앨범 선택
               <input id="photoInput" type="file" accept="image/*" />
-            </span>
+            </label>
             <button id="removePhotoBtn" class="danger wide-action hidden" type="button">사진 삭제</button>
           </div>
           <label>물건명
@@ -928,19 +915,18 @@
           <div class="tags" id="detailTags"></div>
         </div>
         <form class="detail-edit-form hidden" id="detailEditForm">
-          <label>사진
+          <div>
+            <div class="field-title">사진</div>
             <div class="photo-actions">
-              <span id="detailCameraBtn" class="picker-control">
-                <span class="picker-label">카메라</span>
+              <label id="detailCameraBtn" class="native-file-field">카메라 촬영
                 <input id="detailCameraInput" type="file" accept="image/*" capture="environment" />
-              </span>
-              <span id="detailAlbumBtn" class="picker-control">
-                <span class="picker-label">사진앨범</span>
+              </label>
+              <label id="detailAlbumBtn" class="native-file-field">사진앨범 선택
                 <input id="detailPhotoInput" type="file" accept="image/*" />
-              </span>
+              </label>
               <button id="detailClearPhotoBtn" class="danger wide-action" type="button">사진 삭제</button>
             </div>
-          </label>
+          </div>
           <label>물건명
             <input id="detailItemName" required />
           </label>
