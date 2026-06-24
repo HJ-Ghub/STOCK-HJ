@@ -263,6 +263,37 @@
       gap: 8px;
     }
 
+    .picker-control {
+      position: relative;
+      display: grid;
+      min-height: 38px;
+      overflow: hidden;
+    }
+
+    .picker-control .picker-label {
+      display: grid;
+      place-items: center;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      min-height: 38px;
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      font-weight: 800;
+      text-align: center;
+    }
+
+    .picker-control input[type="file"] {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      min-height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      font-size: 100px;
+    }
+
     .detail-move-row {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -753,11 +784,15 @@
               <span>이 영역을 누르면 사진앨범이 열립니다.</span>
             </div>
           </div>
-          <input id="photoInput" class="hidden" type="file" accept="image/*" />
-          <input id="cameraInput" class="hidden" type="file" accept="image/*" capture="environment" />
           <div class="photo-actions">
-            <button id="cameraBtn" type="button">카메라</button>
-            <button id="albumBtn" type="button">사진앨범</button>
+            <span id="cameraBtn" class="picker-control">
+              <span class="picker-label">카메라</span>
+              <input id="cameraInput" type="file" accept="image/*" capture="environment" />
+            </span>
+            <span id="albumBtn" class="picker-control">
+              <span class="picker-label">사진앨범</span>
+              <input id="photoInput" type="file" accept="image/*" />
+            </span>
             <button id="removePhotoBtn" class="danger wide-action hidden" type="button">사진 삭제</button>
           </div>
           <label>물건명
@@ -895,13 +930,17 @@
         <form class="detail-edit-form hidden" id="detailEditForm">
           <label>사진
             <div class="photo-actions">
-              <button id="detailCameraBtn" type="button">카메라</button>
-              <button id="detailAlbumBtn" type="button">사진앨범</button>
+              <span id="detailCameraBtn" class="picker-control">
+                <span class="picker-label">카메라</span>
+                <input id="detailCameraInput" type="file" accept="image/*" capture="environment" />
+              </span>
+              <span id="detailAlbumBtn" class="picker-control">
+                <span class="picker-label">사진앨범</span>
+                <input id="detailPhotoInput" type="file" accept="image/*" />
+              </span>
               <button id="detailClearPhotoBtn" class="danger wide-action" type="button">사진 삭제</button>
             </div>
           </label>
-          <input id="detailPhotoInput" class="hidden" type="file" accept="image/*" />
-          <input id="detailCameraInput" class="hidden" type="file" accept="image/*" capture="environment" />
           <label>물건명
             <input id="detailItemName" required />
           </label>
@@ -2385,8 +2424,6 @@
         };
 
         els.photoBox.addEventListener('click', () => els.photoInput.click());
-        els.albumBtn.addEventListener('click', () => els.photoInput.click());
-        els.cameraBtn.addEventListener('click', () => els.cameraInput.click());
         els.removePhoto.addEventListener('click', removeCurrentPhoto);
         els.photoInput.addEventListener('change', () => handlePhotoFile(els.photoInput));
         els.cameraInput.addEventListener('change', () => handlePhotoFile(els.cameraInput));
@@ -2456,8 +2493,6 @@
           event.preventDefault();
           saveDetailEdit();
         });
-        els.detailCameraBtn.addEventListener('click', () => els.detailCameraInput.click());
-        els.detailAlbumBtn.addEventListener('click', () => els.detailPhotoInput.click());
         els.detailClearPhoto.addEventListener('click', clearDetailEditPhoto);
         els.detailPhotoInput.addEventListener('change', () => handleDetailPhotoFile(els.detailPhotoInput));
         els.detailCameraInput.addEventListener('change', () => handleDetailPhotoFile(els.detailCameraInput));
