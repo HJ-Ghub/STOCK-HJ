@@ -679,6 +679,37 @@
       margin-bottom: 0;
     }
 
+    .camera-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      place-items: center;
+      padding: 16px;
+      background: rgba(0, 0, 0, .72);
+    }
+
+    .camera-modal.open { display: grid; }
+
+    .camera-modal-panel {
+      width: min(560px, 100%);
+      display: grid;
+      gap: 12px;
+      padding: 12px;
+      background: #111;
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+
+    .camera-modal video {
+      width: 100%;
+      max-height: calc(100vh - 150px);
+      max-height: calc(100dvh - 150px);
+      background: #000;
+      border-radius: 14px;
+      object-fit: contain;
+    }
+
     .hidden { display: none !important; }
 
     @media print {
@@ -989,6 +1020,17 @@
     </div>
   </div>
 
+  <div class="camera-modal" id="cameraModal" role="dialog" aria-modal="true">
+    <div class="camera-modal-panel">
+      <video id="cameraVideo" autoplay playsinline muted></video>
+      <canvas id="cameraCanvas" class="hidden"></canvas>
+      <div class="actions">
+        <button id="cameraShootBtn" class="primary" type="button">촬영</button>
+        <button id="cameraCloseBtn" type="button">닫기</button>
+      </div>
+    </div>
+  </div>
+
   <div class="ai-modal" id="aiModal" role="dialog" aria-modal="true">
     <div class="ai-modal-panel">
       <div class="section-title">
@@ -1096,6 +1138,11 @@
         qrModalUrl: $('qrModalUrl'),
         qrSinglePrint: $('qrSinglePrintBtn'),
         qrModalClose: $('qrModalCloseBtn'),
+        cameraModal: $('cameraModal'),
+        cameraVideo: $('cameraVideo'),
+        cameraCanvas: $('cameraCanvas'),
+        cameraShoot: $('cameraShootBtn'),
+        cameraClose: $('cameraCloseBtn'),
         aiModal: $('aiModal'),
         aiConfidence: $('aiConfidence'),
         aiName: $('aiItemName'),
@@ -1151,6 +1198,8 @@
       let urlBoxFilterApplied = false;
       let selectedQrBoxId = '';
       let aiState = { target: 'main', busy: false, suggestion: null };
+      let cameraStream = null;
+      let cameraTarget = 'main';
 
       function emptyApp() {
         return {
@@ -1669,6 +1718,75 @@
         els.photoBox.classList.toggle('has-photo', Boolean(currentPhoto));
         els.removePhoto.classList.toggle('hidden', !currentPhoto);
         els.aiAnalyze.classList.toggle('hidden', !currentPhoto);
+      }
+
+      function fallbackCameraInput(target = 'main') {
+        if (target === 'detail') els.detailCameraInput.click();
+        else els.cameraInput.click();
+      }
+
+      async function openCameraCapture(target = 'main') {
+        cameraTarget = target;
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+          fallbackCameraInput(target);
+          return;
+        }
+        closeCameraCapture({ keepTarget: true });
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({
+            video: {
+              facingMode: { ideal: 'environment' },
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            },
+            audio: false
+          });
+          els.cameraVideo.srcObject = cameraStream;
+          els.cameraModal.classList.add('open');
+          await els.cameraVideo.play().catch(() => {});
+        } catch (err) {
+          console.error(err);
+          alert('카메라를 열 수 없어 기존 카메라 선택 방식으로 전환합니다.');
+          fallbackCameraInput(target);
+        }
+      }
+
+      function closeCameraCapture(options = {}) {
+        if (cameraStream) {
+          cameraStream.getTracks().forEach(track => track.stop());
+          cameraStream = null;
+        }
+        if (els.cameraVideo) els.cameraVideo.srcObject = null;
+        if (els.cameraModal) els.cameraModal.classList.remove('open');
+        if (!options.keepTarget) cameraTarget = 'main';
+      }
+
+      function captureCameraPhoto() {
+        const video = els.cameraVideo;
+        const width = video.videoWidth || 0;
+        const height = video.videoHeight || 0;
+        if (!width || !height) {
+          alert('카메라 화면을 불러오는 중입니다. 잠시 후 다시 눌러 주세요.');
+          return;
+        }
+        const maxSide = 1280;
+        const scale = Math.min(1, maxSide / Math.max(width, height));
+        const canvas = els.cameraCanvas;
+        canvas.width = Math.max(1, Math.round(width * scale));
+        canvas.height = Math.max(1, Math.round(height * scale));
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const dataUrl = canvas.toDataURL('image/jpeg', .82);
+        if (cameraTarget === 'detail') {
+          detailEditPhoto = dataUrl;
+          els.detailPhoto.src = detailEditPhoto || placeholderSvg();
+          els.detailClearPhoto.classList.toggle('hidden', !detailEditPhoto);
+          els.detailAiAnalyze.classList.toggle('hidden', !detailEditPhoto);
+        } else {
+          setPhoto(dataUrl);
+          updateStatus();
+        }
+        closeCameraCapture();
       }
 
       function resetForm() {
@@ -2651,11 +2769,16 @@
 
         els.photoBox.addEventListener('click', () => els.photoInput.click());
         els.albumBtn.addEventListener('click', () => els.photoInput.click());
-        els.cameraBtn.addEventListener('click', () => els.cameraInput.click());
+        els.cameraBtn.addEventListener('click', () => openCameraCapture('main'));
         els.aiAnalyze.addEventListener('click', () => analyzePhoto('main'));
         els.removePhoto.addEventListener('click', removeCurrentPhoto);
         els.photoInput.addEventListener('change', () => handlePhotoFile(els.photoInput));
         els.cameraInput.addEventListener('change', () => handlePhotoFile(els.cameraInput));
+        els.cameraShoot.addEventListener('click', captureCameraPhoto);
+        els.cameraClose.addEventListener('click', () => closeCameraCapture());
+        els.cameraModal.addEventListener('click', (event) => {
+          if (event.target === els.cameraModal) closeCameraCapture();
+        });
 
         els.form.addEventListener('submit', saveItem);
         els.resetForm.addEventListener('click', resetForm);
@@ -2722,7 +2845,7 @@
           event.preventDefault();
           saveDetailEdit();
         });
-        els.detailCameraBtn.addEventListener('click', () => els.detailCameraInput.click());
+        els.detailCameraBtn.addEventListener('click', () => openCameraCapture('detail'));
         els.detailAlbumBtn.addEventListener('click', () => els.detailPhotoInput.click());
         els.detailAiAnalyze.addEventListener('click', () => analyzePhoto('detail'));
         els.detailClearPhoto.addEventListener('click', clearDetailEditPhoto);
