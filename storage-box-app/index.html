@@ -26,13 +26,20 @@
     * { box-sizing: border-box; }
     html {
       min-height: 100%;
+      width: 100%;
+      max-width: 100%;
+      overflow-x: hidden;
       overscroll-behavior-y: contain;
     }
 
     body {
       margin: 0;
+      width: 100%;
+      max-width: 100%;
       min-height: 100vh;
       min-height: 100dvh;
+      min-height: 100svh;
+      overflow-x: hidden;
       overscroll-behavior-y: contain;
       background: var(--bg);
       color: var(--text);
@@ -92,6 +99,7 @@
 
     .app {
       width: min(1160px, 100%);
+      max-width: 100%;
       margin: 0 auto;
       padding: 14px;
       padding-bottom: 86px;
@@ -108,6 +116,7 @@
 
     .head-inner {
       width: min(1160px, 100%);
+      max-width: 100%;
       margin: 0 auto;
       padding: 12px 14px;
       display: grid;
@@ -119,16 +128,39 @@
       align-items: center;
       justify-content: space-between;
       gap: 10px;
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
+      min-width: 0;
     }
 
     .title-tools {
       display: flex;
       align-items: center;
       gap: 8px;
-      flex: 1 1 560px;
+      width: 100%;
       min-width: 0;
-      justify-content: flex-end;
+      justify-content: flex-start;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: 21px;
+      letter-spacing: 0;
+      flex: 0 0 auto;
+    }
+
+    .status {
+      margin-left: auto;
+      min-width: 0;
+      color: #6b5260;
+      background: #fff2f7;
+      border: 1px solid #f2c6d7;
+      border-radius: 999px;
+      padding: 4px 9px;
+      font-size: 12px;
+      font-weight: 900;
+      line-height: 1.2;
+      text-align: right;
+      white-space: nowrap;
     }
 
     .home-btn {
@@ -138,18 +170,6 @@
       border-color: #f5b8cf;
       color: #843653;
       flex: 0 0 auto;
-    }
-
-    h1 {
-      margin: 0;
-      font-size: 21px;
-      letter-spacing: 0;
-    }
-
-    .status {
-      color: var(--muted);
-      font-size: 12px;
-      white-space: nowrap;
     }
 
     .search-row {
@@ -779,21 +799,56 @@
     }
 
     @media (max-width: 860px) {
-      .app { padding: 10px; padding-bottom: 78px; }
+      .app {
+        width: 100%;
+        padding: 8px max(8px, env(safe-area-inset-left)) calc(78px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-right));
+      }
       .summary { grid-template-columns: repeat(2, 1fr); }
+      .panel { padding: 10px; border-radius: 9px; }
       .panel.form-panel { position: static; }
-      .items-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .boxes-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-      .head-inner { padding: 10px; }
-      .title-row { align-items: start; }
+      .items-grid,
+      .boxes-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .head-inner {
+        width: 100%;
+        padding: 8px max(8px, env(safe-area-inset-left)) 10px max(8px, env(safe-area-inset-right));
+        gap: 8px;
+      }
+      .title-row {
+        width: 100%;
+        align-items: center;
+      }
       .title-tools {
         width: 100%;
         justify-content: flex-start;
+        gap: 6px;
       }
       .home-btn { min-width: 70px; }
       .search-row { flex: 1 1 auto; }
+      .search-row input {
+        min-width: 0;
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+      .search-row button {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
       h1 { font-size: 19px; }
-      .status { font-size: 11px; }
+      .status {
+        max-width: calc(100vw - 116px);
+        padding: 4px 7px;
+        font-size: 12px;
+      }
+      .tabs { gap: 4px; }
+      .tab {
+        min-width: 0;
+        min-height: 40px;
+        padding: 5px 2px;
+        font-size: 13px;
+      }
       .photo-box { min-height: 132px; }
       .photo-box img { max-height: 190px; }
       .photo-empty { padding: 14px; }
@@ -828,13 +883,13 @@
     <div class="head-inner">
       <div class="title-row">
         <h1>(보관함)</h1>
-        <div class="title-tools">
-          <button id="homeBtn" class="home-btn" type="button">홈</button>
-          <div class="search-row">
-            <input id="searchInput" type="search" placeholder="물건명, 설명, 태그, 보관박스 검색" autocomplete="off" />
-            <button id="clearSearchBtn" type="button" title="검색 지우기">지우기</button>
-          </div>
-          <span class="status" id="statusText">불러오는 중</span>
+        <span class="status" id="statusText">물건 0개, 박스 0개</span>
+      </div>
+      <div class="title-tools">
+        <button id="homeBtn" class="home-btn" type="button">홈</button>
+        <div class="search-row">
+          <input id="searchInput" type="search" placeholder="물건명, 설명, 태그, 보관박스 검색" autocomplete="off" />
+          <button id="clearSearchBtn" type="button" title="검색 지우기">지우기</button>
         </div>
       </div>
       <nav class="tabs" aria-label="보기 선택">
@@ -1443,7 +1498,7 @@
       }
 
       function updateStatus() {
-        els.status.textContent = `물건 ${app.items.length}개 · 박스 ${app.boxes.length}개`;
+        els.status.textContent = `물건 ${app.items.length}개, 박스 ${app.boxes.length}개`;
       }
 
       function render() {
