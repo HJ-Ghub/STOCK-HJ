@@ -25,22 +25,29 @@
 
     * { box-sizing: border-box; }
     html {
+      height: auto;
       min-height: 100%;
       width: 100%;
       max-width: 100%;
       overflow-x: hidden;
-      overscroll-behavior-y: contain;
+      overflow-y: auto;
+      overscroll-behavior-x: none;
     }
 
     body {
       margin: 0;
+      position: relative;
+      height: auto;
       width: 100%;
       max-width: 100%;
       min-height: 100vh;
       min-height: 100dvh;
       min-height: 100svh;
       overflow-x: hidden;
-      overscroll-behavior-y: contain;
+      overflow-y: auto;
+      overscroll-behavior-x: none;
+      -webkit-overflow-scrolling: touch;
+      touch-action: pan-y;
       background: var(--bg);
       color: var(--text);
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif;
@@ -545,12 +552,15 @@
       aspect-ratio: 1 / 1;
       object-fit: cover;
       background: #f2f8ff;
+      cursor: pointer;
+      touch-action: manipulation;
     }
 
     .item-info {
       display: grid;
       gap: 5px;
       padding: 9px;
+      cursor: pointer;
     }
 
     .item-name {
@@ -633,6 +643,7 @@
       background: rgba(0, 0, 0, .42);
       padding: 12px;
       overflow: auto;
+      -webkit-overflow-scrolling: touch;
       align-items: start;
     }
 
@@ -674,6 +685,62 @@
       min-height: 0;
       align-content: start;
       overscroll-behavior: contain;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .photo-viewer {
+      position: fixed;
+      inset: 0;
+      z-index: 42;
+      display: none;
+      background: rgba(0, 0, 0, .74);
+      padding: 12px;
+      overflow: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .photo-viewer.open {
+      display: grid;
+      place-items: center;
+    }
+
+    .photo-viewer-panel {
+      width: min(960px, 100%);
+      max-height: calc(100vh - 24px);
+      max-height: calc(100dvh - 24px);
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      gap: 10px;
+      color: #fff;
+    }
+
+    .photo-viewer-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .photo-viewer-head h2 {
+      color: #fff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .photo-viewer-head button {
+      flex: 0 0 auto;
+      background: rgba(255, 255, 255, .94);
+    }
+
+    .photo-viewer img {
+      width: 100%;
+      height: 100%;
+      max-height: calc(100vh - 92px);
+      max-height: calc(100dvh - 92px);
+      object-fit: contain;
+      border-radius: 12px;
+      background: #111;
     }
 
     .detail-head {
@@ -1136,6 +1203,16 @@
     </div>
   </div>
 
+  <div class="photo-viewer" id="photoViewerModal" role="dialog" aria-modal="true">
+    <div class="photo-viewer-panel">
+      <div class="photo-viewer-head">
+        <h2 id="photoViewerTitle">사진</h2>
+        <button id="photoViewerCloseBtn" type="button">닫기</button>
+      </div>
+      <img id="photoViewerImage" alt="크게 보기" />
+    </div>
+  </div>
+
   <script>
     (() => {
       'use strict';
@@ -1219,6 +1296,10 @@
         qrModalUrl: $('qrModalUrl'),
         qrSinglePrint: $('qrSinglePrintBtn'),
         qrModalClose: $('qrModalCloseBtn'),
+        photoViewer: $('photoViewerModal'),
+        photoViewerTitle: $('photoViewerTitle'),
+        photoViewerImage: $('photoViewerImage'),
+        photoViewerClose: $('photoViewerCloseBtn'),
         detailModal: $('detailModal'),
         detailPhoto: $('detailPhoto'),
         detailName: $('detailName'),
@@ -1572,11 +1653,12 @@
         }).join('');
       }
 
-      function itemCardHtml(item) {
+      function itemCardHtml(item, options = {}) {
+        const photoAction = options.photoAction || 'detail';
         return `
           <article class="item-card">
-            <img src="${esc(item.photo || placeholderSvg())}" alt="${esc(item.name)}" data-action="detail" data-id="${esc(item.id)}" />
-            <div class="item-info">
+            <img src="${esc(item.photo || placeholderSvg())}" alt="${esc(item.name)}" data-action="${esc(photoAction)}" data-id="${esc(item.id)}" />
+            <div class="item-info" data-action="detail" data-id="${esc(item.id)}">
               <div class="item-name">${esc(item.name || '이름 없음')}</div>
               <div class="item-place">${boxBadgeHtml(boxName(item.boxId))}</div>
               <div class="tags">${(item.tags || []).slice(0, 4).map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
@@ -1603,7 +1685,7 @@
         els.boxDetailTitle.textContent = box.name;
         els.boxDetailHint.textContent = `물건 ${items.length}개`;
         els.boxDetailGrid.innerHTML = items.length
-          ? items.map(itemCardHtml).join('')
+          ? items.map(item => itemCardHtml(item, { photoAction: 'photo-view' })).join('')
           : '<div class="empty">이 보관박스에는 아직 물건이 없습니다.</div>';
       }
 
@@ -1783,6 +1865,20 @@
       function closeQrLabel() {
         selectedQrBoxId = '';
         els.qrModal.classList.remove('open');
+      }
+
+      function openPhotoViewer(id) {
+        const item = app.items.find(row => row.id === id);
+        if (!item) return;
+        els.photoViewerTitle.textContent = item.name || '사진';
+        els.photoViewerImage.src = item.photo || placeholderSvg();
+        els.photoViewerImage.alt = item.name || '물건 사진';
+        els.photoViewer.classList.add('open');
+      }
+
+      function closePhotoViewer() {
+        els.photoViewer.classList.remove('open');
+        els.photoViewerImage.removeAttribute('src');
       }
 
       function printSelectedQrLabel() {
@@ -2117,6 +2213,7 @@
       function goHome() {
         if (selectedDetailId) closeDetail();
         if (els.qrModal.classList.contains('open')) closeQrLabel();
+        if (els.photoViewer.classList.contains('open')) closePhotoViewer();
         els.search.value = '';
         selectedBoxDetailId = '';
         currentView = 'register';
@@ -2129,6 +2226,7 @@
       function returnToHomeView() {
         if (selectedDetailId) closeDetail();
         if (els.qrModal.classList.contains('open')) closeQrLabel();
+        if (els.photoViewer.classList.contains('open')) closePhotoViewer();
         els.search.value = '';
         selectedBoxDetailId = '';
         currentView = 'register';
@@ -2728,6 +2826,7 @@
           if (!target) return;
           const action = target.dataset.action;
           if (action === 'detail') openDetail(target.dataset.id);
+          if (action === 'photo-view') openPhotoViewer(target.dataset.id);
           if (action === 'edit') {
             openDetail(target.dataset.id);
             startDetailEdit();
@@ -2776,6 +2875,10 @@
         els.qrSinglePrint.addEventListener('click', printSelectedQrLabel);
         els.qrModal.addEventListener('click', (event) => {
           if (event.target === els.qrModal) closeQrLabel();
+        });
+        els.photoViewerClose.addEventListener('click', closePhotoViewer);
+        els.photoViewer.addEventListener('click', (event) => {
+          if (event.target === els.photoViewer) closePhotoViewer();
         });
 
         els.exportBtn.addEventListener('click', exportBackup);
