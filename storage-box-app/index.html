@@ -1097,6 +1097,7 @@
       let cloudState = { client: null, user: null, lastSyncAt: '', lastError: '' };
       let urlBoxFilterApplied = false;
       let selectedQrBoxId = '';
+      let skipAutoCloudSyncUntil = 0;
 
       function emptyApp() {
         return {
@@ -1155,6 +1156,33 @@
             els.status.textContent = '저장 실패';
           });
         }, 120);
+      }
+
+      function isHomeFormDirty() {
+        return Boolean(
+          currentPhoto ||
+          editingId ||
+          els.itemName.value.trim() ||
+          els.itemDesc.value.trim() ||
+          els.itemTags.value.trim() ||
+          els.newBoxName.value.trim()
+        );
+      }
+
+      function holdAutoCloudSync(ms = 45000) {
+        skipAutoCloudSyncUntil = Math.max(skipAutoCloudSyncUntil, Date.now() + ms);
+      }
+
+      function canAutoCloudSync() {
+        if (Date.now() < skipAutoCloudSyncUntil) return false;
+        if (isHomeFormDirty()) return false;
+        if (selectedDetailId || detailEditing || els.detailModal.classList.contains('open')) return false;
+        return true;
+      }
+
+      function runAutoCloudSync() {
+        if (!canAutoCloudSync()) return;
+        cloudSyncNow({ silent: true });
       }
 
       function normalizeApp(data) {
@@ -2320,6 +2348,7 @@
 
       async function cloudSyncNow(options = {}) {
         const silent = Boolean(options.silent);
+        if (silent && !canAutoCloudSync()) return;
         const client = initCloudClient();
         if (!client) {
           if (!silent) alert('먼저 클라우드 설정을 저장해 주세요.');
@@ -2344,11 +2373,12 @@
           if (error) throw error;
           const remote = data?.data ? normalizeApp(data.data) : null;
           if (remote) {
+            const keepForm = isHomeFormDirty();
             const before = appSignature(app);
             app = mergeApps(app, remote);
             const changed = appSignature(app) !== before;
             await writeState();
-            resetForm();
+            if (!keepForm) resetForm();
             render();
             applyUrlBoxFilter();
             await cloudSaveNow();
@@ -2399,9 +2429,11 @@
         const handlePhotoFile = async (input) => {
           const file = input.files && input.files[0];
           if (!file) return;
+          holdAutoCloudSync();
           try {
             els.status.textContent = '사진 처리 중';
             setPhoto(await compressImage(file));
+            holdAutoCloudSync();
             updateStatus();
           } catch (err) {
             console.error(err);
@@ -2411,6 +2443,8 @@
           }
         };
 
+        els.photoInput.addEventListener('click', () => holdAutoCloudSync());
+        els.cameraInput.addEventListener('click', () => holdAutoCloudSync());
         els.removePhoto.addEventListener('click', removeCurrentPhoto);
         els.photoInput.addEventListener('change', () => handlePhotoFile(els.photoInput));
         els.cameraInput.addEventListener('change', () => handlePhotoFile(els.cameraInput));
@@ -2511,9 +2545,9 @@
         els.appLockUnlock.addEventListener('click', unlockAppLock);
         els.appLockDisable.addEventListener('click', disableAppLock);
         els.appLockOverlayUnlock.addEventListener('click', unlockAppLock);
-        window.addEventListener('focus', () => cloudSyncNow({ silent: true }));
+        window.addEventListener('focus', runAutoCloudSync);
         document.addEventListener('visibilitychange', () => {
-          if (!document.hidden) cloudSyncNow({ silent: true });
+          if (!document.hidden) runAutoCloudSync();
         });
       }
 
