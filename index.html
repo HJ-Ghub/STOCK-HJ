@@ -2466,6 +2466,7 @@
         deletedAccountOrigins: [],
         customFonts: [],
         formatRecents: [],
+        routineTemplates: [],
         uiStyle: defaultUiStyle()
       };
     }
@@ -2480,6 +2481,104 @@
         const text = String(item.text ?? item.title ?? item.value ?? '');
         const textHtml = String(item.textHtml || item.html || (text ? escMultiline(text) : ''));
         return Object.assign({}, item, { done: Boolean(item.done), text, textHtml });
+      });
+    }
+
+    function routineTemplateKey(item) {
+      const normalized = normalizeTodayTaskList([item])[0] || {};
+      return normalizeText(`${normalized.text || ''} ${plainFromHtml(normalized.textHtml || '')}`);
+    }
+
+    function normalizeRoutineTemplates(list) {
+      const seen = new Set();
+      return normalizeTodayTaskList(list || []).map(item => Object.assign({}, item, { done: false })).filter(item => {
+        const key = routineTemplateKey(item);
+        if (!key || seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      });
+    }
+
+    function inferRoutineTemplatesFromRecords(records) {
+      const out = [];
+      const seen = new Set();
+      const src = records && typeof records === 'object' ? records : {};
+      Object.keys(src).sort().forEach(date => {
+        normalizeTodayTaskList(src[date]?.routine || []).forEach(item => {
+          const key = routineTemplateKey(item);
+          if (!key || seen.has(key)) return;
+          seen.add(key);
+          out.push(Object.assign({}, item, { done: false }));
+        });
+      });
+      return out;
+    }
+
+    function applyRoutineTemplatesToRecord(record) {
+      if (!record) return record;
+      app.routineTemplates = normalizeRoutineTemplates(app.routineTemplates || []);
+      record.routine = normalizeTodayTaskList(record.routine || []);
+      const seen = new Set(record.routine.map(routineTemplateKey).filter(Boolean));
+      app.routineTemplates.forEach(template => {
+        const key = routineTemplateKey(template);
+        if (key && !seen.has(key)) {
+          record.routine.push(Object.assign({}, template, { done: false }));
+          seen.add(key);
+        }
+      });
+      return record;
+    }
+
+    function setRoutineTemplateAt(index, item) {
+      app.routineTemplates = normalizeTodayTaskList(app.routineTemplates || []);
+      const normalized = normalizeTodayTaskList([item])[0] || { done: false, text: '', textHtml: '' };
+      normalized.done = false;
+      if (!routineTemplateKey(normalized)) {
+        app.routineTemplates.splice(index, 1);
+      } else if (index >= 0 && index < app.routineTemplates.length) {
+        app.routineTemplates[index] = normalized;
+      } else {
+        app.routineTemplates.push(normalized);
+      }
+      app.routineTemplates = normalizeRoutineTemplates(app.routineTemplates);
+    }
+
+    function updateRoutineTemplate(oldItem, newItem, index = -1) {
+      const oldKey = routineTemplateKey(oldItem);
+      const normalized = normalizeTodayTaskList([newItem])[0] || { done: false, text: '', textHtml: '' };
+      normalized.done = false;
+      const newKey = routineTemplateKey(normalized);
+      if (!newKey) {
+        removeRoutineTemplate(oldItem, index);
+        return;
+      }
+      app.routineTemplates = normalizeTodayTaskList(app.routineTemplates || []);
+      const templateIndex = oldKey ? app.routineTemplates.findIndex(row => routineTemplateKey(row) === oldKey) : -1;
+      if (templateIndex >= 0) app.routineTemplates[templateIndex] = normalized;
+      else setRoutineTemplateAt(index, normalized);
+      app.routineTemplates = normalizeRoutineTemplates(app.routineTemplates);
+      if (!oldKey) return;
+      Object.keys(app.records || {}).forEach(date => {
+        const record = normalizeTodayRecord(app.records[date], date);
+        record.routine = normalizeTodayTaskList(record.routine || []).map(row => {
+          if (routineTemplateKey(row) !== oldKey) return row;
+          return Object.assign({}, normalized, { done: Boolean(row.done) });
+        });
+        app.records[date] = record;
+      });
+    }
+
+    function removeRoutineTemplate(item, index = -1) {
+      const key = routineTemplateKey(item);
+      app.routineTemplates = normalizeTodayTaskList(app.routineTemplates || []);
+      if (key) app.routineTemplates = app.routineTemplates.filter(row => routineTemplateKey(row) !== key);
+      else if (index >= 0) app.routineTemplates.splice(index, 1);
+      app.routineTemplates = normalizeRoutineTemplates(app.routineTemplates);
+      if (!key) return;
+      Object.keys(app.records || {}).forEach(date => {
+        const record = normalizeTodayRecord(app.records[date], date);
+        record.routine = normalizeTodayTaskList(record.routine || []).filter(row => routineTemplateKey(row) !== key);
+        app.records[date] = record;
       });
     }
 
@@ -2575,6 +2674,7 @@
         deletedAccountOrigins: Array.isArray(parsed.deletedAccountOrigins) ? parsed.deletedAccountOrigins : [],
         customFonts: Array.isArray(parsed.customFonts) ? parsed.customFonts : [],
         formatRecents: Array.isArray(parsed.formatRecents) ? parsed.formatRecents : [],
+        routineTemplates: Array.isArray(parsed.routineTemplates) ? normalizeRoutineTemplates(parsed.routineTemplates) : inferRoutineTemplatesFromRecords(parsed.records || {}),
         uiStyle: Object.assign(defaultUiStyle(), parsed.uiStyle || {})
       });
     }
@@ -3233,7 +3333,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         }
         cur.records[date] = curRec;
       });
-      ['trades','balances','watchExtras','noteExtras','memoManuals','customFonts','formatRecents','accounts','deletedAccountOrigins'].forEach(key => {
+      ['trades','balances','watchExtras','noteExtras','memoManuals','customFonts','formatRecents','routineTemplates','accounts','deletedAccountOrigins'].forEach(key => {
         cur[key] = uniqueByJson([...(old[key] || []), ...(cur[key] || [])]);
       });
       ['memos','memoHtml','opinionHistory','opinion1','opinion2','memoDetails','dailyDetailExtras','memoFieldExtras','dailyHistoryChecks','classTags'].forEach(key => {
@@ -3924,6 +4024,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       } else {
         app.records[date] = normalizeTodayRecord(app.records[date], date);
       }
+      applyRoutineTemplatesToRecord(app.records[date]);
       return app.records[date];
     }
 
@@ -4149,6 +4250,21 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return scopedKey(account, code, date, source);
     }
 
+    function memoSourceKeysForDate(account, code, date = '', source = '') {
+      const keys = [];
+      const add = (src) => {
+        const key = memoStorageKey(account, code, date, src);
+        if (!keys.includes(key)) keys.push(key);
+      };
+      const s = normSource(source);
+      if (date && s) {
+        add(s);
+        return keys;
+      }
+      add('');
+      return keys;
+    }
+
     function stockRecordDates(account, code) {
       const dates = new Set();
       (app.trades || []).forEach(batch => {
@@ -4168,7 +4284,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     function memoHtmlOf(account, code, date = '', source = '') {
       app.memoHtml = app.memoHtml || {};
-      for (const key of sourceVariantKeysForDate(account, code, date, source)) {
+      for (const key of memoSourceKeysForDate(account, code, date, source)) {
         if (app.memoHtml[key]) return app.memoHtml[key];
       }
       const legacyKey = opKey(account, code);
@@ -4181,7 +4297,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const html = memoHtmlOf(account, code, date, source);
       const textFromHtml = html ? plainFromHtml(html) : '';
       if (textFromHtml) return textFromHtml;
-      for (const key of sourceVariantKeysForDate(account, code, date, source)) {
+      for (const key of memoSourceKeysForDate(account, code, date, source)) {
         if (app.memos[key]) return app.memos[key];
       }
       const legacyKey = opKey(account, code);
@@ -4198,7 +4314,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         if (memoHtml) app.memoHtml[key] = cleanHtml(memoHtml);
         else delete app.memoHtml[key];
       };
-      sourceVariantsForDate(account, code, date, source).forEach(writeOneMemo);
+      writeOneMemo(normSource(source));
       saveApp();
     }
 
@@ -4314,13 +4430,10 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     function updateMemoCellsInDom(account, code, date, text, source = '') {
       const base = `[data-action="open-memo"][data-account="${cssEscape(account)}"][data-code="${cssEscape(code)}"][data-date="${cssEscape(date)}"]`;
-      const selectors = new Set([base]);
+      const selectors = new Set();
       const s = normSource(source);
-      if (s) {
-        selectors.add(`${base}[data-source="${cssEscape(s)}"]`);
-        const linked = linkedIfExists(account, code, date, s);
-        if (linked) selectors.add(`${base}[data-source="${cssEscape(linked)}"]`);
-      }
+      if (s) selectors.add(`${base}[data-source="${cssEscape(s)}"]`);
+      else selectors.add(`${base}:not([data-source])`);
       document.querySelectorAll(Array.from(selectors).join(',')).forEach(cell => {
         const editor = cell.querySelector('[data-action="memo-inline-edit"]');
         if (editor) editor.innerHTML = esc(text || '');
@@ -7518,10 +7631,12 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const type = el.dataset.type;
       const idx = Number(el.dataset.index);
       if (!record[type] || !record[type][idx]) return;
+      const previous = Object.assign({}, record[type][idx]);
       const html = cleanHtml(el.innerHTML || '');
       const text = el.innerText || plainFromHtml(html);
       record[type][idx].textHtml = html;
       record[type][idx].text = text.trim();
+      if (type === 'routine') updateRoutineTemplate(previous, record[type][idx], idx);
       saveApp();
     }
 
@@ -7548,6 +7663,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       record[type] = Array.isArray(record[type]) ? record[type] : [];
       const nextIndex = Number(index) + 1;
       record[type].splice(nextIndex, 0, { done: false, text: '', textHtml: '' });
+      if (type === 'routine') setRoutineTemplateAt(nextIndex, record[type][nextIndex]);
       pendingTodayFocus = `[data-action="task-rich-text"][data-type="${cssEscape(type)}"][data-index="${nextIndex}"]`;
       saveApp();
       render();
@@ -8166,12 +8282,17 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         record[type] = Array.isArray(record[type]) ? record[type] : [];
         const idx = record[type].length;
         record[type].push({ done: false, text: '', textHtml: '' });
+        if (type === 'routine') setRoutineTemplateAt(idx, record[type][idx]);
         pendingTodayFocus = `[data-action="task-rich-text"][data-type="${cssEscape(type)}"][data-index="${idx}"]`;
         saveApp(); render();
       }
       if (action === 'delete-task') {
         const record = ensureRecord(selectedDate);
-        record[el.dataset.type].splice(Number(el.dataset.index), 1);
+        const type = el.dataset.type;
+        const index = Number(el.dataset.index);
+        const removed = record[type] && record[type][index];
+        if (type === 'routine') removeRoutineTemplate(removed, index);
+        record[type].splice(index, 1);
         saveApp(); render();
       }
       if (action === 'add-watch') {
