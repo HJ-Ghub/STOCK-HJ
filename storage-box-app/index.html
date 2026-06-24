@@ -149,7 +149,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
+      grid-template-columns: repeat(5, 1fr);
       gap: 6px;
     }
 
@@ -168,7 +168,7 @@
 
     .layout {
       display: grid;
-      grid-template-columns: 380px minmax(0, 1fr);
+      grid-template-columns: 1fr;
       gap: 12px;
       align-items: start;
     }
@@ -677,8 +677,10 @@
       body.qr-print .summary,
       body.qr-print #itemsView,
       body.qr-print #boxesView,
-      body.qr-print #toolsView > .section-title,
-      body.qr-print #toolsView > .form-grid > :not(#qrLabelsPanel) {
+      body.qr-print #boxDetailView,
+      body.qr-print #backupView,
+      body.qr-print #qrView > .section-title,
+      body.qr-print #qrView > :not(#qrLabelsPanel) {
         display: none !important;
       }
 
@@ -695,7 +697,7 @@
         display: block;
       }
 
-      body.qr-print #toolsView {
+      body.qr-print #qrView {
         display: block !important;
         box-shadow: none;
         border: 0;
@@ -704,7 +706,6 @@
 
     @media (max-width: 860px) {
       .app { padding: 10px; padding-bottom: 78px; }
-      .layout { grid-template-columns: 1fr; }
       .summary { grid-template-columns: repeat(2, 1fr); }
       .panel.form-panel { position: static; }
       .items-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -757,16 +758,18 @@
         <button id="clearSearchBtn" type="button" title="검색 지우기">지우기</button>
       </div>
       <nav class="tabs" aria-label="보기 선택">
-        <button class="tab active" type="button" data-view="items">전체물건</button>
+        <button class="tab active" type="button" data-view="register">등록</button>
+        <button class="tab" type="button" data-view="items">전체물건</button>
         <button class="tab" type="button" data-view="boxes">보관박스</button>
-        <button class="tab" type="button" data-view="tools">백업</button>
+        <button class="tab" type="button" data-view="backup">백업</button>
+        <button class="tab" type="button" data-view="qr">QR</button>
       </nav>
     </div>
   </header>
 
   <main class="app">
     <div class="layout">
-      <section class="panel form-panel" aria-label="물건 등록">
+      <section id="registerView" class="panel form-panel" aria-label="물건 등록">
         <div class="section-title">
           <h2 id="formTitle">물건 등록</h2>
           <button id="resetFormBtn" type="button">새로</button>
@@ -813,7 +816,7 @@
       </section>
 
       <section class="content">
-        <section class="summary" aria-label="요약">
+        <section id="summaryView" class="summary hidden" aria-label="요약">
           <div class="metric"><div class="label">전체 물건</div><div class="value" id="metricItems">0</div></div>
           <div class="metric"><div class="label">보관박스</div><div class="value" id="metricBoxes">0</div></div>
           <div class="metric"><div class="label">사진 있음</div><div class="value" id="metricPhotos">0</div></div>
@@ -831,15 +834,26 @@
         <section id="boxesView" class="panel hidden">
           <div class="section-title">
             <h2>보관박스</h2>
-            <span class="hint">보관박스 이름을 변경할 수 있습니다.</span>
+            <span class="hint">보관박스를 누르면 해당 박스의 물건만 볼 수 있습니다.</span>
           </div>
           <div class="boxes-grid" id="boxesGrid"></div>
         </section>
 
-        <section id="toolsView" class="panel hidden">
+        <section id="boxDetailView" class="panel hidden">
+          <div class="section-title">
+            <div>
+              <h2 id="boxDetailTitle">보관박스</h2>
+              <span class="hint" id="boxDetailHint">보관 중인 물건</span>
+            </div>
+            <button id="boxesBackBtn" type="button">박스목록</button>
+          </div>
+          <div class="items-grid" id="boxDetailGrid"></div>
+        </section>
+
+        <section id="backupView" class="panel hidden">
           <div class="section-title">
             <h2>백업</h2>
-            <span class="hint">사진 포함 JSON으로 내보내고 가져옵니다.</span>
+            <span class="hint">클라우드 로그인, 앱 잠금, 백업 파일</span>
           </div>
           <div class="form-grid">
             <div class="panel" style="box-shadow:none;background:#fbfcfa;">
@@ -863,6 +877,7 @@
                 <input id="cloudRemember" type="checkbox" />
                 <span>로그인 정보 저장</span>
               </label>
+              <p class="hint">참고로 비밀번호 저장은 해당 휴대폰 브라우저 저장소에 보관됩니다. 개인 휴대폰에서만 켜는 것을 권장합니다.</p>
               <div class="actions">
                 <button id="cloudSaveConfigBtn" type="button">설정저장</button>
                 <button id="cloudSignupBtn" type="button">가입</button>
@@ -884,19 +899,26 @@
               </div>
               <p class="hint">휴대폰에 등록된 지문, Face ID 또는 화면잠금으로 앱 화면을 열 수 있습니다.</p>
             </div>
-            <div class="panel" id="qrLabelsPanel" style="box-shadow:none;background:#fbfcfa;">
-              <div class="section-title">
-                <h3>보관박스 QR 라벨</h3>
-                <button id="qrPrintBtn" type="button">라벨인쇄</button>
-              </div>
-              <p class="hint">QR을 찍으면 보관앱이 열리고 해당 보관박스 물건만 검색됩니다.</p>
-              <div class="qr-labels-grid" id="qrLabelsGrid"></div>
-            </div>
             <button id="exportBtn" type="button">백업 내보내기</button>
             <button id="importBtn" type="button">백업 가져오기</button>
             <input id="importFile" class="hidden" type="file" accept="application/json,.json" />
             <button id="clearAllBtn" class="danger" type="button">전체 삭제</button>
             <p class="hint">사진은 브라우저 저장소에 보관됩니다. 휴대폰을 바꾸거나 브라우저 데이터를 지우기 전에는 백업 파일을 만들어 두세요.</p>
+          </div>
+        </section>
+
+        <section id="qrView" class="panel hidden">
+          <div class="section-title">
+            <h2>QR</h2>
+            <button id="qrPrintBtn" type="button">라벨인쇄</button>
+          </div>
+          <div class="panel" id="qrLabelsPanel" style="box-shadow:none;background:#fbfcfa;">
+            <div class="section-title">
+              <h3>보관박스 QR 라벨</h3>
+              <span class="hint">박스별 QR</span>
+            </div>
+            <p class="hint">QR을 찍으면 보관앱이 열리고 해당 보관박스 물건만 검색됩니다.</p>
+            <div class="qr-labels-grid" id="qrLabelsGrid"></div>
           </div>
         </section>
       </section>
@@ -1019,9 +1041,17 @@
         metricBoxes: $('metricBoxes'),
         metricPhotos: $('metricPhotos'),
         metricResults: $('metricResults'),
+        registerView: $('registerView'),
+        summaryView: $('summaryView'),
         itemsView: $('itemsView'),
         boxesView: $('boxesView'),
-        toolsView: $('toolsView'),
+        boxDetailView: $('boxDetailView'),
+        boxDetailTitle: $('boxDetailTitle'),
+        boxDetailHint: $('boxDetailHint'),
+        boxDetailGrid: $('boxDetailGrid'),
+        boxesBack: $('boxesBackBtn'),
+        backupView: $('backupView'),
+        qrView: $('qrView'),
         itemsGrid: $('itemsGrid'),
         boxesGrid: $('boxesGrid'),
         itemsHint: $('itemsHint'),
@@ -1091,7 +1121,8 @@
       let detailMode = 'view';
       let editingId = '';
       let selectedDetailId = '';
-      let currentView = 'items';
+      let currentView = 'register';
+      let selectedBoxDetailId = '';
       let saveTimer = null;
       let cloudTimer = null;
       let cloudState = { client: null, user: null, lastSyncAt: '', lastError: '' };
@@ -1358,12 +1389,17 @@
       }
 
       function renderViews() {
+        els.registerView.classList.toggle('hidden', currentView !== 'register');
+        els.summaryView.classList.toggle('hidden', currentView !== 'items');
         els.itemsView.classList.toggle('hidden', currentView !== 'items');
         els.boxesView.classList.toggle('hidden', currentView !== 'boxes');
-        els.toolsView.classList.toggle('hidden', currentView !== 'tools');
-        els.tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.view === currentView));
+        els.boxDetailView.classList.toggle('hidden', currentView !== 'boxDetail');
+        els.backupView.classList.toggle('hidden', currentView !== 'backup');
+        els.qrView.classList.toggle('hidden', currentView !== 'qr');
+        els.tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.view === currentView || (currentView === 'boxDetail' && tab.dataset.view === 'boxes')));
         renderItems();
         renderBoxes();
+        renderBoxDetail();
         renderQrLabels();
       }
 
@@ -1371,22 +1407,10 @@
         const rows = filteredItems();
         els.itemsHint.textContent = els.search.value.trim() ? '검색 결과' : '최근 등록순';
         if (!rows.length) {
-          els.itemsGrid.innerHTML = '<div class="empty">아직 물건이 없습니다. 왼쪽에서 사진과 보관박스를 등록해 보세요.</div>';
+          els.itemsGrid.innerHTML = '<div class="empty">아직 물건이 없습니다. 등록 버튼에서 사진과 보관박스를 등록해 보세요.</div>';
           return;
         }
-        els.itemsGrid.innerHTML = rows.map(item => `
-          <article class="item-card">
-            <img src="${esc(item.photo || placeholderSvg())}" alt="${esc(item.name)}" data-action="detail" data-id="${esc(item.id)}" />
-            <div class="item-info">
-              <div class="item-name">${esc(item.name || '이름 없음')}</div>
-              <div class="item-place">${boxBadgeHtml(boxName(item.boxId))}</div>
-              <div class="tags">${(item.tags || []).slice(0, 4).map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
-            </div>
-            <div class="card-actions">
-              <button type="button" class="danger" data-action="delete-item" data-id="${esc(item.id)}">삭제</button>
-            </div>
-          </article>
-        `).join('');
+        els.itemsGrid.innerHTML = rows.map(itemCardHtml).join('');
       }
 
       function renderBoxes() {
@@ -1398,7 +1422,7 @@
           const items = app.items.filter(item => item.boxId === box.id);
           const photos = items.filter(item => item.photo).slice(0, 6);
           return `
-            <article class="box-card">
+            <article class="box-card" data-action="box-detail" data-box-id="${esc(box.id)}">
               <div class="box-cover">
                 ${photos.length ? photos.map(item => `<img src="${esc(item.photo)}" alt="${esc(item.name)}" />`).join('') : '<div class="empty-cover">빈 박스</div>'}
               </div>
@@ -1410,6 +1434,41 @@
             </article>
           `;
         }).join('');
+      }
+
+      function itemCardHtml(item) {
+        return `
+          <article class="item-card">
+            <img src="${esc(item.photo || placeholderSvg())}" alt="${esc(item.name)}" data-action="detail" data-id="${esc(item.id)}" />
+            <div class="item-info">
+              <div class="item-name">${esc(item.name || '이름 없음')}</div>
+              <div class="item-place">${boxBadgeHtml(boxName(item.boxId))}</div>
+              <div class="tags">${(item.tags || []).slice(0, 4).map(tag => `<span class="tag">${esc(tag)}</span>`).join('')}</div>
+            </div>
+            <div class="card-actions">
+              <button type="button" class="danger" data-action="delete-item" data-id="${esc(item.id)}">삭제</button>
+            </div>
+          </article>
+        `;
+      }
+
+      function renderBoxDetail() {
+        if (!els.boxDetailGrid) return;
+        const box = app.boxes.find(row => row.id === selectedBoxDetailId);
+        if (!box) {
+          els.boxDetailTitle.textContent = '보관박스';
+          els.boxDetailHint.textContent = '박스를 선택해 주세요.';
+          els.boxDetailGrid.innerHTML = '<div class="empty">선택한 보관박스가 없습니다.</div>';
+          return;
+        }
+        const items = app.items
+          .filter(item => item.boxId === box.id)
+          .sort((a, b) => Number(b.updatedAt || 0) - Number(a.updatedAt || 0));
+        els.boxDetailTitle.textContent = box.name;
+        els.boxDetailHint.textContent = `물건 ${items.length}개`;
+        els.boxDetailGrid.innerHTML = items.length
+          ? items.map(itemCardHtml).join('')
+          : '<div class="empty">이 보관박스에는 아직 물건이 없습니다.</div>';
       }
 
       function renderQrLabels() {
@@ -1885,7 +1944,23 @@
 
       function filterByBox(name) {
         els.search.value = name;
+        selectedBoxDetailId = '';
         currentView = 'items';
+        render();
+      }
+
+      function openBoxDetail(boxId) {
+        const box = app.boxes.find(row => row.id === boxId);
+        if (!box) return;
+        selectedBoxDetailId = box.id;
+        currentView = 'boxDetail';
+        render();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+
+      function backToBoxes() {
+        selectedBoxDetailId = '';
+        currentView = 'boxes';
         render();
       }
 
@@ -1906,7 +1981,8 @@
       function goHome() {
         if (selectedDetailId) closeDetail();
         els.search.value = '';
-        currentView = 'items';
+        selectedBoxDetailId = '';
+        currentView = 'register';
         urlBoxFilterApplied = true;
         if (location.search) history.replaceState(null, '', location.pathname);
         render();
@@ -2464,6 +2540,7 @@
         els.search.addEventListener('input', render);
         els.home.addEventListener('click', goHome);
         els.qrPrint.addEventListener('click', printQrLabels);
+        els.boxesBack.addEventListener('click', backToBoxes);
         els.clearSearch.addEventListener('click', () => {
           els.search.value = '';
           render();
@@ -2471,6 +2548,7 @@
 
         els.tabs.forEach(tab => tab.addEventListener('click', () => {
           currentView = tab.dataset.view || 'items';
+          if (currentView !== 'boxDetail') selectedBoxDetailId = '';
           render();
         }));
 
@@ -2492,6 +2570,7 @@
             startDeleteItem();
           }
           if (action === 'filter-box') filterByBox(target.dataset.box);
+          if (action === 'box-detail') openBoxDetail(target.dataset.boxId);
           if (action === 'rename-box') renameBox(target.dataset.boxId);
           if (action === 'save-box-photos') saveBoxPhotos(target.dataset.boxId);
           if (action === 'qr-label') openQrLabel(target.dataset.boxId);
@@ -2504,7 +2583,7 @@
         els.detailEdit.addEventListener('click', startDetailEdit);
         els.detailMove.addEventListener('click', () => {
           const item = app.items.find(row => row.id === selectedDetailId);
-          if (item) filterByBox(boxName(item.boxId));
+          if (item) openBoxDetail(item.boxId);
           closeDetail();
         });
         els.detailMoveBox.addEventListener('click', moveSelectedDetailItem);
