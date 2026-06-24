@@ -228,10 +228,11 @@
 
     .photo-box img {
       width: 100%;
-      height: 100%;
-      max-height: 240px;
-      object-fit: cover;
+      height: auto;
+      max-height: 280px;
+      object-fit: contain;
       display: none;
+      background: #fff;
     }
 
     .photo-box.has-photo img { display: block; }
@@ -261,6 +262,31 @@
       display: grid;
       grid-template-columns: 1fr 1fr;
       gap: 8px;
+    }
+
+    .file-button {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: 38px;
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      border-radius: var(--radius);
+      padding: 8px 10px;
+      font-size: 14px;
+      font-weight: 900;
+      overflow: hidden;
+      cursor: pointer;
+    }
+
+    .file-button input {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
     }
 
     .detail-move-row {
@@ -750,14 +776,16 @@
             <img id="photoPreview" alt="선택한 물건 사진 미리보기" />
             <div class="photo-empty">
               <strong>사진을 찍거나 선택</strong>
-              <span>이 영역을 누르면 사진앨범이 열립니다.</span>
+              <span>아래 버튼으로 사진을 찍거나 선택하세요.</span>
             </div>
           </div>
-          <input id="photoInput" class="hidden" type="file" accept="image/*" />
-          <input id="cameraInput" class="hidden" type="file" accept="image/*" capture="environment" />
           <div class="photo-actions">
-            <button id="cameraBtn" type="button">카메라</button>
-            <button id="albumBtn" type="button">사진앨범</button>
+            <label class="file-button">카메라
+              <input id="cameraInput" type="file" accept="image/*" capture="environment" />
+            </label>
+            <label class="file-button">사진앨범
+              <input id="photoInput" type="file" accept="image/*" />
+            </label>
             <button id="removePhotoBtn" class="danger wide-action hidden" type="button">사진 삭제</button>
           </div>
           <label>물건명
@@ -975,8 +1003,6 @@
         cameraInput: $('cameraInput'),
         photoBox: $('photoBox'),
         photoPreview: $('photoPreview'),
-        cameraBtn: $('cameraBtn'),
-        albumBtn: $('albumBtn'),
         removePhoto: $('removePhotoBtn'),
         form: $('itemForm'),
         formTitle: $('formTitle'),
@@ -1549,6 +1575,7 @@
       }
 
       async function compressImage(file) {
+        if (!file || !/^image\//i.test(file.type || '')) throw new Error('사진 파일만 선택해 주세요.');
         const bitmap = await loadImageSource(file);
         const maxSide = 1280;
         const scale = Math.min(1, maxSide / Math.max(bitmap.width, bitmap.height));
@@ -1561,18 +1588,18 @@
       }
 
       async function loadImageSource(file) {
-        if ('createImageBitmap' in window) return createImageBitmap(file);
-        const dataUrl = await new Promise((resolve, reject) => {
-          const reader = new FileReader();
-          reader.onload = () => resolve(reader.result);
-          reader.onerror = () => reject(reader.error || new Error('사진 읽기 실패'));
-          reader.readAsDataURL(file);
-        });
+        const objectUrl = URL.createObjectURL(file);
         return new Promise((resolve, reject) => {
           const img = new Image();
-          img.onload = () => resolve(img);
-          img.onerror = () => reject(new Error('사진 표시 실패'));
-          img.src = dataUrl;
+          img.onload = () => {
+            URL.revokeObjectURL(objectUrl);
+            resolve(img);
+          };
+          img.onerror = () => {
+            URL.revokeObjectURL(objectUrl);
+            reject(new Error('사진 표시 실패'));
+          };
+          img.src = objectUrl;
         });
       }
 
@@ -2384,9 +2411,6 @@
           }
         };
 
-        els.photoBox.addEventListener('click', () => els.photoInput.click());
-        els.albumBtn.addEventListener('click', () => els.photoInput.click());
-        els.cameraBtn.addEventListener('click', () => els.cameraInput.click());
         els.removePhoto.addEventListener('click', removeCurrentPhoto);
         els.photoInput.addEventListener('change', () => handlePhotoFile(els.photoInput));
         els.cameraInput.addEventListener('change', () => handlePhotoFile(els.cameraInput));
