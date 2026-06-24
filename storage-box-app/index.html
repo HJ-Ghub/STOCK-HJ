@@ -1026,6 +1026,7 @@
       <canvas id="cameraCanvas" class="hidden"></canvas>
       <div class="actions">
         <button id="cameraShootBtn" class="primary" type="button">촬영</button>
+        <button id="cameraSwitchBtn" type="button">카메라 전환</button>
         <button id="cameraCloseBtn" type="button">닫기</button>
       </div>
     </div>
@@ -1142,6 +1143,7 @@
         cameraVideo: $('cameraVideo'),
         cameraCanvas: $('cameraCanvas'),
         cameraShoot: $('cameraShootBtn'),
+        cameraSwitch: $('cameraSwitchBtn'),
         cameraClose: $('cameraCloseBtn'),
         aiModal: $('aiModal'),
         aiConfidence: $('aiConfidence'),
@@ -1200,6 +1202,8 @@
       let aiState = { target: 'main', busy: false, suggestion: null };
       let cameraStream = null;
       let cameraTarget = 'main';
+      let cameraDevices = [];
+      let cameraDeviceIndex = 0;
 
       function emptyApp() {
         return {
@@ -1725,6 +1729,63 @@
         else els.cameraInput.click();
       }
 
+      async function refreshCameraDevices() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.enumerateDevices) {
+          cameraDevices = [];
+          return cameraDevices;
+        }
+        const devices = await navigator.mediaDevices.enumerateDevices();
+        cameraDevices = devices.filter(device => device.kind === 'videoinput');
+        const normalBackIndex = cameraDevices.findIndex((device) => {
+          const label = String(device.label || '').toLowerCase();
+          const isBack = /back|rear|environment|후면/.test(label);
+          const isSpecialLens = /ultra|wide|macro|tele|depth|초광각|광각|매크로|망원|전면|front/.test(label);
+          return isBack && !isSpecialLens;
+        });
+        if (normalBackIndex >= 0) cameraDeviceIndex = normalBackIndex;
+        else cameraDeviceIndex = Math.max(0, cameraDevices.findIndex(device => !/front|전면/i.test(device.label || '')));
+        els.cameraSwitch.classList.toggle('hidden', cameraDevices.length <= 1);
+        return cameraDevices;
+      }
+
+      async function normalizeCameraTrack(stream) {
+        const track = stream.getVideoTracks()[0];
+        if (!track || typeof track.getCapabilities !== 'function') return;
+        try {
+          const capabilities = track.getCapabilities();
+          const constraints = {};
+          if (capabilities.zoom) constraints.advanced = [{ zoom: Math.max(1, capabilities.zoom.min || 1) }];
+          if (Object.keys(constraints).length && typeof track.applyConstraints === 'function') {
+            await track.applyConstraints(constraints);
+          }
+        } catch (err) {
+          console.warn('camera constraints unavailable', err);
+        }
+      }
+
+      function cameraConstraints() {
+        const device = cameraDevices[cameraDeviceIndex];
+        if (device?.deviceId) {
+          return {
+            video: {
+              deviceId: { exact: device.deviceId },
+              width: { ideal: 1280 },
+              height: { ideal: 720 }
+            },
+            audio: false
+          };
+        }
+        return {
+          video: {
+            facingMode: { ideal: 'environment' },
+            width: { ideal: 1280 },
+            height: { ideal: 720 },
+            zoom: { ideal: 1 }
+          },
+          audio: false
+        };
+      }
+
       async function openCameraCapture(target = 'main') {
         cameraTarget = target;
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
@@ -1733,21 +1794,35 @@
         }
         closeCameraCapture({ keepTarget: true });
         try {
-          cameraStream = await navigator.mediaDevices.getUserMedia({
-            video: {
-              facingMode: { ideal: 'environment' },
-              width: { ideal: 1280 },
-              height: { ideal: 720 }
-            },
-            audio: false
-          });
+          await refreshCameraDevices();
+          cameraStream = await navigator.mediaDevices.getUserMedia(cameraConstraints());
+          await normalizeCameraTrack(cameraStream);
+          els.cameraVideo.srcObject = cameraStream;
+          els.cameraModal.classList.add('open');
+          await els.cameraVideo.play().catch(() => {});
+          await refreshCameraDevices();
+        } catch (err) {
+          console.error(err);
+          alert('카메라를 열 수 없어 기존 카메라 선택 방식으로 전환합니다.');
+          fallbackCameraInput(target);
+        }
+      }
+
+      async function switchCameraCapture() {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+        await refreshCameraDevices();
+        if (cameraDevices.length <= 1) return;
+        cameraDeviceIndex = (cameraDeviceIndex + 1) % cameraDevices.length;
+        closeCameraCapture({ keepTarget: true });
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia(cameraConstraints());
+          await normalizeCameraTrack(cameraStream);
           els.cameraVideo.srcObject = cameraStream;
           els.cameraModal.classList.add('open');
           await els.cameraVideo.play().catch(() => {});
         } catch (err) {
           console.error(err);
-          alert('카메라를 열 수 없어 기존 카메라 선택 방식으로 전환합니다.');
-          fallbackCameraInput(target);
+          alert('다른 카메라를 열 수 없습니다.');
         }
       }
 
@@ -1758,6 +1833,7 @@
         }
         if (els.cameraVideo) els.cameraVideo.srcObject = null;
         if (els.cameraModal) els.cameraModal.classList.remove('open');
+        if (els.cameraSwitch && !options.keepTarget) els.cameraSwitch.classList.add('hidden');
         if (!options.keepTarget) cameraTarget = 'main';
       }
 
@@ -2775,6 +2851,7 @@
         els.photoInput.addEventListener('change', () => handlePhotoFile(els.photoInput));
         els.cameraInput.addEventListener('change', () => handlePhotoFile(els.cameraInput));
         els.cameraShoot.addEventListener('click', captureCameraPhoto);
+        els.cameraSwitch.addEventListener('click', switchCameraCapture);
         els.cameraClose.addEventListener('click', () => closeCameraCapture());
         els.cameraModal.addEventListener('click', (event) => {
           if (event.target === els.cameraModal) closeCameraCapture();
