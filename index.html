@@ -2976,6 +2976,167 @@
       }
     }
 
+    /* Dark mode: preserve opinion and target-price colors instead of flattening them. */
+    body.theme-dark .op-select.op-홀딩,
+    body.theme-dark .op-badge.op-홀딩 {
+      background: #dff6df !important;
+      color: #1f6b35 !important;
+      -webkit-text-fill-color: #1f6b35 !important;
+      border-color: #9fd7aa !important;
+    }
+    body.theme-dark .op-select.op-추매,
+    body.theme-dark .op-badge.op-추매 {
+      background: #ffd6e7 !important;
+      color: #8a2846 !important;
+      -webkit-text-fill-color: #8a2846 !important;
+      border-color: #e9a9c1 !important;
+    }
+    body.theme-dark .op-select.op-매수,
+    body.theme-dark .op-select.op-장기,
+    body.theme-dark .op-badge.op-매수,
+    body.theme-dark .op-badge.op-장기 {
+      background: #ffe2bd !important;
+      color: #8a4b08 !important;
+      -webkit-text-fill-color: #8a4b08 !important;
+      border-color: #e9c28f !important;
+    }
+    body.theme-dark .op-select.op-매도,
+    body.theme-dark .op-select.op-일부매도,
+    body.theme-dark .op-badge.op-매도,
+    body.theme-dark .op-badge.op-일부매도 {
+      background: #dbeafe !important;
+      color: #145f8f !important;
+      -webkit-text-fill-color: #145f8f !important;
+      border-color: #9fc7e7 !important;
+    }
+    body.theme-dark .op-select.op-관망,
+    body.theme-dark .op-badge.op-관망 {
+      background: #eadcff !important;
+      color: #5b3bb2 !important;
+      -webkit-text-fill-color: #5b3bb2 !important;
+      border-color: #c8b4f4 !important;
+    }
+    body.theme-dark .op-select.op-기타,
+    body.theme-dark .op-badge.op-기타 {
+      background: #f1f5f9 !important;
+      color: #334155 !important;
+      -webkit-text-fill-color: #334155 !important;
+      border-color: #cbd5e1 !important;
+    }
+    body.theme-dark .op-select.op-중기,
+    body.theme-dark .op-badge.op-중기 {
+      background: #e3f6ce !important;
+      color: #24713a !important;
+      -webkit-text-fill-color: #24713a !important;
+      border-color: #b7d99b !important;
+    }
+    body.theme-dark .op-select.op-단기,
+    body.theme-dark .op-badge.op-단기 {
+      background: #fff3a3 !important;
+      color: #725c10 !important;
+      -webkit-text-fill-color: #725c10 !important;
+      border-color: #e4cc65 !important;
+    }
+    body.theme-dark .target-color-select.target-color-black {
+      background: #f3f4f6 !important;
+      border-color: #cbd5e1 !important;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+    body.theme-dark .target-color-select.target-color-blue {
+      background: #8ec5ff !important;
+      border-color: #58a6ff !important;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+    body.theme-dark .target-color-select.target-color-red {
+      background: #ff9b9b !important;
+      border-color: #ff6b6b !important;
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body.theme-system .op-select.op-홀딩,
+      body.theme-system .op-badge.op-홀딩 {
+        background: #dff6df !important;
+        color: #1f6b35 !important;
+        -webkit-text-fill-color: #1f6b35 !important;
+        border-color: #9fd7aa !important;
+      }
+      body.theme-system .op-select.op-추매,
+      body.theme-system .op-badge.op-추매 {
+        background: #ffd6e7 !important;
+        color: #8a2846 !important;
+        -webkit-text-fill-color: #8a2846 !important;
+        border-color: #e9a9c1 !important;
+      }
+      body.theme-system .op-select.op-매수,
+      body.theme-system .op-select.op-장기,
+      body.theme-system .op-badge.op-매수,
+      body.theme-system .op-badge.op-장기 {
+        background: #ffe2bd !important;
+        color: #8a4b08 !important;
+        -webkit-text-fill-color: #8a4b08 !important;
+        border-color: #e9c28f !important;
+      }
+      body.theme-system .op-select.op-매도,
+      body.theme-system .op-select.op-일부매도,
+      body.theme-system .op-badge.op-매도,
+      body.theme-system .op-badge.op-일부매도 {
+        background: #dbeafe !important;
+        color: #145f8f !important;
+        -webkit-text-fill-color: #145f8f !important;
+        border-color: #9fc7e7 !important;
+      }
+      body.theme-system .op-select.op-관망,
+      body.theme-system .op-badge.op-관망 {
+        background: #eadcff !important;
+        color: #5b3bb2 !important;
+        -webkit-text-fill-color: #5b3bb2 !important;
+        border-color: #c8b4f4 !important;
+      }
+      body.theme-system .op-select.op-기타,
+      body.theme-system .op-badge.op-기타 {
+        background: #f1f5f9 !important;
+        color: #334155 !important;
+        -webkit-text-fill-color: #334155 !important;
+        border-color: #cbd5e1 !important;
+      }
+      body.theme-system .op-select.op-중기,
+      body.theme-system .op-badge.op-중기 {
+        background: #e3f6ce !important;
+        color: #24713a !important;
+        -webkit-text-fill-color: #24713a !important;
+        border-color: #b7d99b !important;
+      }
+      body.theme-system .op-select.op-단기,
+      body.theme-system .op-badge.op-단기 {
+        background: #fff3a3 !important;
+        color: #725c10 !important;
+        -webkit-text-fill-color: #725c10 !important;
+        border-color: #e4cc65 !important;
+      }
+      body.theme-system .target-color-select.target-color-black {
+        background: #f3f4f6 !important;
+        border-color: #cbd5e1 !important;
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+      }
+      body.theme-system .target-color-select.target-color-blue {
+        background: #8ec5ff !important;
+        border-color: #58a6ff !important;
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+      }
+      body.theme-system .target-color-select.target-color-red {
+        background: #ff9b9b !important;
+        border-color: #ff6b6b !important;
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+      }
+    }
+
   </style>
 </head>
 <body spellcheck="false">
@@ -4672,7 +4833,8 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const detail = latestTargetDetailForDisplay(account, code, date, source || '');
       const color = targetColorValue(detail[`${field}Color`]);
       const displayValue = String(value || '').trim() ? value : (detail[field] || '');
-      return `<div class="target-cell"><input class="${esc(className)} target-color-${esc(color)}" type="text" inputmode="numeric" value="${esc(fmtMoneyText(displayValue))}" data-action="memo-detail-input" data-field="${esc(field)}" data-account="${esc(account)}" data-code="${esc(code)}" data-date="${esc(date)}"${dataSourceAttr(source || '')} placeholder="" style="color:${esc(targetColorCss(color))}" />${targetColorSelectHtml(account, code, date, source || '', field, color)}</div>`;
+      const cssColor = targetColorCss(color);
+      return `<div class="target-cell"><input class="${esc(className)} target-color-${esc(color)}" type="text" inputmode="numeric" value="${esc(fmtMoneyText(displayValue))}" data-action="memo-detail-input" data-field="${esc(field)}" data-account="${esc(account)}" data-code="${esc(code)}" data-date="${esc(date)}"${dataSourceAttr(source || '')} placeholder="" style="color:${esc(cssColor)};-webkit-text-fill-color:${esc(cssColor)}" />${targetColorSelectHtml(account, code, date, source || '', field, color)}</div>`;
     }
 
     function manualTargetColorSelectHtml(id, field, color) {
@@ -4682,7 +4844,8 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     function manualTargetInputCellHtml(row, field, className = 'stock-target-input') {
       const color = targetColorValue(row && row[`${field}Color`]);
-      return `<div class="target-cell"><input class="${esc(className)} target-color-${esc(color)}" type="text" inputmode="numeric" value="${esc(fmtMoneyText(row && row[field]))}" data-action="manual-memo-input" data-id="${esc(row && row.id)}" data-field="${esc(field)}" placeholder="" style="color:${esc(targetColorCss(color))}" />${manualTargetColorSelectHtml(row && row.id, field, color)}</div>`;
+      const cssColor = targetColorCss(color);
+      return `<div class="target-cell"><input class="${esc(className)} target-color-${esc(color)}" type="text" inputmode="numeric" value="${esc(fmtMoneyText(row && row[field]))}" data-action="manual-memo-input" data-id="${esc(row && row.id)}" data-field="${esc(field)}" placeholder="" style="color:${esc(cssColor)};-webkit-text-fill-color:${esc(cssColor)}" />${manualTargetColorSelectHtml(row && row.id, field, color)}</div>`;
     }
 
     function normalizeMoneyInput(el) {
@@ -7735,7 +7898,8 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const value = fmtMoneyText(row && row[field]);
       if (!value) return '';
       const color = targetColorValue(row && row[`${field}Color`]);
-      return `<span class="history-target-value target-color-${esc(color)}" style="color:${esc(targetColorCss(color))}">${esc(value)}</span>`;
+      const cssColor = targetColorCss(color);
+      return `<span class="history-target-value target-color-${esc(color)}" style="color:${esc(cssColor)};-webkit-text-fill-color:${esc(cssColor)}">${esc(value)}</span>`;
     }
 
     function isSellPriceRow(row) {
@@ -9458,6 +9622,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           input.classList.remove('target-color-black', 'target-color-blue', 'target-color-red');
           input.classList.add(`target-color-${color}`);
           input.style.color = targetColorCss(color);
+          input.style.webkitTextFillColor = targetColorCss(color);
         }
       }
       if (el.dataset.action === 'manual-class-tag') {
