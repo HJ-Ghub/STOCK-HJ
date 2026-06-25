@@ -724,8 +724,18 @@
       gap: 10px;
     }
 
+    .photo-viewer-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 8px;
+      flex: 0 0 auto;
+    }
+
     .photo-viewer-head h2 {
       color: #fff;
+      min-width: 0;
+      flex: 1 1 auto;
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;
@@ -947,6 +957,20 @@
       }
       .detail-photo-frame { margin: 10px 10px 0; border-radius: 14px; }
       .detail-photo-frame img { max-height: 34vh; }
+      .photo-viewer-head {
+        align-items: stretch;
+        flex-wrap: wrap;
+      }
+      .photo-viewer-actions {
+        width: 100%;
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+      }
+      .photo-viewer-actions button {
+        min-height: 42px;
+        padding: 7px 8px;
+        font-size: 14px;
+      }
       .detail.editing .detail-photo-frame img {
         max-height: 18vh;
         max-height: 18dvh;
@@ -1220,7 +1244,11 @@
     <div class="photo-viewer-panel">
       <div class="photo-viewer-head">
         <h2 id="photoViewerTitle">사진</h2>
-        <button id="photoViewerCloseBtn" type="button">닫기</button>
+        <div class="photo-viewer-actions">
+          <button id="photoViewerSaveBtn" class="primary" type="button">사진저장</button>
+          <button id="photoViewerRemoveBtn" class="danger" type="button">사진삭제</button>
+          <button id="photoViewerCloseBtn" type="button">닫기</button>
+        </div>
       </div>
       <img id="photoViewerImage" alt="크게 보기" />
     </div>
@@ -1312,6 +1340,8 @@
         photoViewer: $('photoViewerModal'),
         photoViewerTitle: $('photoViewerTitle'),
         photoViewerImage: $('photoViewerImage'),
+        photoViewerSave: $('photoViewerSaveBtn'),
+        photoViewerRemove: $('photoViewerRemoveBtn'),
         photoViewerClose: $('photoViewerCloseBtn'),
         detailModal: $('detailModal'),
         detailPhoto: $('detailPhoto'),
@@ -1357,6 +1387,7 @@
       let cloudState = { client: null, user: null, lastSyncAt: '', lastError: '' };
       let urlBoxFilterApplied = false;
       let selectedQrBoxId = '';
+      let selectedPhotoViewerId = '';
       let skipAutoCloudSyncUntil = 0;
       let backGuardInstalled = false;
       const photoViewerZoom = {
@@ -1895,6 +1926,7 @@
       function openPhotoViewer(id) {
         const item = app.items.find(row => row.id === id);
         if (!item) return;
+        selectedPhotoViewerId = item.id;
         resetPhotoViewerZoom();
         els.photoViewerTitle.textContent = item.name || '사진';
         els.photoViewerImage.src = item.photo || placeholderSvg();
@@ -1905,6 +1937,7 @@
       function closePhotoViewer() {
         els.photoViewer.classList.remove('open');
         els.photoViewerImage.removeAttribute('src');
+        selectedPhotoViewerId = '';
         resetPhotoViewerZoom();
       }
 
@@ -2395,6 +2428,12 @@
         downloadPhoto(item.photo, `${safeFileName(item.name)}.jpg`);
       }
 
+      function savePhotoViewerPhoto() {
+        const item = app.items.find(row => row.id === selectedPhotoViewerId);
+        if (!item) return;
+        downloadPhoto(item.photo, `${safeFileName(item.name)}.jpg`);
+      }
+
       function removeCurrentPhoto() {
         if (!currentPhoto) return;
         if (!confirm('현재 선택한 사진을 삭제할까요?')) return;
@@ -2409,6 +2448,17 @@
         item.updatedAt = Date.now();
         scheduleSave();
         openDetail(item.id);
+        render();
+      }
+
+      function removePhotoViewerPhoto() {
+        const item = app.items.find(row => row.id === selectedPhotoViewerId);
+        if (!item || !item.photo) return;
+        if (!confirm(`${item.name || '이 물건'}의 사진만 삭제할까요?`)) return;
+        item.photo = '';
+        item.updatedAt = Date.now();
+        scheduleSave();
+        closePhotoViewer();
         render();
       }
 
@@ -2983,6 +3033,8 @@
           if (event.target === els.qrModal) closeQrLabel();
         });
         els.photoViewerClose.addEventListener('click', closePhotoViewer);
+        els.photoViewerSave.addEventListener('click', savePhotoViewerPhoto);
+        els.photoViewerRemove.addEventListener('click', removePhotoViewerPhoto);
         els.photoViewer.addEventListener('click', (event) => {
           if (event.target === els.photoViewer) closePhotoViewer();
         });
