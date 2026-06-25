@@ -362,6 +362,9 @@
     .mini-stock-name { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: middle; }
     .mini-search-row { display:flex; align-items:center; gap:6px; margin: 6px 0; }
     .mini-search-row input { min-height: 28px; height: 28px; padding: 4px 8px; font-size: 11px; flex:1; }
+    .mini-list-summary { display:flex; align-items:center; gap:5px; flex-wrap:wrap; margin:2px 0 4px; font-size:10px; font-weight:800; }
+    .mini-list-summary .summary-chip { display:inline-flex; align-items:center; gap:4px; min-height:20px; padding:2px 7px; border:1px solid #d7e5f2; border-radius:999px; background:#f7fbff; color:#26384d; white-space:nowrap; }
+    .mini-list-summary .summary-label { color:#56677a; }
     .manual-upload-row { display:grid; grid-template-columns: 1.25fr .75fr .66fr .72fr .78fr .78fr .42fr 1.35fr .7fr .75fr .88fr .58fr .88fr .88fr .56fr; gap:4px; align-items:center; margin:6px 0; padding:6px; border:1px solid #dbe8f4; border-radius:12px; background:#fffdf8; }
     .manual-upload-row.manual-upload-trade { grid-template-columns: 1.25fr .75fr .66fr .72fr .78fr .78fr .42fr 1.35fr .7fr .88fr .58fr .88fr .88fr .56fr; }
     .manual-upload-row input, .manual-upload-row select { width:100%; min-height:24px; height:24px; padding:2px 4px; font-size:10px; border-radius:8px; }
@@ -2691,6 +2694,53 @@
       border-color: #30363d !important;
       box-shadow: none !important;
     }
+    body.theme-dark .account-upload-page .empty,
+    body.theme-dark .account-upload-page .tiny,
+    body.theme-dark .account-upload-page label,
+    body.theme-dark .account-upload-page strong,
+    body.theme-dark .account-upload-page h2,
+    body.theme-dark .account-upload-page h3,
+    body.theme-dark .mini-search-row label,
+    body.theme-dark .mini-search-row span {
+      color: #dbe7f3 !important;
+      -webkit-text-fill-color: #dbe7f3 !important;
+    }
+    body.theme-dark .account-upload-page input:not([type="checkbox"]):not(.target-color-black):not(.target-color-blue):not(.target-color-red),
+    body.theme-dark .account-upload-page select:not(.target-color-select):not(.class-tag-select),
+    body.theme-dark .account-upload-page textarea,
+    body.theme-dark .mini-search-row input {
+      background: #0d1117 !important;
+      color: #f0f6fc !important;
+      -webkit-text-fill-color: #f0f6fc !important;
+      border-color: #3b4451 !important;
+    }
+    body.theme-dark .account-upload-page input::placeholder {
+      color: #a8b3c2 !important;
+      -webkit-text-fill-color: #a8b3c2 !important;
+      opacity: 1 !important;
+    }
+    body.theme-dark .account-upload-page input[type="file"]::file-selector-button {
+      background: #21262d !important;
+      color: #f0f6fc !important;
+      border: 1px solid #3b4451 !important;
+      border-radius: 7px !important;
+    }
+    body.theme-dark .account-upload-page .mini-upload-table th {
+      background: #21262d !important;
+      color: #f0f6fc !important;
+      -webkit-text-fill-color: #f0f6fc !important;
+      border-color: #30363d !important;
+    }
+    body.theme-dark .account-upload-page .mini-list-summary .summary-chip {
+      background: #111827 !important;
+      border-color: #30363d !important;
+      color: #f0f6fc !important;
+      -webkit-text-fill-color: #f0f6fc !important;
+    }
+    body.theme-dark .account-upload-page .mini-list-summary .summary-label {
+      color: #a8b3c2 !important;
+      -webkit-text-fill-color: #a8b3c2 !important;
+    }
     body.theme-dark .name-link,
     body.theme-dark .mini-stock-name,
     body.theme-dark .memo-line {
@@ -2808,6 +2858,53 @@
         -webkit-text-fill-color: #f0f6fc !important;
         border-color: #30363d !important;
         box-shadow: none !important;
+      }
+      body.theme-system .account-upload-page .empty,
+      body.theme-system .account-upload-page .tiny,
+      body.theme-system .account-upload-page label,
+      body.theme-system .account-upload-page strong,
+      body.theme-system .account-upload-page h2,
+      body.theme-system .account-upload-page h3,
+      body.theme-system .mini-search-row label,
+      body.theme-system .mini-search-row span {
+        color: #dbe7f3 !important;
+        -webkit-text-fill-color: #dbe7f3 !important;
+      }
+      body.theme-system .account-upload-page input:not([type="checkbox"]):not(.target-color-black):not(.target-color-blue):not(.target-color-red),
+      body.theme-system .account-upload-page select:not(.target-color-select):not(.class-tag-select),
+      body.theme-system .account-upload-page textarea,
+      body.theme-system .mini-search-row input {
+        background: #0d1117 !important;
+        color: #f0f6fc !important;
+        -webkit-text-fill-color: #f0f6fc !important;
+        border-color: #3b4451 !important;
+      }
+      body.theme-system .account-upload-page input::placeholder {
+        color: #a8b3c2 !important;
+        -webkit-text-fill-color: #a8b3c2 !important;
+        opacity: 1 !important;
+      }
+      body.theme-system .account-upload-page input[type="file"]::file-selector-button {
+        background: #21262d !important;
+        color: #f0f6fc !important;
+        border: 1px solid #3b4451 !important;
+        border-radius: 7px !important;
+      }
+      body.theme-system .account-upload-page .mini-upload-table th {
+        background: #21262d !important;
+        color: #f0f6fc !important;
+        -webkit-text-fill-color: #f0f6fc !important;
+        border-color: #30363d !important;
+      }
+      body.theme-system .account-upload-page .mini-list-summary .summary-chip {
+        background: #111827 !important;
+        border-color: #30363d !important;
+        color: #f0f6fc !important;
+        -webkit-text-fill-color: #f0f6fc !important;
+      }
+      body.theme-system .account-upload-page .mini-list-summary .summary-label {
+        color: #a8b3c2 !important;
+        -webkit-text-fill-color: #a8b3c2 !important;
       }
       body.theme-system .name-link,
       body.theme-system .mini-stock-name,
@@ -5499,8 +5596,13 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     function uploadSummary(rows, kind) {
       const count = (rows || []).length;
       const amount = (rows || []).reduce((sum, row) => sum + Number(kind === 'trade' ? tradeAmount(row) : row.evalAmount || 0), 0);
+      const buyAmount = (rows || []).reduce((sum, row) => {
+        const base = kind === 'trade' ? tradeBuyAmount(row) : (Number(effectiveBuyAmount(row) || 0) || Number(row.buyAmount || 0));
+        return sum + Number(base || 0);
+      }, 0);
       const profit = (rows || []).reduce((sum, row) => sum + Number(row.profit || 0), 0);
-      return { count, amount, profit };
+      const returnRate = buyAmount ? (profit / buyAmount) * 100 : 0;
+      return { count, amount, buyAmount, profit, returnRate };
     }
 
     function renderUploadSummaryCards(tradeRows, balanceRows) {
@@ -5610,10 +5712,12 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         };
       }).filter(row => matchesSearch(row, state.search));
       const visibleRows = applyMiniSort(decorated, state);
+      const summary = uploadSummary(visibleRows, kind);
+      const summaryBar = `<div class="mini-list-summary" aria-label="${esc(label)} 요약"><span class="summary-chip"><span class="summary-label">수익률</span><b class="${profitClass(summary.returnRate)}">${fmtRate2(summary.returnRate)}</b></span><span class="summary-chip"><span class="summary-label">손익금액</span><b class="${profitClass(summary.profit)}">${fmtNum(summary.profit)}</b></span></div>`;
       const searchId = `mini-${kind}-${account}`.replace(/\s+/g, '-');
       const searchBar = `<div class="mini-search-row"><label class="tiny" for="${esc(searchId)}">종목명 검색</label><input id="${esc(searchId)}" type="search" value="${esc(state.search)}" data-action="mini-search" data-account="${esc(account)}" data-kind="${esc(kind)}" placeholder="종목명 또는 코드" /><span class="tiny">표시 ${fmtNum(visibleRows.length)}건</span></div>`;
-      if (!rows.length) return `${searchBar}<div class="empty">업로드된 목록이 없습니다.</div>`;
-      if (!visibleRows.length) return `${searchBar}<div class="empty">검색 결과가 없습니다.</div>`;
+      if (!rows.length) return `${summaryBar}${searchBar}<div class="empty">업로드된 목록이 없습니다.</div>`;
+      if (!visibleRows.length) return `${summaryBar}${searchBar}<div class="empty">검색 결과가 없습니다.</div>`;
       const body = visibleRows.map((row, idx) => {
         const code = row.stockCode;
         const target1Input = targetInputCellHtml(row.account, code, row.date, row.source || kind, 'target1', row.target1, 'mini-target-input');
@@ -5655,7 +5759,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const tradeCols = '<col style="width:3.2%"><col style="width:12.8%"><col style="width:4.8%"><col style="width:4.8%"><col style="width:7.5%"><col style="width:7.5%"><col style="width:2.8%"><col style="width:16%"><col class="col-return" style="width:7%"><col style="width:6.5%"><col class="col-qty" style="width:4.2%"><col style="width:10.5%"><col style="width:8%"><col style="width:4.4%">';
       const balanceCols = '<col style="width:3.1%"><col style="width:10.5%"><col style="width:4.5%"><col style="width:4.5%"><col style="width:6.8%"><col style="width:6.8%"><col style="width:2.7%"><col style="width:14%"><col class="col-return" style="width:6.8%"><col class="col-dayrate" style="width:7.7%"><col style="width:6.2%"><col class="col-qty" style="width:4%"><col style="width:8.8%"><col style="width:7%"><col style="width:6.6%">';
       const colgroup = kind === 'trade' ? tradeCols : balanceCols;
-      return `${searchBar}<div class="table-wrap mini-table-wrap ${kind === 'trade' ? 'trade-list' : 'balance-list'}"><table class="mini-upload-table"><colgroup>${colgroup}</colgroup><thead><tr>${headers.map(([key, title]) => key === 'rowNo' ? `<th class="row-no-col">${title}</th>` : key === 'delete' ? `<th class="delete-col ${headerClass(key)}">${title}</th>` : `<th class="sortable ${headerClass(key)}" data-action="mini-sort" data-account="${esc(account)}" data-kind="${esc(kind)}" data-key="${esc(key)}">${title}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`;
+      return `${summaryBar}${searchBar}<div class="table-wrap mini-table-wrap ${kind === 'trade' ? 'trade-list' : 'balance-list'}"><table class="mini-upload-table"><colgroup>${colgroup}</colgroup><thead><tr>${headers.map(([key, title]) => key === 'rowNo' ? `<th class="row-no-col">${title}</th>` : key === 'delete' ? `<th class="delete-col ${headerClass(key)}">${title}</th>` : `<th class="sortable ${headerClass(key)}" data-action="mini-sort" data-account="${esc(account)}" data-kind="${esc(kind)}" data-key="${esc(key)}">${title}</th>`).join('')}</tr></thead><tbody>${body}</tbody></table></div>`;
     }
 
     function todayUploadKey(account, kind) {
@@ -5764,7 +5868,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     function tradeAmount(row) {
       const manual = Number(row.manualAmount || row.amount || 0);
       if (Number.isFinite(manual) && manual > 0) return manual;
-      const sell = Number(row.sellPrice || 0) * Number(row.sellQty || 0);
+      const sell = tradeSellAmount(row);
       const buy = tradeBuyAmount(row);
       return sell || buy || 0;
     }
