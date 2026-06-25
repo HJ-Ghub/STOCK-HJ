@@ -7885,6 +7885,43 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return applyTypingStyle(styleObj);
     }
 
+    function collectSelectedTextSegments(range, editor) {
+      const walker = document.createTreeWalker(editor, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (!node.nodeValue || !node.nodeValue.length) return NodeFilter.FILTER_REJECT;
+          try {
+            return range.intersectsNode(node) ? NodeFilter.FILTER_ACCEPT : NodeFilter.FILTER_REJECT;
+          } catch (e) {
+            return NodeFilter.FILTER_REJECT;
+          }
+        }
+      });
+      const segments = [];
+      let node = walker.nextNode();
+      while (node) {
+        const length = node.nodeValue.length;
+        let start = node === range.startContainer ? range.startOffset : 0;
+        let end = node === range.endContainer ? range.endOffset : length;
+        start = Math.max(0, Math.min(length, start));
+        end = Math.max(0, Math.min(length, end));
+        if (end > start) segments.push({ node, start, end });
+        node = walker.nextNode();
+      }
+      return segments;
+    }
+
+    function wrapTextSegment(segment, styleObj) {
+      const { node, start, end } = segment;
+      let selected = node;
+      if (end < selected.nodeValue.length) selected.splitText(end);
+      if (start > 0) selected = selected.splitText(start);
+      const span = document.createElement('span');
+      Object.assign(span.style, styleObj);
+      selected.parentNode.insertBefore(span, selected);
+      span.appendChild(selected);
+      return span;
+    }
+
     function wrapSelectionWithStyle(styleObj) {
       restoreSavedSelection();
       const sel = window.getSelection();
@@ -7898,20 +7935,33 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         alert('서식은 사용자가 작성하는 기록창 글자에 적용됩니다.');
         return false;
       }
-      const span = document.createElement('span');
-      Object.assign(span.style, styleObj);
-      try {
-        range.surroundContents(span);
-      } catch (e) {
-        const fragment = range.extractContents();
-        span.appendChild(fragment);
-        range.insertNode(span);
+      const segments = collectSelectedTextSegments(range.cloneRange(), editor);
+      const wrappers = [];
+      if (segments.length) {
+        segments.reverse().forEach(segment => {
+          const wrapped = wrapTextSegment(segment, styleObj);
+          if (wrapped) wrappers.unshift(wrapped);
+        });
+      } else {
+        const span = document.createElement('span');
+        Object.assign(span.style, styleObj);
+        try {
+          range.surroundContents(span);
+        } catch (e) {
+          const fragment = range.extractContents();
+          span.appendChild(fragment);
+          range.insertNode(span);
+        }
+        wrappers.push(span);
       }
       sel.removeAllRanges();
       const newRange = document.createRange();
-      newRange.selectNodeContents(span);
+      newRange.setStartBefore(wrappers[0]);
+      newRange.setEndAfter(wrappers[wrappers.length - 1]);
       sel.addRange(newRange);
+      saveCurrentRichSelection();
       syncRichEditors();
+      autoGrowTodayEditors();
       return true;
     }
 
