@@ -338,9 +338,9 @@
     .op-단기 { background: var(--yellow); }
     .op-매수 { background: #ffe2bd; }
     .op-일부매도 { background: #e9f2ff; }
-    .op-손절 { background: #dbeafe; color:#145f8f !important; -webkit-text-fill-color:#145f8f !important; }
-    .op-익절 { background: #ffd6a3; color:#8a4b08 !important; -webkit-text-fill-color:#8a4b08 !important; }
-    .op-custom { background: #ffd84d !important; color:#5f4b00 !important; -webkit-text-fill-color:#5f4b00 !important; }
+    .op-손절 { background: #fff6ce; color:#6b5200 !important; -webkit-text-fill-color:#6b5200 !important; }
+    .op-익절 { background: #ffdede; color:#9f2633 !important; -webkit-text-fill-color:#9f2633 !important; }
+    .op-custom { background: #f7f0ff !important; color:#6b4aa0 !important; -webkit-text-fill-color:#6b4aa0 !important; }
     .today-secondary-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: start; }
     .today-compact-card { min-height: 156px; }
     .today-compact-card textarea { min-height: 92px; max-height: 92px; }
@@ -3017,28 +3017,33 @@
     }
     body.theme-dark .op-select.op-매도,
     body.theme-dark .op-select.op-일부매도,
-    body.theme-dark .op-select.op-손절,
     body.theme-dark .op-badge.op-매도,
-    body.theme-dark .op-badge.op-일부매도,
-    body.theme-dark .op-badge.op-손절 {
+    body.theme-dark .op-badge.op-일부매도 {
       background: #dbeafe !important;
       color: #145f8f !important;
       -webkit-text-fill-color: #145f8f !important;
       border-color: #9fc7e7 !important;
     }
+    body.theme-dark .op-select.op-손절,
+    body.theme-dark .op-badge.op-손절 {
+      background: #fff6ce !important;
+      color: #6b5200 !important;
+      -webkit-text-fill-color: #6b5200 !important;
+      border-color: #e8d57a !important;
+    }
     body.theme-dark .op-select.op-익절,
     body.theme-dark .op-badge.op-익절 {
-      background: #ffd6a3 !important;
-      color: #8a4b08 !important;
-      -webkit-text-fill-color: #8a4b08 !important;
-      border-color: #e6ad6b !important;
+      background: #ffdede !important;
+      color: #9f2633 !important;
+      -webkit-text-fill-color: #9f2633 !important;
+      border-color: #efb1b9 !important;
     }
     body.theme-dark .op-select.op-custom,
     body.theme-dark .op-badge.op-custom {
-      background: #ffd84d !important;
-      color: #5f4b00 !important;
-      -webkit-text-fill-color: #5f4b00 !important;
-      border-color: #e4bd1e !important;
+      background: #f7f0ff !important;
+      color: #6b4aa0 !important;
+      -webkit-text-fill-color: #6b4aa0 !important;
+      border-color: #ddcbff !important;
     }
     body.theme-dark .op-select.op-관망,
     body.theme-dark .op-badge.op-관망 {
@@ -3113,28 +3118,33 @@
       }
       body.theme-system .op-select.op-매도,
       body.theme-system .op-select.op-일부매도,
-      body.theme-system .op-select.op-손절,
       body.theme-system .op-badge.op-매도,
-      body.theme-system .op-badge.op-일부매도,
-      body.theme-system .op-badge.op-손절 {
+      body.theme-system .op-badge.op-일부매도 {
         background: #dbeafe !important;
         color: #145f8f !important;
         -webkit-text-fill-color: #145f8f !important;
         border-color: #9fc7e7 !important;
       }
+      body.theme-system .op-select.op-손절,
+      body.theme-system .op-badge.op-손절 {
+        background: #fff6ce !important;
+        color: #6b5200 !important;
+        -webkit-text-fill-color: #6b5200 !important;
+        border-color: #e8d57a !important;
+      }
       body.theme-system .op-select.op-익절,
       body.theme-system .op-badge.op-익절 {
-        background: #ffd6a3 !important;
-        color: #8a4b08 !important;
-        -webkit-text-fill-color: #8a4b08 !important;
-        border-color: #e6ad6b !important;
+        background: #ffdede !important;
+        color: #9f2633 !important;
+        -webkit-text-fill-color: #9f2633 !important;
+        border-color: #efb1b9 !important;
       }
       body.theme-system .op-select.op-custom,
       body.theme-system .op-badge.op-custom {
-        background: #ffd84d !important;
-        color: #5f4b00 !important;
-        -webkit-text-fill-color: #5f4b00 !important;
-        border-color: #e4bd1e !important;
+        background: #f7f0ff !important;
+        color: #6b4aa0 !important;
+        -webkit-text-fill-color: #6b4aa0 !important;
+        border-color: #ddcbff !important;
       }
       body.theme-system .op-select.op-관망,
       body.theme-system .op-badge.op-관망 {
