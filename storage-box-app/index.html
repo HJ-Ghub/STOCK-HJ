@@ -256,14 +256,16 @@
     #itemName,
     #itemDesc,
     #itemTags {
-      color: #8f9692;
-      font-size: 14px;
+      color: #3d473f;
+      font-size: 16px;
+      line-height: 1.45;
     }
 
     #itemName::placeholder,
     #itemDesc::placeholder,
     #itemTags::placeholder {
       color: #aeb8b2;
+      font-size: 14px;
       opacity: 1;
     }
 
@@ -695,8 +697,9 @@
       display: none;
       background: rgba(0, 0, 0, .74);
       padding: 12px;
-      overflow: auto;
-      -webkit-overflow-scrolling: touch;
+      overflow: hidden;
+      touch-action: none;
+      overscroll-behavior: contain;
     }
 
     .photo-viewer.open {
@@ -741,6 +744,11 @@
       object-fit: contain;
       border-radius: 12px;
       background: #111;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      transform-origin: center center;
+      will-change: transform;
     }
 
     .detail-head {
@@ -925,6 +933,11 @@
       #itemName,
       #itemDesc,
       #itemTags {
+        font-size: 17px;
+      }
+      #itemName::placeholder,
+      #itemDesc::placeholder,
+      #itemTags::placeholder {
         font-size: 14px;
       }
       .detail { padding: 8px; }
@@ -1346,6 +1359,18 @@
       let selectedQrBoxId = '';
       let skipAutoCloudSyncUntil = 0;
       let backGuardInstalled = false;
+      const photoViewerZoom = {
+        scale: 1,
+        x: 0,
+        y: 0,
+        pointers: new Map(),
+        startDistance: 0,
+        startScale: 1,
+        startX: 0,
+        startY: 0,
+        panStartX: 0,
+        panStartY: 0
+      };
 
       function emptyApp() {
         return {
@@ -1627,7 +1652,7 @@
           els.itemsGrid.innerHTML = '<div class="empty">아직 물건이 없습니다. 등록 버튼에서 사진과 보관박스를 등록해 보세요.</div>';
           return;
         }
-        els.itemsGrid.innerHTML = rows.map(itemCardHtml).join('');
+        els.itemsGrid.innerHTML = rows.map(item => itemCardHtml(item, { photoAction: 'photo-view' })).join('');
       }
 
       function renderBoxes() {
@@ -1870,6 +1895,7 @@
       function openPhotoViewer(id) {
         const item = app.items.find(row => row.id === id);
         if (!item) return;
+        resetPhotoViewerZoom();
         els.photoViewerTitle.textContent = item.name || '사진';
         els.photoViewerImage.src = item.photo || placeholderSvg();
         els.photoViewerImage.alt = item.name || '물건 사진';
@@ -1879,6 +1905,86 @@
       function closePhotoViewer() {
         els.photoViewer.classList.remove('open');
         els.photoViewerImage.removeAttribute('src');
+        resetPhotoViewerZoom();
+      }
+
+      function applyPhotoViewerZoom() {
+        els.photoViewerImage.style.transform = `translate(${photoViewerZoom.x}px, ${photoViewerZoom.y}px) scale(${photoViewerZoom.scale})`;
+      }
+
+      function resetPhotoViewerZoom() {
+        photoViewerZoom.scale = 1;
+        photoViewerZoom.x = 0;
+        photoViewerZoom.y = 0;
+        photoViewerZoom.pointers.clear();
+        photoViewerZoom.startDistance = 0;
+        photoViewerZoom.startScale = 1;
+        applyPhotoViewerZoom();
+      }
+
+      function photoViewerDistance() {
+        const points = Array.from(photoViewerZoom.pointers.values());
+        if (points.length < 2) return 0;
+        return Math.hypot(points[0].clientX - points[1].clientX, points[0].clientY - points[1].clientY);
+      }
+
+      function clampPhotoViewerPan() {
+        const maxX = Math.max(0, els.photoViewerImage.clientWidth * (photoViewerZoom.scale - 1) / 2);
+        const maxY = Math.max(0, els.photoViewerImage.clientHeight * (photoViewerZoom.scale - 1) / 2);
+        photoViewerZoom.x = Math.max(-maxX, Math.min(maxX, photoViewerZoom.x));
+        photoViewerZoom.y = Math.max(-maxY, Math.min(maxY, photoViewerZoom.y));
+      }
+
+      function updatePhotoViewerPointer(event) {
+        photoViewerZoom.pointers.set(event.pointerId, { clientX: event.clientX, clientY: event.clientY });
+      }
+
+      function startPhotoViewerPointer(event) {
+        if (!els.photoViewer.classList.contains('open')) return;
+        els.photoViewerImage.setPointerCapture?.(event.pointerId);
+        updatePhotoViewerPointer(event);
+        if (photoViewerZoom.pointers.size === 2) {
+          photoViewerZoom.startDistance = photoViewerDistance();
+          photoViewerZoom.startScale = photoViewerZoom.scale;
+        } else if (photoViewerZoom.pointers.size === 1) {
+          photoViewerZoom.startX = photoViewerZoom.x;
+          photoViewerZoom.startY = photoViewerZoom.y;
+          photoViewerZoom.panStartX = event.clientX;
+          photoViewerZoom.panStartY = event.clientY;
+        }
+      }
+
+      function movePhotoViewerPointer(event) {
+        if (!photoViewerZoom.pointers.has(event.pointerId)) return;
+        event.preventDefault();
+        updatePhotoViewerPointer(event);
+        if (photoViewerZoom.pointers.size >= 2 && photoViewerZoom.startDistance) {
+          photoViewerZoom.scale = Math.max(1, Math.min(5, photoViewerZoom.startScale * (photoViewerDistance() / photoViewerZoom.startDistance)));
+          if (photoViewerZoom.scale === 1) {
+            photoViewerZoom.x = 0;
+            photoViewerZoom.y = 0;
+          }
+          clampPhotoViewerPan();
+          applyPhotoViewerZoom();
+          return;
+        }
+        if (photoViewerZoom.scale > 1) {
+          photoViewerZoom.x = photoViewerZoom.startX + event.clientX - photoViewerZoom.panStartX;
+          photoViewerZoom.y = photoViewerZoom.startY + event.clientY - photoViewerZoom.panStartY;
+          clampPhotoViewerPan();
+          applyPhotoViewerZoom();
+        }
+      }
+
+      function endPhotoViewerPointer(event) {
+        photoViewerZoom.pointers.delete(event.pointerId);
+        if (photoViewerZoom.pointers.size === 1) {
+          const point = Array.from(photoViewerZoom.pointers.values())[0];
+          photoViewerZoom.startX = photoViewerZoom.x;
+          photoViewerZoom.startY = photoViewerZoom.y;
+          photoViewerZoom.panStartX = point.clientX;
+          photoViewerZoom.panStartY = point.clientY;
+        }
       }
 
       function printSelectedQrLabel() {
@@ -2880,6 +2986,12 @@
         els.photoViewer.addEventListener('click', (event) => {
           if (event.target === els.photoViewer) closePhotoViewer();
         });
+        els.photoViewerImage.addEventListener('pointerdown', startPhotoViewerPointer);
+        els.photoViewerImage.addEventListener('pointermove', movePhotoViewerPointer);
+        els.photoViewerImage.addEventListener('pointerup', endPhotoViewerPointer);
+        els.photoViewerImage.addEventListener('pointercancel', endPhotoViewerPointer);
+        els.photoViewerImage.addEventListener('lostpointercapture', endPhotoViewerPointer);
+        els.photoViewerImage.addEventListener('dblclick', resetPhotoViewerZoom);
 
         els.exportBtn.addEventListener('click', exportBackup);
         els.importBtn.addEventListener('click', () => els.importFile.click());
