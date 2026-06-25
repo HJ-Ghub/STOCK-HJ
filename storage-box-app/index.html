@@ -460,26 +460,26 @@
     .summary {
       display: grid;
       grid-template-columns: repeat(4, 1fr);
-      gap: 8px;
+      gap: 6px;
     }
 
     .metric {
       background: var(--panel-2);
       border: 1px solid var(--line);
       border-radius: var(--radius);
-      padding: 10px;
-      min-height: 68px;
+      padding: 6px 8px;
+      min-height: 46px;
     }
 
     .metric .label {
       color: var(--muted);
-      font-size: 11px;
+      font-size: 10px;
       font-weight: 800;
     }
 
     .metric .value {
-      margin-top: 4px;
-      font-size: 19px;
+      margin-top: 1px;
+      font-size: 16px;
       font-weight: 900;
     }
 
@@ -1022,9 +1022,9 @@
         </div>
       </div>
       <nav class="tabs" aria-label="보기 선택">
-        <button class="tab active" type="button" data-view="register"><span>등록</span></button>
-        <button class="tab" type="button" data-view="items"><span>전체</span><span>물건</span></button>
+        <button class="tab active" type="button" data-view="items"><span>전체</span><span>물건</span></button>
         <button class="tab" type="button" data-view="boxes"><span>보관</span><span>박스</span></button>
+        <button class="tab" type="button" data-view="register"><span>등록</span></button>
         <button class="tab" type="button" data-view="backup"><span>백업</span></button>
         <button class="tab" type="button" data-view="qr"><span>QR</span></button>
       </nav>
@@ -1408,7 +1408,7 @@
       let detailMode = 'view';
       let editingId = '';
       let selectedDetailId = '';
-      let currentView = 'register';
+      let currentView = 'items';
       let selectedBoxDetailId = '';
       let saveTimer = null;
       let cloudTimer = null;
@@ -2393,7 +2393,7 @@
         if (els.photoViewer.classList.contains('open')) closePhotoViewer();
         els.search.value = '';
         selectedBoxDetailId = '';
-        currentView = 'register';
+        currentView = 'items';
         urlBoxFilterApplied = true;
         if (location.search) history.replaceState(null, '', location.pathname);
         render();
@@ -2406,7 +2406,7 @@
         if (els.photoViewer.classList.contains('open')) closePhotoViewer();
         els.search.value = '';
         selectedBoxDetailId = '';
-        currentView = 'register';
+        currentView = 'items';
         urlBoxFilterApplied = true;
         if (location.search) history.replaceState(null, '', location.pathname);
         render();
