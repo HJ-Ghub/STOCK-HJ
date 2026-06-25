@@ -763,6 +763,15 @@
       -webkit-user-select: none;
       transform-origin: center center;
       will-change: transform;
+      cursor: zoom-in;
+    }
+
+    .photo-viewer img.is-zoomed {
+      cursor: grab;
+    }
+
+    .photo-viewer img.is-zoomed:active {
+      cursor: grabbing;
     }
 
     .detail-head {
@@ -1981,6 +1990,7 @@
 
       function applyPhotoViewerZoom() {
         els.photoViewerImage.style.transform = `translate(${photoViewerZoom.x}px, ${photoViewerZoom.y}px) scale(${photoViewerZoom.scale})`;
+        els.photoViewerImage.classList.toggle('is-zoomed', photoViewerZoom.scale > 1);
       }
 
       function resetPhotoViewerZoom() {
@@ -2004,6 +2014,32 @@
         const maxY = Math.max(0, els.photoViewerImage.clientHeight * (photoViewerZoom.scale - 1) / 2);
         photoViewerZoom.x = Math.max(-maxX, Math.min(maxX, photoViewerZoom.x));
         photoViewerZoom.y = Math.max(-maxY, Math.min(maxY, photoViewerZoom.y));
+      }
+
+      function zoomPhotoViewerAt(clientX, clientY, nextScale) {
+        const prevScale = photoViewerZoom.scale;
+        const scale = Math.max(1, Math.min(5, nextScale));
+        if (scale === prevScale) return;
+        const rect = els.photoViewerImage.getBoundingClientRect();
+        const offsetX = clientX - (rect.left + rect.width / 2);
+        const offsetY = clientY - (rect.top + rect.height / 2);
+        const ratio = scale / prevScale;
+        photoViewerZoom.x = (photoViewerZoom.x - offsetX) * ratio + offsetX;
+        photoViewerZoom.y = (photoViewerZoom.y - offsetY) * ratio + offsetY;
+        photoViewerZoom.scale = scale;
+        if (photoViewerZoom.scale === 1) {
+          photoViewerZoom.x = 0;
+          photoViewerZoom.y = 0;
+        }
+        clampPhotoViewerPan();
+        applyPhotoViewerZoom();
+      }
+
+      function wheelPhotoViewerZoom(event) {
+        if (!els.photoViewer.classList.contains('open')) return;
+        event.preventDefault();
+        const factor = event.deltaY < 0 ? 1.12 : 1 / 1.12;
+        zoomPhotoViewerAt(event.clientX, event.clientY, photoViewerZoom.scale * factor);
       }
 
       function updatePhotoViewerPointer(event) {
@@ -3084,6 +3120,7 @@
         els.photoViewerImage.addEventListener('pointercancel', endPhotoViewerPointer);
         els.photoViewerImage.addEventListener('lostpointercapture', endPhotoViewerPointer);
         els.photoViewerImage.addEventListener('dblclick', resetPhotoViewerZoom);
+        els.photoViewerImage.addEventListener('wheel', wheelPhotoViewerZoom, { passive: false });
 
         els.exportBtn.addEventListener('click', exportBackup);
         els.importBtn.addEventListener('click', () => els.importFile.click());
