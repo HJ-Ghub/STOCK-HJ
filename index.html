@@ -3312,8 +3312,8 @@
     const LOCAL_ONLY_KEY = 'stockDiaryMiniApp.localOnlyMode.v1';
     const DEFAULT_OP1 = '기타';
     const DEFAULT_OP2 = '기타';
-    const OP1_LIST = ['홀딩', '추매', '매수', '매도', '일부매도', '관망', '기타'];
-    const OP2_LIST = ['장기', '중기', '단기', '홀딩', '추매', '매도', '일부매도', '관망', '기타'];
+    const OP1_LIST = ['장기', '중기', '단기', '홀딩', '추매', '매도', '일부매도', '관망', '기타'];
+    const OP2_LIST = ['홀딩', '추매', '매수', '매도', '일부매도', '관망', '기타'];
     const CLASS_TAGS = [
       { value: '', label: '', name: '미지정' },
       { value: 'red', label: '빨', name: '빨강' },
@@ -5295,12 +5295,19 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return `<div class="memo-inline-editor" contenteditable="true" spellcheck="false" data-action="memo-inline-edit" data-account="${esc(account)}" data-code="${esc(code)}" data-date="${esc(date)}"${dataSourceAttr(source || '')} data-name="${esc(name || '')}" title="바로 입력할 수 있습니다. 더블클릭하면 큰 메모창이 열립니다." data-placeholder="메모">${html}</div>`;
     }
 
+    function optionListWithSelected(list, selected) {
+      const values = Array.isArray(list) ? list.slice() : [];
+      const current = String(selected || '').trim();
+      if (current && !values.includes(current)) values.unshift(current);
+      return values;
+    }
+
     function optionHtml(list, selected) {
-      return list.map(v => `<option value="${esc(v)}" ${v === selected ? 'selected' : ''}>${esc(v)}</option>`).join('');
+      return optionListWithSelected(list, selected).map(v => `<option value="${esc(v)}" ${v === selected ? 'selected' : ''}>${esc(v)}</option>`).join('');
     }
 
     function opinionOptionHtml(list, selected) {
-      return list.map(v => {
+      return optionListWithSelected(list, selected).map(v => {
         const label = v === '기타' ? '' : v;
         return `<option value="${esc(v)}" ${v === selected ? 'selected' : ''}>${esc(label)}</option>`;
       }).join('');
