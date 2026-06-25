@@ -2358,8 +2358,12 @@
     body.theme-dark .history-inline-editor {
       background: #0d1117 !important;
       color: #f0f6fc !important;
-      -webkit-text-fill-color: #f0f6fc;
       border-color: #30363d !important;
+    }
+    body.theme-dark input,
+    body.theme-dark select,
+    body.theme-dark textarea {
+      -webkit-text-fill-color: #f0f6fc;
     }
     body.theme-dark input::placeholder,
     body.theme-dark textarea::placeholder {
@@ -2472,8 +2476,12 @@
       body.theme-system .history-inline-editor {
         background: #0d1117 !important;
         color: #f0f6fc !important;
-        -webkit-text-fill-color: #f0f6fc;
         border-color: #30363d !important;
+      }
+      body.theme-system input,
+      body.theme-system select,
+      body.theme-system textarea {
+        -webkit-text-fill-color: #f0f6fc;
       }
       body.theme-system input::placeholder,
       body.theme-system textarea::placeholder {
@@ -2537,6 +2545,98 @@
         background: #3b1f25 !important;
         color: #ffb4b4 !important;
         border-color: #7f2b35 !important;
+      }
+    }
+
+    /* Dark readability refinements: keep colors/highlights, improve contrast. */
+    body.theme-dark .cloud-sync-panel,
+    body.theme-dark .global-format-toolbar,
+    body.theme-dark .smart-record-toolbar,
+    body.theme-dark .inline-format-toolbar,
+    body.theme-dark .format-help,
+    body.theme-dark .recent-format-row {
+      background: #161b22 !important;
+      color: #f0f6fc !important;
+      border-color: #30363d !important;
+    }
+    body.theme-dark .global-format-toolbar button,
+    body.theme-dark .smart-record-toolbar button,
+    body.theme-dark .inline-format-toolbar button,
+    body.theme-dark .cloud-sync-panel button {
+      background: #21262d !important;
+      color: #f0f6fc !important;
+      border-color: #30363d !important;
+    }
+    body.theme-dark .global-format-toolbar input,
+    body.theme-dark .global-format-toolbar select,
+    body.theme-dark .smart-record-toolbar input,
+    body.theme-dark .smart-record-toolbar select,
+    body.theme-dark .inline-format-toolbar input,
+    body.theme-dark .inline-format-toolbar select {
+      background: #0d1117 !important;
+      color: #f0f6fc !important;
+      border-color: #30363d !important;
+    }
+    body.theme-dark .rich-editor [style*="background-color"]:not([style*=" color:"]):not([style^="color:"]),
+    body.theme-dark .record-rich-content [style*="background-color"]:not([style*=" color:"]):not([style^="color:"]),
+    body.theme-dark .memo-inline-editor [style*="background-color"]:not([style*=" color:"]):not([style^="color:"]),
+    body.theme-dark .history-inline-editor [style*="background-color"]:not([style*=" color:"]):not([style^="color:"]),
+    body.theme-dark .rich-editor [style*="background:"]:not([style*=" color:"]):not([style^="color:"]),
+    body.theme-dark .record-rich-content [style*="background:"]:not([style*=" color:"]):not([style^="color:"]),
+    body.theme-dark .memo-inline-editor [style*="background:"]:not([style*=" color:"]):not([style^="color:"]),
+    body.theme-dark .history-inline-editor [style*="background:"]:not([style*=" color:"]):not([style^="color:"]) {
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      text-shadow: none !important;
+    }
+    body.theme-dark mark {
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+    }
+    @media (prefers-color-scheme: dark) {
+      body.theme-system .cloud-sync-panel,
+      body.theme-system .global-format-toolbar,
+      body.theme-system .smart-record-toolbar,
+      body.theme-system .inline-format-toolbar,
+      body.theme-system .format-help,
+      body.theme-system .recent-format-row {
+        background: #161b22 !important;
+        color: #f0f6fc !important;
+        border-color: #30363d !important;
+      }
+      body.theme-system .global-format-toolbar button,
+      body.theme-system .smart-record-toolbar button,
+      body.theme-system .inline-format-toolbar button,
+      body.theme-system .cloud-sync-panel button {
+        background: #21262d !important;
+        color: #f0f6fc !important;
+        border-color: #30363d !important;
+      }
+      body.theme-system .global-format-toolbar input,
+      body.theme-system .global-format-toolbar select,
+      body.theme-system .smart-record-toolbar input,
+      body.theme-system .smart-record-toolbar select,
+      body.theme-system .inline-format-toolbar input,
+      body.theme-system .inline-format-toolbar select {
+        background: #0d1117 !important;
+        color: #f0f6fc !important;
+        border-color: #30363d !important;
+      }
+      body.theme-system .rich-editor [style*="background-color"]:not([style*=" color:"]):not([style^="color:"]),
+      body.theme-system .record-rich-content [style*="background-color"]:not([style*=" color:"]):not([style^="color:"]),
+      body.theme-system .memo-inline-editor [style*="background-color"]:not([style*=" color:"]):not([style^="color:"]),
+      body.theme-system .history-inline-editor [style*="background-color"]:not([style*=" color:"]):not([style^="color:"]),
+      body.theme-system .rich-editor [style*="background:"]:not([style*=" color:"]):not([style^="color:"]),
+      body.theme-system .record-rich-content [style*="background:"]:not([style*=" color:"]):not([style^="color:"]),
+      body.theme-system .memo-inline-editor [style*="background:"]:not([style*=" color:"]):not([style^="color:"]),
+      body.theme-system .history-inline-editor [style*="background:"]:not([style*=" color:"]):not([style^="color:"]) {
+        color: #0f172a !important;
+        -webkit-text-fill-color: #0f172a !important;
+        text-shadow: none !important;
+      }
+      body.theme-system mark {
+        color: #0f172a !important;
+        -webkit-text-fill-color: #0f172a !important;
       }
     }
 
