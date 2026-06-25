@@ -5489,7 +5489,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         ['#ffe2bd', '#8a4b08'], ['#e0f7fa', '#12646d'], ['#f1f5f9', '#334155'], ['#dcfce7', '#166534'], ['#fee2e2', '#991b1b']
       ];
       const [bg, fg] = palette[accountColorIndex(account)] || palette[0];
-      return `background:${bg};color:${fg} !important;`;
+      return `background:${bg};color:${fg} !important;-webkit-text-fill-color:${fg} !important;`;
     }
 
     function stockNameAutoStyle(name) {
