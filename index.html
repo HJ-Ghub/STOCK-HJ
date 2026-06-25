@@ -6492,7 +6492,12 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     }
 
     function readStockFilters() {
-      return { account: stockFilterState.account || '전체계좌', search: stockFilterState.search || '' };
+      const account = stockFilterState.account || '전체계좌';
+      if (account !== '전체계좌' && !getActiveAccounts().includes(account)) {
+        stockFilterState.account = '전체계좌';
+        return { account: '전체계좌', search: stockFilterState.search || '' };
+      }
+      return { account, search: stockFilterState.search || '' };
     }
 
     function getAllStockSourceRows() {
