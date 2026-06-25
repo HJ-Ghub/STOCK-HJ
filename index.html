@@ -1973,6 +1973,18 @@
     .account-upload-tables .mini-table-wrap {
       max-height:324px !important;
       overflow:auto !important;
+      padding-bottom:12px !important;
+      scroll-padding-bottom:12px !important;
+    }
+    .account-upload-tables .mini-table-wrap table {
+      margin-bottom:10px !important;
+    }
+    .account-upload-list {
+      padding-bottom:18px !important;
+      scroll-padding-bottom:18px !important;
+    }
+    .account-upload-list .account-card:last-child {
+      margin-bottom:14px !important;
     }
     @media (max-width: 900px) {
       .account-upload-top-two { grid-template-columns:1fr !important; }
@@ -2709,7 +2721,7 @@
       -webkit-text-fill-color: #dbe7f3 !important;
     }
     body.theme-dark .account-upload-page input:not([type="checkbox"]):not(.target-color-black):not(.target-color-blue):not(.target-color-red),
-    body.theme-dark .account-upload-page select:not(.target-color-select):not(.class-tag-select),
+    body.theme-dark .account-upload-page select:not(.op-select):not(.target-color-select):not(.class-tag-select),
     body.theme-dark .account-upload-page textarea,
     body.theme-dark .mini-search-row input {
       background: #0d1117 !important;
@@ -2874,7 +2886,7 @@
         -webkit-text-fill-color: #dbe7f3 !important;
       }
       body.theme-system .account-upload-page input:not([type="checkbox"]):not(.target-color-black):not(.target-color-blue):not(.target-color-red),
-      body.theme-system .account-upload-page select:not(.target-color-select):not(.class-tag-select),
+      body.theme-system .account-upload-page select:not(.op-select):not(.target-color-select):not(.class-tag-select),
       body.theme-system .account-upload-page textarea,
       body.theme-system .mini-search-row input {
         background: #0d1117 !important;
