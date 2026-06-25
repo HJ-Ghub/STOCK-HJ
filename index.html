@@ -5589,7 +5589,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const label = kind === 'trade' ? '당일매매' : '당일잔고';
       const decorated = rows.map(row => {
         const code = row.stockCode;
-        const qty = kind === 'trade' ? (Number(row.buyQty || 0) + Number(row.sellQty || 0)) : row.quantity;
+        const qty = kind === 'trade' ? tradeDisplayQty(row) : row.quantity;
         const amount = kind === 'trade' ? (hasTradeBuyAmount(row) ? tradeBuyAmount(row) : '') : row.evalAmount;
         const rowSource = row.source || kind;
         const opinion = getOpinion(row.account, code, row.date, rowSource);
@@ -5701,6 +5701,19 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (!row) return 0;
       if (row.manualBuyAmount !== undefined && row.manualBuyAmount !== null && String(row.manualBuyAmount).trim() !== '') return parseNumber(row.manualBuyAmount);
       return Number(row.buyPrice || 0) * Number(row.buyQty || 0);
+    }
+
+    function tradeSellAmount(row) {
+      if (!row) return 0;
+      if (row.manualSellAmount !== undefined && row.manualSellAmount !== null && String(row.manualSellAmount).trim() !== '') return parseNumber(row.manualSellAmount);
+      return Number(row.sellPrice || 0) * Number(row.sellQty || 0);
+    }
+
+    function tradeDisplayQty(row) {
+      if (!row) return 0;
+      const settlementQty = Number(row.settlementQty || 0);
+      if (settlementQty > 0) return settlementQty;
+      return Number(row.buyQty || 0) + Number(row.sellQty || 0);
     }
 
     function rowBuyQuantity(row) {
@@ -5997,7 +6010,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     function tradeToLinkedRow(batch, item) {
       const buyAmount = tradeBuyAmount(item);
-      const sellAmount = Number(item.sellPrice || 0) * Number(item.sellQty || 0);
+      const sellAmount = tradeSellAmount(item);
       const amount = sellAmount || buyAmount || tradeAmount(item);
       return {
         ...item,
@@ -7312,16 +7325,136 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return '';
     }
 
+    function findExactValue(row, candidates) {
+      const entries = Object.entries(row);
+      for (const c of candidates) {
+        const nc = normalizeText(c);
+        const exact = entries.find(([k]) => normalizeText(k) === nc);
+        if (exact) return exact[1];
+      }
+      return '';
+    }
+
+    function findTradeValue(row, candidates, excludeWords = []) {
+      const entries = Object.entries(row);
+      for (const c of candidates) {
+        const nc = normalizeText(c);
+        const exact = entries.find(([k]) => normalizeText(k) === nc);
+        if (exact) return exact[1];
+      }
+      const excludes = excludeWords.map(normalizeText).filter(Boolean);
+      for (const c of candidates) {
+        const nc = normalizeText(c);
+        const partial = entries.find(([k]) => {
+          const nk = normalizeText(k);
+          if (!nk.includes(nc)) return false;
+          return !excludes.some(ex => nk.includes(ex));
+        });
+        if (partial) return partial[1];
+      }
+      return '';
+    }
+
+    function tradeWeightedPrice(totalAmount, totalQty, fallback = 0) {
+      const amount = Number(totalAmount || 0);
+      const qty = Number(totalQty || 0);
+      if (amount > 0 && qty > 0) return Math.round(amount / qty);
+      return Number(fallback || 0);
+    }
+
+    function aggregateTradeItems(items) {
+      const map = new Map();
+      const order = [];
+      (items || []).forEach(item => {
+        const key = uploadItemKey(item);
+        if (!key) return;
+        if (!map.has(key)) {
+          map.set(key, {
+            base: { ...item },
+            count: 0,
+            buyQty: 0,
+            sellQty: 0,
+            buyAmount: 0,
+            sellAmount: 0,
+            profit: 0,
+            feeTax: 0,
+            returnWeight: 0,
+            returnWeightedSum: 0,
+            dayChangeWeight: 0,
+            dayChangeWeightedSum: 0
+          });
+          order.push(key);
+        }
+        const acc = map.get(key);
+        acc.count += 1;
+        const buyQty = Number(item.buyQty || 0);
+        const sellQty = Number(item.sellQty || 0);
+        const buyAmount = tradeBuyAmount(item);
+        const sellAmount = tradeSellAmount(item);
+        acc.buyQty += buyQty;
+        acc.sellQty += sellQty;
+        acc.buyAmount += buyAmount;
+        acc.sellAmount += sellAmount;
+        acc.profit += Number(item.profit || 0);
+        acc.feeTax += Number(item.feeTax || 0);
+        const returnWeight = buyAmount || buyQty || 1;
+        acc.returnWeight += returnWeight;
+        acc.returnWeightedSum += Number(item.returnRate || 0) * returnWeight;
+        const dayWeight = buyAmount || sellAmount || buyQty || sellQty || 1;
+        acc.dayChangeWeight += dayWeight;
+        acc.dayChangeWeightedSum += Number(item.dayChangeRate || 0) * dayWeight;
+        if (!acc.base.stockName && item.stockName) acc.base.stockName = item.stockName;
+        if (!acc.base.stockCode && item.stockCode) acc.base.stockCode = item.stockCode;
+        if (Number(item.currentPrice || 0)) acc.base.currentPrice = Number(item.currentPrice || 0);
+      });
+      return order.map(key => {
+        const acc = map.get(key);
+        const buyPrice = tradeWeightedPrice(acc.buyAmount, acc.buyQty, acc.base.buyPrice);
+        const sellPrice = tradeWeightedPrice(acc.sellAmount, acc.sellQty, acc.base.sellPrice);
+        const returnRate = acc.buyAmount > 0 ? (acc.profit / acc.buyAmount) * 100 : (acc.returnWeight ? acc.returnWeightedSum / acc.returnWeight : Number(acc.base.returnRate || 0));
+        const dayChangeRate = acc.dayChangeWeight ? acc.dayChangeWeightedSum / acc.dayChangeWeight : Number(acc.base.dayChangeRate || 0);
+        return {
+          ...acc.base,
+          buyPrice,
+          buyQty: acc.buyQty || Number(acc.base.buyQty || 0),
+          manualBuyAmount: acc.buyAmount || '',
+          sellPrice,
+          sellQty: acc.sellQty || Number(acc.base.sellQty || 0),
+          manualSellAmount: acc.sellAmount || '',
+          currentPrice: sellPrice || Number(acc.base.currentPrice || 0) || buyPrice,
+          profit: acc.profit,
+          returnRate,
+          dayChangeRate,
+          feeTax: acc.feeTax,
+          settlementQty: Math.max(acc.buyQty, acc.sellQty) || Number(acc.base.settlementQty || 0),
+          aggregatedCount: acc.count
+        };
+      });
+    }
+
     function parseTradeItems(parsed) {
-      return parsed.rows.map(row => {
+      const items = parsed.rows.map(row => {
         const stockCode = normalizeStockCode(findValue(row, ['종목코드', '코드', '단축코드']));
         const stockName = String(findValue(row, ['종목명', '종목', '한글종목명']) || '').trim();
-        const buyPrice = parseNumber(findValueSafe(row, ['금일매수', '금일매수평균가', '금일매수 평균가', '매수평균가', '매수평균단가', '매수단가', '매수평단가', '이전 매입가', '이전매입가', '매입가']));
-        const buyQty = parseNumber(findValueSafe(row, ['금일매수수량', '금일매수 수량', '매수수량', '매수량', '매수']));
-        const manualBuyAmount = parseNumber(findValueSafe(row, ['금일매수금액', '금일 매수금액', '매수금액', '매입금액', '매입액']));
-        const sellPrice = parseNumber(findValueSafe(row, ['금일매도', '금일매도평균가', '금일매도 평균가', '매도평균가', '매도평균단가', '매도단가', '매도가']));
-        const sellQty = parseNumber(findValueSafe(row, ['금일매도수량', '금일매도 수량', '매도수량', '매도량', '매도']));
+        const commonQty = parseNumber(findExactValue(row, ['수량', '체결수량', '거래수량']));
+        const manualBuyAmount = parseNumber(findTradeValue(row, ['금일매수금액', '금일 매수금액', '매수금액', '매입금액', '매입액'], ['수량', '단가', '평균가', '체결가']));
+        const manualSellAmount = parseNumber(findTradeValue(row, ['금일매도금액', '금일 매도금액', '매도금액', '매도체결금액'], ['수량', '단가', '평균가', '체결가']));
+        const buyQtyDirect = parseNumber(findTradeValue(row, ['금일매수수량', '금일 매수수량', '금일매수 수량', '매수수량', '매수량'], ['금액', '단가', '평균가', '체결가']));
+        const sellQtyDirect = parseNumber(findTradeValue(row, ['금일매도수량', '금일 매도수량', '금일매도 수량', '매도수량', '매도량'], ['금액', '단가', '평균가', '체결가']));
+        let buyPrice = parseNumber(findTradeValue(row, ['금일매수평균가', '금일매수 평균가', '매수평균가', '매수평균단가', '매수단가', '매수평단가', '이전 매입가', '이전매입가', '매입가'], ['수량', '금액']));
+        let sellPrice = parseNumber(findTradeValue(row, ['매도체결가', '금일매도평균가', '금일매도 평균가', '매도평균가', '매도평균단가', '매도단가', '매도가'], ['수량', '금액']));
+        const profit = parseNumber(findValue(row, ['손익금액', '실현손익', '손익', '매매손익']));
+        const buyQty = buyQtyDirect || ((buyPrice || manualBuyAmount) ? commonQty : 0);
+        const sellQty = sellQtyDirect || ((sellPrice || manualSellAmount || profit) ? commonQty : 0);
+        if (!buyPrice && manualBuyAmount && buyQty) buyPrice = Math.round(manualBuyAmount / buyQty);
+        if (!sellPrice && manualSellAmount && sellQty) sellPrice = Math.round(manualSellAmount / sellQty);
         const directCurrent = parseNumber(findValueSafe(row, ['현재가', '현재가/매도가', '현재가격', '종가']));
+        const combinedFeeTax = parseNumber(findExactValue(row, ['수수료+제세금', '수수료 +제세금', '수수료 + 제세금', '수수료제세금']));
+        const feeTax = combinedFeeTax || (
+          parseNumber(findExactValue(row, ['수수료', '매매수수료'])) +
+          parseNumber(findExactValue(row, ['세금', '제세금'])) +
+          parseNumber(findExactValue(row, ['신용이자']))
+        );
         return {
           stockCode,
           stockName,
@@ -7330,13 +7463,15 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           manualBuyAmount: manualBuyAmount || '',
           sellPrice,
           sellQty,
+          manualSellAmount: manualSellAmount || '',
           currentPrice: directCurrent || sellPrice || buyPrice,
           dayChangeRate: parseNumber(findValue(row, ['당일등락률', '등락률', '전일대비등락률', '등락율', '당일등락율'])),
-          feeTax: parseNumber(findValue(row, ['수수료+제세금', '수수료 +제세금', '수수료제세금', '수수료', '제세금', '세금'])),
-          profit: parseNumber(findValue(row, ['손익금액', '실현손익', '손익', '매매손익'])),
+          feeTax,
+          profit,
           returnRate: parseNumber(findValue(row, ['수익률', '손익률', '수익율']))
         };
       }).filter(item => item.stockCode || item.stockName);
+      return aggregateTradeItems(items);
     }
 
     function parseBalanceItems(parsed) {
