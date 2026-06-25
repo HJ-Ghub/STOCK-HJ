@@ -2640,6 +2640,241 @@
       }
     }
 
+    /* Dark table/list readability across account upload, balances, stocks, history, and memos. */
+    body.theme-dark {
+      --profit-plus-color: #ff6b6b;
+      --profit-minus-color: #58a6ff;
+      --plus: #ff6b6b;
+      --minus: #58a6ff;
+    }
+    body.theme-dark .main-list-table td,
+    body.theme-dark .mini-upload-table td,
+    body.theme-dark .performance-table td,
+    body.theme-dark .latest-table td,
+    body.theme-dark .stock-list-table td,
+    body.theme-dark .memo-history-table td,
+    body.theme-dark .history-half-table td,
+    body.theme-dark .history-detail-table td {
+      color: #dbe7f3 !important;
+      -webkit-text-fill-color: #dbe7f3 !important;
+    }
+    body.theme-dark .row-no,
+    body.theme-dark .row-no-col,
+    body.theme-dark .main-list-table .row-no,
+    body.theme-dark .memo-history-table .row-no,
+    body.theme-dark .history-half-table .row-no {
+      color: #a8b3c2 !important;
+      -webkit-text-fill-color: #a8b3c2 !important;
+    }
+    body.theme-dark .metric .value,
+    body.theme-dark .upload-summary-card,
+    body.theme-dark .upload-summary-card * {
+      color: #dbe7f3 !important;
+      -webkit-text-fill-color: #dbe7f3 !important;
+    }
+    body.theme-dark .op-select,
+    body.theme-dark .memo-history-table .op-badge {
+      background: #253143 !important;
+      color: #f0f6fc !important;
+      -webkit-text-fill-color: #f0f6fc !important;
+      border-color: #4b5563 !important;
+    }
+    body.theme-dark .upload-kind-badge,
+    body.theme-dark .file-pick-btn,
+    body.theme-dark .account-upload-file-row button {
+      background: #21262d !important;
+      color: #f0f6fc !important;
+      -webkit-text-fill-color: #f0f6fc !important;
+      border-color: #30363d !important;
+      box-shadow: none !important;
+    }
+    body.theme-dark .name-link,
+    body.theme-dark .mini-stock-name,
+    body.theme-dark .memo-line {
+      color: #f0f6fc !important;
+      -webkit-text-fill-color: #f0f6fc !important;
+    }
+    body.theme-dark input.target-color-black,
+    body.theme-dark .target-color-black:not(.target-color-select) {
+      color: #f0f6fc !important;
+      -webkit-text-fill-color: #f0f6fc !important;
+    }
+    body.theme-dark input.target-color-blue,
+    body.theme-dark .target-color-blue:not(.target-color-select) {
+      color: #58a6ff !important;
+      -webkit-text-fill-color: #58a6ff !important;
+    }
+    body.theme-dark input.target-color-red,
+    body.theme-dark .target-color-red:not(.target-color-select) {
+      color: #ff6b6b !important;
+      -webkit-text-fill-color: #ff6b6b !important;
+    }
+    body.theme-dark .profit-plus,
+    body.theme-dark td.profit-plus,
+    body.theme-dark span.profit-plus,
+    body.theme-dark b.profit-plus,
+    body.theme-dark input.profit-plus,
+    body.theme-dark .metric .value.profit-plus,
+    body.theme-dark .upload-summary-card .profit-plus {
+      color: var(--profit-plus-color) !important;
+      -webkit-text-fill-color: var(--profit-plus-color) !important;
+    }
+    body.theme-dark .profit-minus,
+    body.theme-dark td.profit-minus,
+    body.theme-dark span.profit-minus,
+    body.theme-dark b.profit-minus,
+    body.theme-dark input.profit-minus,
+    body.theme-dark .metric .value.profit-minus,
+    body.theme-dark .upload-summary-card .profit-minus {
+      color: var(--profit-minus-color) !important;
+      -webkit-text-fill-color: var(--profit-minus-color) !important;
+    }
+    body.theme-dark .sell-price-value,
+    body.theme-dark .sell-trade-value,
+    body.theme-dark td.sell-price-value,
+    body.theme-dark td.sell-trade-value {
+      color: #c084fc !important;
+      -webkit-text-fill-color: #c084fc !important;
+    }
+    body.theme-dark .status-pill.status-hold {
+      background: #ffd6e7 !important;
+      color: #8a2846 !important;
+      -webkit-text-fill-color: #8a2846 !important;
+    }
+    body.theme-dark .status-pill.status-buy {
+      background: #dff6df !important;
+      color: #24713a !important;
+      -webkit-text-fill-color: #24713a !important;
+    }
+    body.theme-dark .status-pill.status-sell {
+      background: #eadcff !important;
+      color: #5b3bb2 !important;
+      -webkit-text-fill-color: #5b3bb2 !important;
+    }
+    body.theme-dark .class-tag-select,
+    body.theme-dark .target-color-select {
+      color: transparent !important;
+      -webkit-text-fill-color: transparent !important;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body.theme-system {
+        --profit-plus-color: #ff6b6b;
+        --profit-minus-color: #58a6ff;
+        --plus: #ff6b6b;
+        --minus: #58a6ff;
+      }
+      body.theme-system .main-list-table td,
+      body.theme-system .mini-upload-table td,
+      body.theme-system .performance-table td,
+      body.theme-system .latest-table td,
+      body.theme-system .stock-list-table td,
+      body.theme-system .memo-history-table td,
+      body.theme-system .history-half-table td,
+      body.theme-system .history-detail-table td {
+        color: #dbe7f3 !important;
+        -webkit-text-fill-color: #dbe7f3 !important;
+      }
+      body.theme-system .row-no,
+      body.theme-system .row-no-col,
+      body.theme-system .main-list-table .row-no,
+      body.theme-system .memo-history-table .row-no,
+      body.theme-system .history-half-table .row-no {
+        color: #a8b3c2 !important;
+        -webkit-text-fill-color: #a8b3c2 !important;
+      }
+      body.theme-system .metric .value,
+      body.theme-system .upload-summary-card,
+      body.theme-system .upload-summary-card * {
+        color: #dbe7f3 !important;
+        -webkit-text-fill-color: #dbe7f3 !important;
+      }
+      body.theme-system .op-select,
+      body.theme-system .memo-history-table .op-badge {
+        background: #253143 !important;
+        color: #f0f6fc !important;
+        -webkit-text-fill-color: #f0f6fc !important;
+        border-color: #4b5563 !important;
+      }
+      body.theme-system .upload-kind-badge,
+      body.theme-system .file-pick-btn,
+      body.theme-system .account-upload-file-row button {
+        background: #21262d !important;
+        color: #f0f6fc !important;
+        -webkit-text-fill-color: #f0f6fc !important;
+        border-color: #30363d !important;
+        box-shadow: none !important;
+      }
+      body.theme-system .name-link,
+      body.theme-system .mini-stock-name,
+      body.theme-system .memo-line {
+        color: #f0f6fc !important;
+        -webkit-text-fill-color: #f0f6fc !important;
+      }
+      body.theme-system input.target-color-black,
+      body.theme-system .target-color-black:not(.target-color-select) {
+        color: #f0f6fc !important;
+        -webkit-text-fill-color: #f0f6fc !important;
+      }
+      body.theme-system input.target-color-blue,
+      body.theme-system .target-color-blue:not(.target-color-select) {
+        color: #58a6ff !important;
+        -webkit-text-fill-color: #58a6ff !important;
+      }
+      body.theme-system input.target-color-red,
+      body.theme-system .target-color-red:not(.target-color-select) {
+        color: #ff6b6b !important;
+        -webkit-text-fill-color: #ff6b6b !important;
+      }
+      body.theme-system .profit-plus,
+      body.theme-system td.profit-plus,
+      body.theme-system span.profit-plus,
+      body.theme-system b.profit-plus,
+      body.theme-system input.profit-plus,
+      body.theme-system .metric .value.profit-plus,
+      body.theme-system .upload-summary-card .profit-plus {
+        color: var(--profit-plus-color) !important;
+        -webkit-text-fill-color: var(--profit-plus-color) !important;
+      }
+      body.theme-system .profit-minus,
+      body.theme-system td.profit-minus,
+      body.theme-system span.profit-minus,
+      body.theme-system b.profit-minus,
+      body.theme-system input.profit-minus,
+      body.theme-system .metric .value.profit-minus,
+      body.theme-system .upload-summary-card .profit-minus {
+        color: var(--profit-minus-color) !important;
+        -webkit-text-fill-color: var(--profit-minus-color) !important;
+      }
+      body.theme-system .sell-price-value,
+      body.theme-system .sell-trade-value,
+      body.theme-system td.sell-price-value,
+      body.theme-system td.sell-trade-value {
+        color: #c084fc !important;
+        -webkit-text-fill-color: #c084fc !important;
+      }
+      body.theme-system .status-pill.status-hold {
+        background: #ffd6e7 !important;
+        color: #8a2846 !important;
+        -webkit-text-fill-color: #8a2846 !important;
+      }
+      body.theme-system .status-pill.status-buy {
+        background: #dff6df !important;
+        color: #24713a !important;
+        -webkit-text-fill-color: #24713a !important;
+      }
+      body.theme-system .status-pill.status-sell {
+        background: #eadcff !important;
+        color: #5b3bb2 !important;
+        -webkit-text-fill-color: #5b3bb2 !important;
+      }
+      body.theme-system .class-tag-select,
+      body.theme-system .target-color-select {
+        color: transparent !important;
+        -webkit-text-fill-color: transparent !important;
+      }
+    }
+
   </style>
 </head>
 <body spellcheck="false">
