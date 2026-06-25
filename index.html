@@ -2305,8 +2305,8 @@
     }
     .amount-black,
     .amount-black * {
-      color: #0f172a !important;
-      -webkit-text-fill-color: #0f172a !important;
+      color: var(--amount-neutral-color, #0f172a) !important;
+      -webkit-text-fill-color: var(--amount-neutral-color, #0f172a) !important;
       font-weight: 400 !important;
     }
 
@@ -2317,6 +2317,7 @@
       --line: #30363d;
       --text: #f0f6fc;
       --muted: #9da7b3;
+      --amount-neutral-color: #f0f6fc;
       --sidebar-bg: #0d1117;
       --sidebar-active: #1f2937;
       background: #0d1117 !important;
@@ -2435,6 +2436,7 @@
         --line: #30363d;
         --text: #f0f6fc;
         --muted: #9da7b3;
+        --amount-neutral-color: #f0f6fc;
         --sidebar-bg: #0d1117;
         --sidebar-active: #1f2937;
         background: #0d1117 !important;
@@ -2646,6 +2648,7 @@
       --profit-minus-color: #58a6ff;
       --plus: #ff6b6b;
       --minus: #58a6ff;
+      --amount-neutral-color: #f0f6fc;
     }
     body.theme-dark .main-list-table td,
     body.theme-dark .mini-upload-table td,
@@ -2763,6 +2766,7 @@
         --profit-minus-color: #58a6ff;
         --plus: #ff6b6b;
         --minus: #58a6ff;
+        --amount-neutral-color: #f0f6fc;
       }
       body.theme-system .main-list-table td,
       body.theme-system .mini-upload-table td,
@@ -5176,8 +5180,8 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         target.style.removeProperty('font-size');
         target.style.setProperty('font-weight', '400', 'important');
         if (forceBlack) {
-          target.style.setProperty('color', '#0f172a', 'important');
-          target.style.setProperty('-webkit-text-fill-color', '#0f172a', 'important');
+          target.style.setProperty('color', 'var(--amount-neutral-color, #0f172a)', 'important');
+          target.style.setProperty('-webkit-text-fill-color', 'var(--amount-neutral-color, #0f172a)', 'important');
         } else {
           target.style.removeProperty('color');
           target.style.removeProperty('-webkit-text-fill-color');
