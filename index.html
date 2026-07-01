@@ -3194,6 +3194,185 @@
       }
     }
 
+    /* 2026-07-01 request: today view compact 4-row layout, enter-add rows, plain checks */
+    .today-page {
+      height: calc(100vh - 152px) !important;
+      min-height: 620px !important;
+      display: grid !important;
+      grid-template-rows: auto auto auto minmax(160px, 1fr) !important;
+      gap: 7px !important;
+      overflow: auto !important;
+    }
+    .today-top-grid {
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+      gap: 7px !important;
+    }
+    .today-date-half,
+    .today-quote-card,
+    .today-compact-card,
+    .today-note-card {
+      padding: 6px 8px !important;
+      border-radius: 10px !important;
+      min-height: 0 !important;
+    }
+    .today-date-half .section-title,
+    .today-quote-card .section-title,
+    .today-compact-card .section-title,
+    .today-note-card .section-title {
+      margin-bottom: 4px !important;
+    }
+    .today-date-half h2,
+    .today-quote-card h2,
+    .today-compact-card h3,
+    .today-note-card h3 {
+      font-size: 13px !important;
+      line-height: 1.1 !important;
+    }
+    .today-date-half .today-date-row {
+      grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+      gap: 5px !important;
+    }
+    .today-date-half .today-date-row label {
+      font-size: 9.5px !important;
+    }
+    .today-date-half .today-date-row input,
+    .today-date-half .today-date-row select {
+      min-height: 24px !important;
+      height: 24px !important;
+      padding: 2px 5px !important;
+      font-size: 10px !important;
+      border-radius: 7px !important;
+    }
+    .today-quote-editor {
+      min-height: 32px !important;
+      max-height: 54px !important;
+      padding: 3px 6px !important;
+      line-height: 18px !important;
+    }
+    .today-split-layout {
+      display: contents !important;
+    }
+    .today-left-stack {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+      grid-template-rows: auto auto !important;
+      gap: 7px !important;
+      min-height: 0 !important;
+    }
+    .today-left-stack .today-compact-card {
+      display: flex !important;
+      flex-direction: column !important;
+      max-height: 112px !important;
+      overflow: hidden !important;
+    }
+    .today-left-stack .today-compact-card > div:last-child {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+    }
+    .task-row.done .today-item-editor,
+    .task-row.done input[type="text"],
+    .task-row.done .rich-editor {
+      text-decoration: none !important;
+      color: inherit !important;
+      -webkit-text-fill-color: inherit !important;
+      background: #fff !important;
+    }
+    .task-row,
+    .today-left-stack .task-row {
+      grid-template-columns: 18px minmax(0, 1fr) 40px !important;
+      gap: 4px !important;
+      min-height: 24px !important;
+      margin-bottom: 3px !important;
+    }
+    .watch-row,
+    .today-left-stack .watch-row {
+      display: grid !important;
+      grid-template-columns: 18px minmax(70px, .65fr) minmax(0, 1.35fr) 40px !important;
+      gap: 4px !important;
+      align-items: start !important;
+      min-height: 24px !important;
+      margin-bottom: 3px !important;
+    }
+    .task-row input[type="checkbox"],
+    .watch-row input[type="checkbox"] {
+      width: 13px !important;
+      height: 13px !important;
+      min-height: 13px !important;
+      margin: 4px auto 0 !important;
+      padding: 0 !important;
+    }
+    .today-item-editor,
+    .watch-item-editor,
+    .today-left-stack .task-row .today-item-editor.rich-editor,
+    .today-left-stack .watch-row .watch-item-editor.rich-editor {
+      min-height: 22px !important;
+      height: 22px !important;
+      max-height: 22px !important;
+      padding: 1px 5px !important;
+      line-height: 18px !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      white-space: normal !important;
+      word-break: break-word !important;
+      resize: none !important;
+    }
+    .today-left-stack .btn-small {
+      min-height: 22px !important;
+      height: 22px !important;
+      padding: 1px 5px !important;
+      font-size: 9px !important;
+      border-radius: 7px !important;
+    }
+    .today-note-card {
+      min-height: 0 !important;
+      height: auto !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    .today-note-card .note-draw-wrapper {
+      min-height: 145px !important;
+      flex: 1 1 auto !important;
+    }
+    .today-note-editor {
+      min-height: 145px !important;
+      max-height: none !important;
+      padding: 6px 8px !important;
+      line-height: 1.35 !important;
+    }
+    .history-inline-editor,
+    .history-half-table .history-inline-editor,
+    .history-half-table .note-one-line .record-rich-content,
+    .history-half-table .content-col .record-rich-content {
+      min-height: 18px !important;
+      height: 18px !important;
+      max-height: 18px !important;
+      line-height: 16px !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      white-space: normal !important;
+      word-break: break-word !important;
+    }
+    .history-half-table td.content-col,
+    .history-half-table td.note-one-line {
+      height: 20px !important;
+      max-height: 20px !important;
+    }
+    @media (max-width: 900px) {
+      .today-page {
+        height: auto !important;
+        min-height: 0 !important;
+      }
+      .today-top-grid,
+      .today-left-stack {
+        grid-template-columns: 1fr !important;
+      }
+      .today-left-stack .today-compact-card {
+        max-height: 150px !important;
+      }
+    }
+
   </style>
 </head>
 <body spellcheck="false">
@@ -3588,14 +3767,14 @@
       if (!Array.isArray(list)) return [];
       return list.map(item => {
         if (typeof item === 'string') {
-          return { name: item, nameHtml: escMultiline(item), reason: '', reasonHtml: '' };
+          return { checked: false, name: item, nameHtml: escMultiline(item), reason: '', reasonHtml: '' };
         }
-        if (!item || typeof item !== 'object') return { name: '', nameHtml: '', reason: '', reasonHtml: '' };
+        if (!item || typeof item !== 'object') return { checked: false, name: '', nameHtml: '', reason: '', reasonHtml: '' };
         const name = String(item.name ?? item.stockName ?? item.title ?? '');
         const reason = String(item.reason ?? item.memo ?? item.text ?? '');
         const nameHtml = String(item.nameHtml || (name ? escMultiline(name) : ''));
         const reasonHtml = String(item.reasonHtml || item.html || (reason ? escMultiline(reason) : ''));
-        return Object.assign({}, item, { name, nameHtml, reason, reasonHtml });
+        return Object.assign({}, item, { checked: Boolean(item.checked || item.done), name, nameHtml, reason, reasonHtml });
       });
     }
 
@@ -5853,6 +6032,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           <div class="section-title"><h3>관심종목</h3><button class="btn-small btn-primary" data-action="add-watch">+ 추가</button></div>
           <div>${items.length ? items.map((it, idx) => `
             <div class="watch-row">
+              <input type="checkbox" ${it.checked ? 'checked' : ''} data-action="watch-done" data-index="${idx}" aria-label="watch check" />
               <div class="rich-editor watch-item-editor" contenteditable="true" spellcheck="false" data-action="watch-rich-name" data-index="${idx}" data-placeholder="종목명">${renderRichContent(it.nameHtml || '', it.name || '')}</div>
               <div class="rich-editor watch-item-editor" contenteditable="true" spellcheck="false" data-action="watch-rich-reason" data-index="${idx}" data-placeholder="관심 이유 / 가격대">${renderRichContent(it.reasonHtml || '', it.reason || '')}</div>
               <button class="btn-small btn-danger" data-action="delete-watch" data-index="${idx}">삭제</button>
@@ -8946,7 +9126,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const record = ensureRecord(selectedDate);
       record.watch = Array.isArray(record.watch) ? record.watch : [];
       const nextIndex = Number(index) + 1;
-      record.watch.splice(nextIndex, 0, { name: '', nameHtml: '', reason: '', reasonHtml: '' });
+      record.watch.splice(nextIndex, 0, { checked: false, name: '', nameHtml: '', reason: '', reasonHtml: '' });
       pendingTodayFocus = `[data-action="watch-rich-name"][data-index="${nextIndex}"]`;
       saveApp();
       render();
@@ -8956,13 +9136,15 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (!target || !target.dataset) return false;
       const action = target.dataset.action;
       if (['task-rich-text', 'watch-rich-name', 'watch-rich-reason'].includes(action)) {
-        // Enter는 같은 기록칸 안에서 줄바꿈으로 사용합니다. +추가 버튼은 새 기록칸을 만들 때만 사용합니다.
-        setTimeout(() => {
-          if (action === 'task-rich-text') syncTodayTaskEditor(target);
-          else syncTodayWatchEditor(target);
-          autoGrowTodayEditors();
-        }, 0);
-        return false;
+        // Enter creates a new record row and moves focus there.
+        if (action === 'task-rich-text') {
+          syncTodayTaskEditor(target);
+          addTaskAfterEnter(target.dataset.type, target.dataset.index);
+          return true;
+        }
+        syncTodayWatchEditor(target);
+        addWatchAfterEnter(target.dataset.index);
+        return true;
       }
       return false;
     }
@@ -9232,7 +9414,16 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const sel = window.getSelection();
       const hasSelection = sel && sel.rangeCount && !sel.isCollapsed && editableRootFromRange(sel.getRangeAt(0));
       if (hasSelection) {
+        const editor = editableRootFromRange(sel.getRangeAt(0));
         document.execCommand('createLink', false, url);
+        if (editor) {
+          editor.querySelectorAll('a[href]').forEach(a => {
+            if (a.getAttribute('href') === url) {
+              a.setAttribute('target', '_blank');
+              a.setAttribute('rel', 'noopener noreferrer');
+            }
+          });
+        }
         syncRichEditors();
       } else {
         const text = prompt('표시할 글자를 입력하세요.', url) || url;
@@ -9573,7 +9764,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         const record = ensureRecord(selectedDate);
         record.watch = Array.isArray(record.watch) ? record.watch : [];
         const idx = record.watch.length;
-        record.watch.push({ name: '', nameHtml: '', reason: '', reasonHtml: '' });
+        record.watch.push({ checked: false, name: '', nameHtml: '', reason: '', reasonHtml: '' });
         pendingTodayFocus = `[data-action="watch-rich-name"][data-index="${idx}"]`;
         saveApp(); render();
       }
@@ -9707,6 +9898,13 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (el.dataset.action === 'task-done') {
         const record = ensureRecord(selectedDate);
         record[el.dataset.type][Number(el.dataset.index)].done = el.checked;
+        saveApp(); render();
+      }
+      if (el.dataset.action === 'watch-done') {
+        const record = ensureRecord(selectedDate);
+        record.watch = Array.isArray(record.watch) ? record.watch : [];
+        const item = record.watch[Number(el.dataset.index)];
+        if (item) item.checked = el.checked;
         saveApp(); render();
       }
       if (el.dataset.action === 'change-opinion') {
@@ -9880,7 +10078,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (e.key === 'Enter' && e.target && e.target.id === 'newAccountName') { e.preventDefault(); addAccount(); return; }
       if (e.key === 'Enter') {
         const action = e.target.dataset?.action;
-        handleTodayRichEnter(e.target);
+        if (handleTodayRichEnter(e.target)) { e.preventDefault(); return; }
         if (['task-text','watch-name','watch-reason'].includes(action)) e.preventDefault();
         if (action === 'rename-account') {
           e.preventDefault();
