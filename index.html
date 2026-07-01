@@ -4163,6 +4163,20 @@
     }
 
     /* 2026-07-01 final correction: keep target controls dark while preserving opinion colors */
+    /* 2026-07-02: default blank opinion cells stay dark; named opinions keep their assigned colors. */
+    html body .op-select.op-기타,
+    html body .op-badge.op-기타,
+    html body.theme-dark .op-select.op-기타,
+    html body.theme-dark .op-badge.op-기타,
+    html body.theme-system .op-select.op-기타,
+    html body.theme-system .op-badge.op-기타 {
+      background: #000000 !important;
+      background-color: #000000 !important;
+      color: #ffffff !important;
+      -webkit-text-fill-color: #ffffff !important;
+      border-color: #4b5563 !important;
+      text-shadow: none !important;
+    }
     html body select.target-color-select,
     html body select.target-color-select.target-color-black,
     html body select.target-color-select.target-color-blue,
@@ -11362,7 +11376,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=20260701-ui4').catch(err => console.warn('서비스워커 등록 실패', err));
+        navigator.serviceWorker.register('./sw.js?v=20260702-ui1').catch(err => console.warn('서비스워커 등록 실패', err));
       });
     }
   })();
