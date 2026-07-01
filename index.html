@@ -4079,6 +4079,122 @@
       border-color: #334155 !important;
     }
 
+    /* 2026-07-01 final URL follow-up: dark list inputs, hover-only color delete, readable format labels */
+    .mini-upload-table .op-select,
+    .manual-upload-row .op-select,
+    .performance-table .op-select,
+    .latest-table .op-select,
+    .stock-list-table .op-select,
+    .memo-history-table .op-select,
+    .memo-history-table .op-badge {
+      background: #05070b !important;
+      color: #f8fafc !important;
+      -webkit-text-fill-color: #f8fafc !important;
+      border-color: #374151 !important;
+      box-shadow: none !important;
+    }
+    .mini-upload-table .op-select option,
+    .manual-upload-row .op-select option,
+    .performance-table .op-select option,
+    .latest-table .op-select option,
+    .stock-list-table .op-select option,
+    .memo-history-table .op-select option {
+      background: #05070b !important;
+      color: #f8fafc !important;
+      -webkit-text-fill-color: #f8fafc !important;
+    }
+    .mini-upload-table .target-color-select,
+    .manual-upload-row .target-color-select,
+    .performance-table .target-color-select,
+    .latest-table .target-color-select,
+    .stock-list-table .target-color-select,
+    .memo-history-table .target-color-select {
+      background: #05070b !important;
+      border-color: #374151 !important;
+      box-shadow: none !important;
+    }
+    .mini-upload-table .stock-target-input,
+    .mini-upload-table .mini-target-input,
+    .manual-upload-row input[data-field="target1"],
+    .manual-upload-row input[data-field="target2"],
+    .performance-table .stock-target-input,
+    .latest-table .stock-target-input,
+    .stock-list-table .stock-target-input,
+    .memo-history-table .stock-target-input {
+      background: #05070b !important;
+      border-color: #374151 !important;
+      box-shadow: none !important;
+    }
+    .mini-upload-table .target-color-black:not(.target-color-select),
+    .manual-upload-row .target-color-black:not(.target-color-select),
+    .performance-table .target-color-black:not(.target-color-select),
+    .latest-table .target-color-black:not(.target-color-select),
+    .stock-list-table .target-color-black:not(.target-color-select),
+    .memo-history-table .target-color-black:not(.target-color-select) {
+      color: #f8fafc !important;
+      -webkit-text-fill-color: #f8fafc !important;
+    }
+    .mini-upload-table .target-color-blue:not(.target-color-select),
+    .manual-upload-row .target-color-blue:not(.target-color-select),
+    .performance-table .target-color-blue:not(.target-color-select),
+    .latest-table .target-color-blue:not(.target-color-select),
+    .stock-list-table .target-color-blue:not(.target-color-select),
+    .memo-history-table .target-color-blue:not(.target-color-select) {
+      color: #60a5fa !important;
+      -webkit-text-fill-color: #60a5fa !important;
+    }
+    .mini-upload-table .target-color-red:not(.target-color-select),
+    .manual-upload-row .target-color-red:not(.target-color-select),
+    .performance-table .target-color-red:not(.target-color-select),
+    .latest-table .target-color-red:not(.target-color-select),
+    .stock-list-table .target-color-red:not(.target-color-select),
+    .memo-history-table .target-color-red:not(.target-color-select) {
+      color: #fb7185 !important;
+      -webkit-text-fill-color: #fb7185 !important;
+    }
+    .format-color-delete {
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transition: opacity .12s ease !important;
+    }
+    .recent-color-wrap:hover .format-color-delete,
+    .recent-color-wrap:focus-within .format-color-delete {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+    .global-format-toolbar.smart-record-toolbar,
+    .modal .inline-format-toolbar,
+    .modal .smart-record-toolbar,
+    .format-toolbar-simplified {
+      min-height: 32px !important;
+      height: auto !important;
+      max-height: none !important;
+      overflow-x: auto !important;
+      overflow-y: visible !important;
+    }
+    .format-mini-label,
+    .format-toolbar-simplified .format-mini-label,
+    .modal .format-toolbar-simplified .format-mini-label {
+      display: inline-flex !important;
+      align-items: center !important;
+      min-width: max-content !important;
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      font-size: 9.5px !important;
+      line-height: 1 !important;
+      opacity: 1 !important;
+    }
+    .format-toolbar-simplified select[data-style-key="fontFamily"],
+    .format-toolbar-simplified select[data-style-key="fontSize"] {
+      min-width: 48px !important;
+    }
+    .performance-table .stock-name-fit,
+    .stock-list-table .stock-name-fit,
+    .memo-history-table .stock-name-fit {
+      max-width: 100% !important;
+      line-height: 1.05 !important;
+    }
+
   </style>
 </head>
 <body spellcheck="false">
@@ -6656,7 +6772,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     function stockNameAutoStyle(name) {
       const len = Array.from(String(name || '')).length;
-      const size = len <= 4 ? 11.8 : (len <= 6 ? 11.2 : (len <= 8 ? 10.6 : (len <= 11 ? 10.0 : 9.4)));
+      const size = len <= 4 ? 9.8 : (len <= 6 ? 9.5 : (len <= 8 ? 9.2 : (len <= 11 ? 8.8 : 8.5)));
       return `font-size:${size}px !important;`;
     }
 
