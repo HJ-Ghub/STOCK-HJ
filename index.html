@@ -3495,6 +3495,137 @@
       border-color: #30363d !important;
     }
 
+    /* 2026-07-01 follow-up: fixed unified format bar, two-column today items, compact list names */
+    header {
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 80 !important;
+    }
+    .global-format-toolbar.smart-record-toolbar {
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 90 !important;
+      align-items: center !important;
+      border-bottom: 1px solid #d8e6f2 !important;
+      box-shadow: 0 2px 8px rgba(15, 23, 42, .08) !important;
+    }
+    .today-entry-grid {
+      display: grid !important;
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      gap: 5px !important;
+      align-items: start !important;
+    }
+    .today-top-grid,
+    .today-split-layout {
+      grid-column: 1 / -1 !important;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    .today-split-layout {
+      display: grid !important;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) !important;
+      gap: 10px !important;
+      align-items: start !important;
+    }
+    .today-left-stack {
+      grid-template-columns: minmax(0, 1fr) !important;
+      grid-template-rows: none !important;
+      width: 100% !important;
+      min-width: 0 !important;
+    }
+    .today-entry-grid .task-row,
+    .today-entry-grid .watch-row {
+      width: 100% !important;
+      min-width: 0 !important;
+      margin-bottom: 0 !important;
+    }
+    .today-entry-grid .watch-row {
+      grid-template-columns: 16px minmax(58px, .74fr) minmax(0, 1.26fr) 36px !important;
+    }
+    .today-entry-grid .task-row {
+      grid-template-columns: 16px minmax(0, 1fr) 36px !important;
+    }
+    .today-entry-grid .btn-small {
+      min-width: 0 !important;
+      padding-left: 3px !important;
+      padding-right: 3px !important;
+    }
+    @media (max-width: 900px) {
+      .today-split-layout {
+        grid-template-columns: 1fr !important;
+      }
+    }
+    @media (max-width: 360px) {
+      .today-entry-grid { grid-template-columns: 1fr !important; }
+    }
+    .format-current-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-left: auto;
+      padding: 2px 6px;
+      border: 1px solid #c9d8e8;
+      border-radius: 8px;
+      background: #f8fbff;
+      color: #243348;
+      font-size: 9.5px;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+    .format-current-sample {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      min-height: 17px;
+      padding: 0 4px;
+      border-radius: 5px;
+      border: 1px solid rgba(15, 23, 42, .12);
+      line-height: 1.2 !important;
+    }
+    .format-color-dot.recent-user-color::after {
+      background: var(--dot-color, transparent) !important;
+    }
+    .list-rich-cell,
+    .name-link.list-rich-cell,
+    .stock-name-fit.list-rich-cell,
+    .mini-stock-name.list-rich-cell,
+    .memo-line.list-rich-cell {
+      min-height: 14px !important;
+      padding: 0 1px !important;
+      font-size: 9.8px !important;
+      line-height: 1.15 !important;
+      font-weight: 700 !important;
+      border: 0 !important;
+      background: transparent !important;
+      box-shadow: none !important;
+      white-space: normal !important;
+      text-decoration-thickness: 1px !important;
+    }
+    .list-rich-cell *,
+    .list-rich-cell [style*="font-size"] {
+      font-size: inherit !important;
+      line-height: inherit !important;
+    }
+    .history-inline-editor {
+      line-height: 1.15 !important;
+    }
+    .modal .modal-unified-toolbar {
+      position: sticky !important;
+      top: 0 !important;
+      z-index: 60 !important;
+    }
+    .detail-split-panel > .inline-format-toolbar,
+    .modal > .inline-format-toolbar {
+      display: none !important;
+    }
+    .modal .rich-editor [style*="color"],
+    .modal .rich-editor span[style*="color"],
+    .rich-editor [style*="color"],
+    .rich-editor font[color] {
+      -webkit-text-fill-color: currentColor !important;
+    }
+
   </style>
 </head>
 <body spellcheck="false">
@@ -3769,6 +3900,7 @@
         deletedAccountOrigins: [],
         customFonts: [],
         formatRecents: [],
+        formatColors: { text: [], highlight: [] },
         routineTemplates: [],
         listCellFormats: {},
         uiStyle: defaultUiStyle()
@@ -3978,6 +4110,10 @@
         deletedAccountOrigins: Array.isArray(parsed.deletedAccountOrigins) ? parsed.deletedAccountOrigins : [],
         customFonts: Array.isArray(parsed.customFonts) ? parsed.customFonts : [],
         formatRecents: Array.isArray(parsed.formatRecents) ? parsed.formatRecents : [],
+        formatColors: parsed.formatColors && typeof parsed.formatColors === 'object' ? {
+          text: Array.isArray(parsed.formatColors.text) ? parsed.formatColors.text : [],
+          highlight: Array.isArray(parsed.formatColors.highlight) ? parsed.formatColors.highlight : []
+        } : { text: [], highlight: [] },
         routineTemplates: Array.isArray(parsed.routineTemplates) ? normalizeRoutineTemplates(parsed.routineTemplates) : inferRoutineTemplatesFromRecords(parsed.records || {}),
         listCellFormats: parsed.listCellFormats || {},
         uiStyle: Object.assign(defaultUiStyle(), parsed.uiStyle || {})
@@ -4638,7 +4774,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         }
         cur.records[date] = curRec;
       });
-      ['trades','balances','watchExtras','noteExtras','memoManuals','customFonts','formatRecents','routineTemplates','accounts','deletedAccountOrigins'].forEach(key => {
+      ['trades','balances','watchExtras','noteExtras','memoManuals','customFonts','formatRecents','formatColors','routineTemplates','accounts','deletedAccountOrigins'].forEach(key => {
         cur[key] = uniqueByJson([...(old[key] || []), ...(cur[key] || [])]);
       });
       ['memos','memoHtml','opinionHistory','opinion1','opinion2','memoDetails','dailyDetailExtras','memoFieldExtras','dailyHistoryChecks','classTags'].forEach(key => {
@@ -4995,6 +5131,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       document.querySelectorAll('[data-style-key="fontSize"]').forEach(el => { if ('value' in el) el.value = style.fontSize; });
       document.querySelectorAll('[data-style-key="textColor"]').forEach(el => { if ('value' in el) el.value = style.textColor; });
       document.querySelectorAll('[data-style-key="highlightColor"]').forEach(el => { if ('value' in el) el.value = style.highlightColor; });
+      syncFormatToolbarState();
     }
 
     function setUiStyle(key, value) {
@@ -5984,6 +6121,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         fitAllMoneyInputsToBox();
         initNoteDrawCanvases();
         disableSpellcheck();
+        syncFormatToolbarState();
         autoGrowTodayEditors();
         focusPendingTodayEditor();
       });
@@ -6140,7 +6278,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return `
         <div class="card today-compact-card">
           <div class="section-title"><h3>${esc(title)}</h3><button class="btn-small btn-primary" data-action="add-task" data-type="${esc(type)}">+ 추가</button></div>
-          <div>${items.length ? items.map((it, idx) => `
+          <div class="today-entry-grid">${items.length ? items.map((it, idx) => `
             <div class="task-row ${it.done ? 'done' : ''}">
               <input type="checkbox" ${it.done ? 'checked' : ''} data-action="task-done" data-type="${esc(type)}" data-index="${idx}" aria-label="완료" />
               <div class="rich-editor today-item-editor" contenteditable="true" spellcheck="false" data-action="task-rich-text" data-type="${esc(type)}" data-index="${idx}" data-placeholder="한 줄 입력">${renderRichContent(it.textHtml || '', it.text || '')}</div>
@@ -6155,7 +6293,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return `
         <div class="card today-compact-card">
           <div class="section-title"><h3>관심종목</h3><button class="btn-small btn-primary" data-action="add-watch">+ 추가</button></div>
-          <div>${items.length ? items.map((it, idx) => `
+          <div class="today-entry-grid">${items.length ? items.map((it, idx) => `
             <div class="watch-row">
               <input type="checkbox" ${it.checked ? 'checked' : ''} data-action="watch-done" data-index="${idx}" aria-label="watch check" />
               <div class="rich-editor watch-item-editor" contenteditable="true" spellcheck="false" data-action="watch-rich-name" data-index="${idx}" data-placeholder="종목명">${renderRichContent(it.nameHtml || '', it.name || '')}</div>
@@ -8546,6 +8684,80 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       saveApp();
     }
 
+    function normalizeColorValue(value, fallback = '#000000') {
+      const raw = String(value || '').trim();
+      if (/^#[0-9a-f]{6}$/i.test(raw)) return raw.toLowerCase();
+      if (/^#[0-9a-f]{3}$/i.test(raw)) return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`.toLowerCase();
+      return fallback;
+    }
+
+    function rememberFormatColor(kind, color, shouldSave = true) {
+      const key = kind === 'highlight' ? 'highlight' : 'text';
+      const normalized = normalizeColorValue(color, key === 'highlight' ? '#fff3a3' : '#273447');
+      app.formatColors = app.formatColors && typeof app.formatColors === 'object' ? app.formatColors : { text: [], highlight: [] };
+      app.formatColors[key] = Array.isArray(app.formatColors[key]) ? app.formatColors[key] : [];
+      app.formatColors[key] = [normalized, ...app.formatColors[key].filter(item => normalizeColorValue(item) !== normalized)].slice(0, 6);
+      if (shouldSave) saveApp();
+      return normalized;
+    }
+
+    function quickFormatStyle(kind) {
+      const map = {
+        'color-black': { color: '#111827' },
+        'color-red': { color: '#d93025' },
+        'color-blue': { color: '#1769d1' },
+        'color-purple': { color: '#7c3aed' },
+        'color-green': { color: '#16833a' },
+        'color-orange': { color: '#f97316' },
+        'color-gray': { color: '#4b5563' },
+        'mark-yellow': { backgroundColor: '#fff3a3' },
+        'mark-green': { backgroundColor: '#dff6df' },
+        'mark-pink': { backgroundColor: '#ffd6e7' },
+        'mark-blue': { backgroundColor: '#dbeafe' },
+        'mark-purple': { backgroundColor: '#eadcff' },
+        'size-large': { fontSize: '18px' },
+        'size-normal': { fontSize: '15px' }
+      };
+      return map[kind] || {};
+    }
+
+    function syncFormatToolbarState() {
+      const style = currentFormatPreset();
+      document.querySelectorAll('.global-format-toolbar, .inline-format-toolbar').forEach(toolbar => {
+        toolbar.querySelectorAll('[data-style-key="fontFamily"]').forEach(el => { if ('value' in el) el.value = style.fontFamily; });
+        toolbar.querySelectorAll('[data-style-key="fontSize"]').forEach(el => { if ('value' in el) el.value = style.fontSize; });
+        toolbar.querySelectorAll('[data-style-key="textColor"]').forEach(el => { if ('value' in el) el.value = style.textColor; });
+        toolbar.querySelectorAll('[data-style-key="highlightColor"]').forEach(el => { if ('value' in el) el.value = style.highlightColor; });
+
+        const groups = toolbar.querySelectorAll('.format-chip-group');
+        const appendRecent = (group, key, colors) => {
+          if (!group) return;
+          group.querySelectorAll(`[data-action="custom-format-color"][data-format-color-kind="${key}"]`).forEach(btn => btn.remove());
+          (colors || []).slice(0, 6).forEach(color => {
+            const btn = document.createElement('button');
+            btn.type = 'button';
+            btn.className = 'format-color-dot recent-user-color';
+            btn.dataset.action = 'custom-format-color';
+            btn.dataset.formatColorKind = key;
+            btn.dataset.color = color;
+            btn.title = key === 'highlight' ? `최근 형광 ${color}` : `최근 글자색 ${color}`;
+            btn.style.setProperty('--dot-color', color);
+            group.appendChild(btn);
+          });
+        };
+        appendRecent(groups[0], 'text', app.formatColors?.text || []);
+        appendRecent(groups[1], 'highlight', app.formatColors?.highlight || []);
+
+        let chip = toolbar.querySelector('.format-current-chip');
+        if (!chip) {
+          chip = document.createElement('span');
+          chip.className = 'format-current-chip';
+          toolbar.appendChild(chip);
+        }
+        chip.innerHTML = `<span>사용중</span><span class="format-current-sample" style="font-family:${esc(style.fontFamily)};font-size:${esc(style.fontSize)};color:${esc(style.textColor)};background:${esc(style.highlightColor)}">가</span><span>${esc(style.fontSize)}</span>`;
+      });
+    }
+
     function renderRecentFormatButtons() {
       const list = Array.isArray(app.formatRecents) ? app.formatRecents.slice(0, 5) : [];
       if (!list.length) return '';
@@ -8960,16 +9172,61 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       rememberUndoSnapshot(editor);
       if (!ensureEditorSelection(editor)) return false;
       try { document.execCommand('styleWithCSS', false, true); } catch (e) { /* ignore */ }
-      if (styleObj.fontFamily) document.execCommand('fontName', false, styleObj.fontFamily);
-      if (styleObj.fontSize) document.execCommand('fontSize', false, fontSizeCommandValue(styleObj.fontSize));
-      if (styleObj.color) document.execCommand('foreColor', false, styleObj.color);
       if (styleObj.backgroundColor) {
         try { document.execCommand('hiliteColor', false, styleObj.backgroundColor); }
         catch (e) { document.execCommand('backColor', false, styleObj.backgroundColor); }
       }
+      if (styleObj.fontFamily) document.execCommand('fontName', false, styleObj.fontFamily);
+      if (styleObj.fontSize) document.execCommand('fontSize', false, fontSizeCommandValue(styleObj.fontSize));
+      if (styleObj.color) document.execCommand('foreColor', false, styleObj.color);
       setEditorLineHeight(editor, styleObj.lineHeight || editor.style.lineHeight || lineHeightForFontSize(app.uiStyle?.fontSize || '15px'));
       saveCurrentRichSelection();
       toast('서식 선택 완료 · 이어서 입력하세요');
+      return true;
+    }
+
+    function primeEditorTypingStyle(editor) {
+      if (!editor || !editor.matches || !editor.matches('.rich-editor[contenteditable="true"]')) return;
+      const preset = currentFormatPreset();
+      const styleObj = normalizeStyleLineHeight({
+        fontFamily: preset.fontFamily,
+        fontSize: preset.fontSize,
+        color: preset.textColor,
+        backgroundColor: preset.highlightColor
+      });
+      try { document.execCommand('styleWithCSS', false, true); } catch (e) { /* ignore */ }
+      if (styleObj.backgroundColor) {
+        try { document.execCommand('hiliteColor', false, styleObj.backgroundColor); }
+        catch (e) { document.execCommand('backColor', false, styleObj.backgroundColor); }
+      }
+      if (styleObj.fontFamily) document.execCommand('fontName', false, styleObj.fontFamily);
+      if (styleObj.fontSize) document.execCommand('fontSize', false, fontSizeCommandValue(styleObj.fontSize));
+      if (styleObj.color) document.execCommand('foreColor', false, styleObj.color);
+      setEditorLineHeight(editor, styleObj.lineHeight || lineHeightForFontSize(preset.fontSize));
+      saveCurrentRichSelection();
+    }
+
+    function currentTypingStyleHtml(text) {
+      const preset = currentFormatPreset();
+      const lineHeight = lineHeightForFontSize(preset.fontSize);
+      const safeText = esc(text).replace(/ {2}/g, ' &nbsp;');
+      return `<span style="font-family:${esc(preset.fontFamily)};font-size:${esc(preset.fontSize)};color:${esc(preset.textColor)};background-color:${esc(preset.highlightColor)};line-height:${esc(lineHeight)};">${safeText}</span>`;
+    }
+
+    function insertTextWithCurrentStyle(e) {
+      const editor = e.target && e.target.closest ? e.target.closest('.rich-editor[contenteditable="true"]') : null;
+      if (!editor || e.isComposing || e.inputType !== 'insertText' || !e.data) return false;
+      e.preventDefault();
+      rememberUndoSnapshot(editor);
+      editor.focus?.();
+      try { document.execCommand('styleWithCSS', false, true); } catch (err) { /* ignore */ }
+      document.execCommand('insertHTML', false, currentTypingStyleHtml(e.data));
+      setEditorLineHeight(editor, lineHeightForFontSize(currentFormatPreset().fontSize));
+      saveCurrentRichSelection();
+      setTimeout(() => {
+        syncRichEditors();
+        autoGrowTodayEditors();
+      }, 0);
       return true;
     }
 
@@ -9117,25 +9374,14 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         if (window.getSelection()?.isCollapsed) toast('서식 선택 완료 · 이어서 입력하세요');
         return;
       }
-      const map = {
-        'color-black': { color: '#111827' },
-        'color-red': { color: '#d93025' },
-        'color-blue': { color: '#1769d1' },
-        'color-purple': { color: '#7c3aed' },
-        'color-green': { color: '#16833a' },
-        'color-orange': { color: '#f97316' },
-        'color-gray': { color: '#4b5563' },
-        'mark-yellow': { backgroundColor: '#fff3a3' },
-        'mark-green': { backgroundColor: '#dff6df' },
-        'mark-pink': { backgroundColor: '#ffd6e7' },
-        'mark-blue': { backgroundColor: '#dbeafe' },
-        'mark-purple': { backgroundColor: '#eadcff' },
-        'size-large': { fontSize: '18px' },
-        'size-normal': { fontSize: '15px' }
-      };
-      const styleObj = map[kind] || {};
+      const styleObj = quickFormatStyle(kind);
       if (!Object.keys(styleObj).length) return;
-      if (applyStyleToSelectionOrTyping(styleObj)) rememberFormatPreset(Object.assign(currentFormatPreset(), styleObj.backgroundColor ? { highlightColor: styleObj.backgroundColor } : {}, styleObj.color ? { textColor: styleObj.color } : {}, styleObj.fontSize ? { fontSize: styleObj.fontSize } : {}));
+      const nextPreset = Object.assign(currentFormatPreset(), styleObj.backgroundColor ? { highlightColor: styleObj.backgroundColor } : {}, styleObj.color ? { textColor: styleObj.color } : {}, styleObj.fontSize ? { fontSize: styleObj.fontSize } : {});
+      app.uiStyle = Object.assign(defaultUiStyle(), app.uiStyle || {}, nextPreset);
+      if (styleObj.color) rememberFormatColor('text', styleObj.color, false);
+      if (styleObj.backgroundColor) rememberFormatColor('highlight', styleObj.backgroundColor, false);
+      applyUiStyle();
+      if (applyStyleToSelectionOrTyping(styleObj)) rememberFormatPreset(nextPreset);
     }
 
     function applySelectedStyle(mode) {
@@ -9149,13 +9395,21 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     }
 
     function applyChangedStyleControl(key, value) {
-      if (!getCurrentRichEditor() && !savedSelectionRange) return;
       const style = {};
       if (key === 'fontFamily') style.fontFamily = value;
       if (key === 'fontSize') style.fontSize = value;
-      if (key === 'textColor') style.color = value;
-      if (key === 'highlightColor') style.backgroundColor = value;
+      if (key === 'textColor') {
+        style.color = rememberFormatColor('text', value, false);
+      }
+      if (key === 'highlightColor') {
+        style.backgroundColor = rememberFormatColor('highlight', value, false);
+      }
       if (!Object.keys(style).length) return;
+      applyUiStyle();
+      if (!getCurrentRichEditor() && !savedSelectionRange) {
+        rememberFormatPreset(currentFormatPreset());
+        return;
+      }
       if (applyStyleToSelectionOrTyping(style)) rememberFormatPreset(currentFormatPreset());
     }
 
@@ -9165,7 +9419,14 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const p = normalizeFormatPreset(preset);
       app.uiStyle = Object.assign(defaultUiStyle(), app.uiStyle || {}, p);
       applyUiStyle();
-      applyStyleToSelectionOrTyping({ fontFamily: p.fontFamily, fontSize: p.fontSize, color: p.textColor });
+      applyStyleToSelectionOrTyping({ fontFamily: p.fontFamily, fontSize: p.fontSize, color: p.textColor, backgroundColor: p.highlightColor });
+    }
+
+    function applyCustomFormatColor(kind, color) {
+      const key = kind === 'highlight' ? 'highlightColor' : 'textColor';
+      const normalized = rememberFormatColor(kind, color, false);
+      setUiStyle(key, normalized);
+      applyChangedStyleControl(key, normalized);
     }
 
 
@@ -9878,13 +10139,14 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     function ensureModalUnifiedToolbar() {
       if (!modalBackdrop.classList.contains('open')) return;
       if (!modalContent || !modalContent.querySelector) return;
-      if (modalContent.querySelector('.inline-format-toolbar')) return;
+      if (modalContent.querySelector('.modal-unified-toolbar')) return;
       const head = modalContent.querySelector('.modal-head');
       if (!head) return;
       const wrap = document.createElement('div');
       wrap.className = 'modal-unified-toolbar';
       wrap.innerHTML = renderFormatToolbarInline();
       head.insertAdjacentElement('afterend', wrap);
+      syncFormatToolbarState();
     }
 
     const modalToolbarObserver = new MutationObserver(() => setTimeout(ensureModalUnifiedToolbar, 0));
@@ -10001,6 +10263,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (action === 'apply-highlight-only') applySelectedStyle('highlight');
       if (action === 'apply-format-preset') applyFormatPreset(el.dataset.index);
       if (action === 'quick-format') applyQuickFormat(el.dataset.kind);
+      if (action === 'custom-format-color') applyCustomFormatColor(el.dataset.formatColorKind, el.dataset.color);
       if (action === 'undo-rich-style') undoRichStyle();
       if (action === 'erase-selected-style') eraseSelectedStyle();
       if (action === 'pick-custom-font') document.getElementById('customFontFile')?.click();
@@ -10142,8 +10405,10 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         noteDrawState.color = el.value || '#d93025';
       }
       if (el.dataset.action === 'change-ui-style') {
-        setUiStyle(el.dataset.styleKey, el.value);
-        applyChangedStyleControl(el.dataset.styleKey, el.value);
+        const key = el.dataset.styleKey;
+        const value = key === 'textColor' ? rememberFormatColor('text', el.value, false) : (key === 'highlightColor' ? rememberFormatColor('highlight', el.value, false) : el.value);
+        setUiStyle(key, value);
+        applyChangedStyleControl(key, value);
       }
       if (el.id === 'localBackupImportFile') {
         importLocalBackupFile(el.files && el.files[0]).finally(() => { el.value = ''; });
@@ -10176,7 +10441,13 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     });
 
     document.addEventListener('beforeinput', (e) => {
+      if (insertTextWithCurrentStyle(e)) return;
       rememberUndoSnapshot(e.target);
+    });
+
+    document.addEventListener('focusin', (e) => {
+      const editor = e.target && e.target.closest ? e.target.closest('.rich-editor[contenteditable="true"]') : null;
+      if (editor) primeEditorTypingStyle(editor);
     });
 
     document.addEventListener('input', (e) => {
@@ -10184,6 +10455,13 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       rememberUndoSnapshot(el);
       if (el.dataset.action === 'note-draw-color') {
         noteDrawState.color = el.value || '#d93025';
+      }
+      if (el.dataset.action === 'change-ui-style' && el.type === 'color') {
+        const key = el.dataset.styleKey;
+        const value = key === 'textColor' ? rememberFormatColor('text', el.value, false) : rememberFormatColor('highlight', el.value, false);
+        setUiStyle(key, value);
+        applyChangedStyleControl(key, value);
+        return;
       }
       if (el.dataset.action === 'daily-inline-edit') { saveDailyInlineEdit(el); }
       if (el.dataset.action === 'list-cell-format') { syncListRichCell(el); }
@@ -10310,7 +10588,10 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     document.addEventListener('mousedown', (e) => {
       const toolbar = e.target && e.target.closest ? e.target.closest('.inline-format-toolbar, .global-format-toolbar') : null;
-      if (toolbar && e.target.matches('button')) { saveCurrentRichSelection(); e.preventDefault(); }
+      if (toolbar && e.target.matches('button, input[type="color"], select')) {
+        saveCurrentRichSelection();
+        if (e.target.matches('button')) e.preventDefault();
+      }
     });
 
     document.addEventListener('mouseup', (e) => {
