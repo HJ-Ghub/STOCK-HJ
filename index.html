@@ -3979,15 +3979,6 @@
       -webkit-text-fill-color: #0f172a !important;
       border-color: #94a3b8 !important;
     }
-    .op-select,
-    select.op-select,
-    .mini-upload-table .op-select,
-    .main-list-table .op-select,
-    .performance-table .op-select,
-    .latest-table .op-select,
-    .stock-list-table .op-select,
-    .memo-history-table .op-select,
-    .history-detail-table .op-select,
     .target-color-select,
     .mini-upload-table .target-color-select,
     .main-list-table .target-color-select,
@@ -3998,7 +3989,6 @@
       border-color: #374151 !important;
       box-shadow: none !important;
     }
-    .op-select option,
     .target-color-select option {
       background: #05070b !important;
       color: #f8fafc !important;
@@ -4080,29 +4070,6 @@
     }
 
     /* 2026-07-01 final URL follow-up: dark list inputs, hover-only color delete, readable format labels */
-    .mini-upload-table .op-select,
-    .manual-upload-row .op-select,
-    .performance-table .op-select,
-    .latest-table .op-select,
-    .stock-list-table .op-select,
-    .memo-history-table .op-select,
-    .memo-history-table .op-badge {
-      background: #05070b !important;
-      color: #f8fafc !important;
-      -webkit-text-fill-color: #f8fafc !important;
-      border-color: #374151 !important;
-      box-shadow: none !important;
-    }
-    .mini-upload-table .op-select option,
-    .manual-upload-row .op-select option,
-    .performance-table .op-select option,
-    .latest-table .op-select option,
-    .stock-list-table .op-select option,
-    .memo-history-table .op-select option {
-      background: #05070b !important;
-      color: #f8fafc !important;
-      -webkit-text-fill-color: #f8fafc !important;
-    }
     .mini-upload-table .target-color-select,
     .manual-upload-row .target-color-select,
     .performance-table .target-color-select,
@@ -4195,38 +4162,7 @@
       line-height: 1.05 !important;
     }
 
-    /* 2026-07-01 final correction: win against opinion/theme color classes */
-    html body .mini-upload-table select.op-select,
-    html body .manual-upload-row select.op-select,
-    html body .performance-table select.op-select,
-    html body .latest-table select.op-select,
-    html body .stock-list-table select.op-select,
-    html body .memo-history-table select.op-select,
-    html body .history-detail-table .op-select,
-    html body .memo-history-table .op-badge,
-    html body.theme-dark .mini-upload-table select.op-select,
-    html body.theme-dark .manual-upload-row select.op-select,
-    html body.theme-dark .performance-table select.op-select,
-    html body.theme-dark .latest-table select.op-select,
-    html body.theme-dark .stock-list-table select.op-select,
-    html body.theme-dark .memo-history-table select.op-select,
-    html body.theme-dark .history-detail-table .op-select,
-    html body.theme-dark .memo-history-table .op-badge,
-    html body.theme-system .mini-upload-table select.op-select,
-    html body.theme-system .manual-upload-row select.op-select,
-    html body.theme-system .performance-table select.op-select,
-    html body.theme-system .latest-table select.op-select,
-    html body.theme-system .stock-list-table select.op-select,
-    html body.theme-system .memo-history-table select.op-select,
-    html body.theme-system .history-detail-table .op-select,
-    html body.theme-system .memo-history-table .op-badge {
-      background: #000000 !important;
-      background-color: #000000 !important;
-      color: #ffffff !important;
-      -webkit-text-fill-color: #ffffff !important;
-      border-color: #4b5563 !important;
-      text-shadow: none !important;
-    }
+    /* 2026-07-01 final correction: keep target controls dark while preserving opinion colors */
     html body select.target-color-select,
     html body select.target-color-select.target-color-black,
     html body select.target-color-select.target-color-blue,
@@ -6526,6 +6462,11 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       }).join('');
     }
 
+    function opinionDisplayText(value) {
+      const text = String(value || '').trim();
+      return text === '기타' ? '' : text;
+    }
+
     function opinionSelect(account, code, date, field, source = '') {
       const opinion = getOpinion(account, code, date, source);
       const value = field === 'op1' ? opinion.op1 : opinion.op2;
@@ -8144,8 +8085,8 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         <td class="center">${esc(row.date)}</td>
         <td class="center row-no">${fmtNum(idx + 1)}</td>
         <td>${stockCell}</td>
-        <td class="center"><span class="op-badge ${esc(opinionClass(row.op1))}">${esc(row.op1)}</span></td>
-        <td class="center"><span class="op-badge ${esc(opinionClass(row.op2))}">${esc(row.op2)}</span></td>
+        <td class="center"><span class="op-badge ${esc(opinionClass(row.op1))}">${esc(opinionDisplayText(row.op1))}</span></td>
+        <td class="center"><span class="op-badge ${esc(opinionClass(row.op2))}">${esc(opinionDisplayText(row.op2))}</span></td>
         <td>${target1Input}</td>
         <td>${target2Input}</td>
         <td class="class-tag-cell">${row.manual ? manualClassTagSelect(row.id) : classTagSelect(row.account, row.stockCode, row.date, '', row.source || '')}</td>
@@ -9221,8 +9162,8 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         <div class="history-edit-form" style="margin-top:10px">
           <div class="field"><label>종목명</label><input id="histEditName" value="${esc(item.stockName || name || '')}"></div>
           <div class="field"><label>현황</label><select id="histEditStatus"><option ${isSell ? '' : 'selected'}>매수</option><option ${isSell ? 'selected' : ''}>매도</option><option ${!isTrade ? 'selected' : ''}>보유</option></select></div>
-          <div class="field"><label>의견1</label><select id="histEditOp1" class="op-select ${esc(opinionClass(op.op1 || DEFAULT_OP1))}">${optionHtml(OP1_LIST, op.op1 || DEFAULT_OP1)}</select></div>
-          <div class="field"><label>의견2</label><select id="histEditOp2" class="op-select ${esc(opinionClass(op.op2 || DEFAULT_OP2))}">${optionHtml(OP2_LIST, op.op2 || DEFAULT_OP2)}</select></div>
+          <div class="field"><label>의견1</label><select id="histEditOp1" class="op-select ${esc(opinionClass(op.op1 || DEFAULT_OP1))}">${opinionOptionHtml(OP1_LIST, op.op1 || DEFAULT_OP1)}</select></div>
+          <div class="field"><label>의견2</label><select id="histEditOp2" class="op-select ${esc(opinionClass(op.op2 || DEFAULT_OP2))}">${opinionOptionHtml(OP2_LIST, op.op2 || DEFAULT_OP2)}</select></div>
           <div class="field"><label>분류</label><select id="histEditClass">${CLASS_TAGS.map(c => `<option value="${esc(c.value)}" ${c.value === cls ? 'selected' : ''}>${esc(c.name || c.label)}</option>`).join('')}</select></div>
           <div class="field"><label>수량</label><input id="histEditQty" inputmode="numeric" value="${esc(fmtNum(qty))}"></div>
           <div class="field"><label>매수평단가</label><input id="histEditBuyPrice" inputmode="numeric" value="${esc(buyPrice ? fmtNum(buyPrice) : '')}"></div>
@@ -9307,8 +9248,8 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         const amountCls = sellCls || (r.source === 'balance' ? profitClass(r.profit) : '');
         return `<tr>
           <td>${esc(r.date)}</td><td>${esc(r.account)}</td><td>${esc(r.type)}</td><td class="history-status-col">${esc(r.status)}</td>
-          <td class="center history-op-col"><span class="op-select ${esc(opinionClass(op.op1))}" style="display:inline-block">${esc(op.op1)}</span></td>
-          <td class="center history-op-col"><span class="op-select ${esc(opinionClass(op.op2))}" style="display:inline-block">${esc(op.op2)}</span></td>
+          <td class="center history-op-col"><span class="op-select ${esc(opinionClass(op.op1))}" style="display:inline-block">${esc(opinionDisplayText(op.op1))}</span></td>
+          <td class="center history-op-col"><span class="op-select ${esc(opinionClass(op.op2))}" style="display:inline-block">${esc(opinionDisplayText(op.op2))}</span></td>
           <td class="num ${sellCls}">${fmtNum(r.quantity)}</td><td class="num ${sellCls}">${fmtNum(r.price)}</td><td class="num history-current-col ${currentCls} ${sellCls}">${fmtNum(r.currentPrice)}</td><td class="num ${amountCls}">${fmtNum(r.amount)}</td>
           <td class="num ${profitClass(r.profit)}">${fmtNum(r.profit)}</td><td class="num ${profitClass(r.returnRate)}">${fmtRate(r.returnRate)}</td><td class="num history-dayrate-col ${profitClass(r.dayChangeRate)}">${fmtRate(r.dayChangeRate)}</td>
           <td class="class-tag-cell">${classTagSelect(account, code, r.date, '', r.source || '')}</td>
@@ -11421,7 +11362,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=20260701-ui3').catch(err => console.warn('서비스워커 등록 실패', err));
+        navigator.serviceWorker.register('./sw.js?v=20260701-ui4').catch(err => console.warn('서비스워커 등록 실패', err));
       });
     }
   })();
