@@ -3702,6 +3702,156 @@
       background: #fef3c7 !important;
     }
 
+    /* 2026-07-01 follow-up 2: separated formatting controls, clearer titles, revised today layout */
+    .today-split-layout {
+      grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+    .today-left-stack {
+      display: contents !important;
+    }
+    .today-note-card {
+      grid-column: 1 / -1 !important;
+    }
+    .today-watch-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .format-toolbar-simplified strong,
+    .format-toolbar-simplified [data-action="apply-selected-style"],
+    .format-toolbar-simplified [data-action="undo-rich-style"],
+    .format-toolbar-simplified select[data-style-key="fontFamily"],
+    .format-toolbar-simplified .format-font-label {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      min-height: 22px !important;
+      padding: 2px 7px !important;
+      border-radius: 8px !important;
+      border: 1px solid #bfd3ea !important;
+      background: #e0f2fe !important;
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      font-size: 10px !important;
+      font-weight: 800 !important;
+      white-space: nowrap !important;
+    }
+    .format-toolbar-simplified select[data-style-key="fontFamily"] {
+      max-width: 92px !important;
+      background: #fff !important;
+    }
+    .format-toolbar-simplified .format-font-label {
+      background: transparent !important;
+      border: 0 !important;
+      padding: 0 !important;
+    }
+    .format-toolbar-simplified [data-action="undo-rich-style"] {
+      background: #fef3c7 !important;
+    }
+    .format-toolbar-simplified .format-mini-label,
+    .modal .format-toolbar-simplified .format-mini-label {
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      font-weight: 900 !important;
+    }
+    .format-current-chip {
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      background: #ffffff !important;
+      border-color: #b9cbe2 !important;
+      gap: 5px !important;
+    }
+    .format-current-label,
+    .format-current-item {
+      display: inline-flex !important;
+      align-items: center !important;
+      gap: 3px !important;
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      white-space: nowrap !important;
+    }
+    .format-current-label {
+      font-weight: 900 !important;
+    }
+    .format-current-swatch {
+      width: 14px !important;
+      height: 14px !important;
+      border-radius: 4px !important;
+      border: 1px solid #64748b !important;
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,.55) !important;
+    }
+    .section-title h2,
+    .section-title h3,
+    .card > h2,
+    .card > h3,
+    .account-date-line h2,
+    .upload-box > strong,
+    .history-panel h3,
+    .detail-split-panel h4,
+    .modal-head h3 {
+      background: #dbeafe !important;
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      border: 1px solid rgba(37, 99, 235, .16) !important;
+      border-radius: 8px !important;
+      padding: 2px 8px !important;
+      text-shadow: none !important;
+    }
+    .upload-file-box .section-title h3,
+    .account-card-title h3 {
+      background: #dcfce7 !important;
+    }
+    .modal .modal-head,
+    .modal .modal-head .tiny,
+    .modal .modal-unified-toolbar,
+    .modal .modal-format-toolbar {
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+    }
+    body.theme-dark .modal .modal-head h3,
+    body.theme-system .modal .modal-head h3,
+    body.theme-dark .modal .format-current-chip,
+    body.theme-system .modal .format-current-chip {
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+    }
+    .list-rich-cell,
+    .name-link.list-rich-cell,
+    .list-rich-cell[data-show-history-code] {
+      text-decoration: underline !important;
+      text-underline-offset: 2px !important;
+    }
+    .name-link.list-rich-cell,
+    .list-rich-cell[data-show-history-code] {
+      cursor: pointer !important;
+    }
+    .list-rich-cell *,
+    .name-link.list-rich-cell *,
+    .list-rich-cell[data-show-history-code] * {
+      text-decoration: underline !important;
+      text-underline-offset: 2px !important;
+    }
+    .latest-table .delete-col,
+    .stock-list-table .delete-col,
+    .memo-history-table .delete-col,
+    .history-half-table th:last-child,
+    .history-half-table td:last-child {
+      width: 34px !important;
+      min-width: 34px !important;
+      max-width: 38px !important;
+      padding-left: 1px !important;
+      padding-right: 1px !important;
+    }
+    .latest-table .delete-col button,
+    .stock-list-table .delete-col button,
+    .memo-history-table .delete-col button,
+    .history-half-table button.btn-danger {
+      min-height: 18px !important;
+      height: 18px !important;
+      padding: 0 4px !important;
+      border-radius: 6px !important;
+      font-size: 9px !important;
+      line-height: 1 !important;
+    }
+
   </style>
 </head>
 <body spellcheck="false">
@@ -6270,11 +6420,11 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     function accountHighlightStyle(account) {
       const palette = [
-        ['#fff3a3', '#725c10'], ['#dff6df', '#1f6b35'], ['#dbeafe', '#145f8f'], ['#ffd6e7', '#8a2846'], ['#eadcff', '#5b3bb2'],
-        ['#ffe2bd', '#8a4b08'], ['#e0f7fa', '#12646d'], ['#f1f5f9', '#334155'], ['#dcfce7', '#166534'], ['#fee2e2', '#991b1b']
+        ['#dbeafe', '#1e3a8a'], ['#dcfce7', '#166534'], ['#fef3c7', '#854d0e'], ['#fce7f3', '#9d174d'], ['#ede9fe', '#5b21b6'],
+        ['#cffafe', '#155e75'], ['#ffedd5', '#9a3412'], ['#e0f2fe', '#075985'], ['#f0fdf4', '#15803d'], ['#fee2e2', '#991b1b']
       ];
       const [bg, fg] = palette[accountColorIndex(account)] || palette[0];
-      return `background:${bg};color:${fg} !important;-webkit-text-fill-color:${fg} !important;`;
+      return `background:${bg};color:${fg} !important;-webkit-text-fill-color:${fg} !important;border:1px solid rgba(15,23,42,.10);`;
     }
 
     function stockNameAutoStyle(name) {
@@ -6369,7 +6519,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return `
         <div class="card today-compact-card">
           <div class="section-title"><h3>관심종목</h3><button class="btn-small btn-primary" data-action="add-watch">+ 추가</button></div>
-          <div class="today-entry-grid">${items.length ? items.map((it, idx) => `
+          <div class="today-entry-grid today-watch-grid">${items.length ? items.map((it, idx) => `
             <div class="watch-row">
               <input type="checkbox" ${it.checked ? 'checked' : ''} data-action="watch-done" data-index="${idx}" aria-label="watch check" />
               <div class="rich-editor watch-item-editor" contenteditable="true" spellcheck="false" data-action="watch-rich-name" data-index="${idx}" data-placeholder="종목명">${renderRichContent(it.nameHtml || '', it.name || '')}</div>
@@ -7628,7 +7778,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     function renderDetailExtraList(storeName, key) {
       const list = readExtraList(storeName, key);
-      if (!list.length) return '<div class="empty">추가 기록이 없습니다.</div>';
+      if (!list.length) return '';
       return list.map(item => `<div class="detail-extra-item"><div class="tiny">${esc(item.at || '')}</div><div class="record-rich-content">${renderRichContent(item.html, item.text)}</div><div class="modal-actions"><button class="btn-small btn-danger" data-action="delete-detail-extra" data-store="${esc(storeName)}" data-key="${esc(key)}" data-id="${esc(item.id)}">삭제</button></div></div>`).join('');
     }
 
@@ -7699,7 +7849,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         key,
         title: `📝 ${label} 상세내용`,
         subtitle: `${row.date} · ${row.account} · ${row.stockName || row.stockCode} · ${sourceLabel(row.source || '')}`,
-        metaHtml: `<div class="memo-history-price-line">${esc(currentPriceLabel(row))}: <span class="${esc(currentPriceClass(row))}">${esc(fmtNum(row.currentPrice))}</span></div>`,
+        metaHtml: '',
         text: content || '입력된 내용이 없습니다.',
         html: contentHtml,
         isHtml: true,
@@ -8747,6 +8897,31 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return normalizeFormatPreset(app.uiStyle || defaultUiStyle());
     }
 
+    function setActiveFormatMode(mode) {
+      app.activeFormatMode = ['text', 'highlight', 'font'].includes(mode) ? mode : 'text';
+    }
+
+    function activeTypingStyleObj() {
+      const preset = currentFormatPreset();
+      const mode = app.activeFormatMode || 'text';
+      if (mode === 'highlight') return { backgroundColor: preset.highlightColor };
+      if (mode === 'font') return { fontFamily: preset.fontFamily, fontSize: preset.fontSize };
+      return { color: preset.textColor };
+    }
+
+    function styleObjToCss(styleObj) {
+      return Object.entries(styleObj || {})
+        .filter(([, value]) => value !== undefined && value !== null && value !== '')
+        .map(([key, value]) => `${key.replace(/[A-Z]/g, match => `-${match.toLowerCase()}`)}:${esc(value)}`)
+        .join(';');
+    }
+
+    function formatFontSummary(fontFamily) {
+      const raw = String(fontFamily || '').split(',')[0].replace(/["']/g, '').trim();
+      if (!raw || raw === 'system-ui') return '기본';
+      return raw.length > 8 ? `${raw.slice(0, 8)}...` : raw;
+    }
+
     function presetKey(preset) {
       const p = normalizeFormatPreset(preset);
       return [p.fontFamily, p.fontSize, p.textColor, p.highlightColor].join('__');
@@ -8771,8 +8946,13 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const key = kind === 'highlight' ? 'highlight' : 'text';
       const normalized = normalizeColorValue(color, key === 'highlight' ? '#fff3a3' : '#273447');
       app.formatColors = app.formatColors && typeof app.formatColors === 'object' ? app.formatColors : { text: [], highlight: [] };
-      app.formatColors[key] = Array.isArray(app.formatColors[key]) ? app.formatColors[key] : [];
-      app.formatColors[key] = [normalized, ...app.formatColors[key].filter(item => normalizeColorValue(item) !== normalized)].slice(0, 6);
+      const seen = new Set([normalized]);
+      const existing = Array.isArray(app.formatColors[key]) ? app.formatColors[key] : [];
+      app.formatColors[key] = [normalized, ...existing.map(item => normalizeColorValue(item, normalized)).filter(item => {
+        if (seen.has(item)) return false;
+        seen.add(item);
+        return true;
+      })].slice(0, 6);
       if (shouldSave) saveApp();
       return normalized;
     }
@@ -8810,7 +8990,9 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           if (kind === 'bold') btn.textContent = '굵게';
           if (kind === 'underline') btn.textContent = '밑줄';
         });
-        toolbar.querySelectorAll('[data-action="apply-highlight-only"]').forEach(btn => { btn.textContent = '형광'; });
+        toolbar.querySelectorAll('[data-action="apply-selected-style"]').forEach(btn => { btn.textContent = '글자적용'; });
+        toolbar.querySelectorAll('[data-action="apply-highlight-only"]').forEach(btn => { btn.textContent = '형광적용'; });
+        toolbar.querySelectorAll('[data-action="undo-rich-style"]').forEach(btn => { btn.textContent = '돌아가기'; });
         toolbar.querySelectorAll('[data-action="erase-selected-style"]').forEach(btn => { btn.textContent = '지움'; });
         toolbar.querySelectorAll('[data-action="insert-rich-link"]').forEach(btn => { btn.textContent = '링크'; });
         toolbar.querySelectorAll('[data-action="pick-rich-image"]').forEach(btn => { btn.textContent = '그림'; });
@@ -8847,7 +9029,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           chip.className = 'format-current-chip';
           toolbar.appendChild(chip);
         }
-        chip.innerHTML = `<span>사용중</span><span class="format-current-sample" style="font-family:${esc(style.fontFamily)};font-size:${esc(style.fontSize)};color:${esc(style.textColor)};background:${esc(style.highlightColor)}">가</span><span>${esc(style.fontSize)}</span>`;
+        chip.innerHTML = `<span class="format-current-label">사용중</span><span class="format-current-item">글자<span class="format-current-swatch" style="background:${esc(style.textColor)}"></span></span><span class="format-current-item">형광<span class="format-current-swatch" style="background:${esc(style.highlightColor)}"></span></span><span class="format-current-item">폰트<span style="font-family:${esc(style.fontFamily)}">${esc(formatFontSummary(style.fontFamily))} ${esc(style.fontSize)}</span></span>`;
       });
     }
 
@@ -9240,7 +9422,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     }
 
     function lineHeightForFontSize(pxValue) {
-      const n = Number(String(pxValue || '').replace(/[^0-9.]/g, '')) || 15;
+      const n = Number(String(pxValue || '').replace(/[^0-9.]/g, '')) || 11;
       return `${Math.max(16, Math.round(n * 1.42))}px`;
     }
 
@@ -9282,12 +9464,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (!editor || !editor.matches || !editor.matches('.rich-editor[contenteditable="true"]')) return;
       if (editor.dataset.action === 'list-cell-format') return;
       const preset = currentFormatPreset();
-      const styleObj = normalizeStyleLineHeight({
-        fontFamily: preset.fontFamily,
-        fontSize: preset.fontSize,
-        color: preset.textColor,
-        backgroundColor: preset.highlightColor
-      });
+      const styleObj = normalizeStyleLineHeight(activeTypingStyleObj());
       try { document.execCommand('styleWithCSS', false, true); } catch (e) { /* ignore */ }
       if (styleObj.backgroundColor) {
         try { document.execCommand('hiliteColor', false, styleObj.backgroundColor); }
@@ -9301,10 +9478,9 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     }
 
     function currentTypingStyleHtml(text) {
-      const preset = currentFormatPreset();
-      const lineHeight = lineHeightForFontSize(preset.fontSize);
+      const styleObj = normalizeStyleLineHeight(activeTypingStyleObj());
       const safeText = esc(text).replace(/ {2}/g, ' &nbsp;');
-      return `<span style="font-family:${esc(preset.fontFamily)};font-size:${esc(preset.fontSize)};color:${esc(preset.textColor)};background-color:${esc(preset.highlightColor)};line-height:${esc(lineHeight)};">${safeText}</span>`;
+      return `<span style="${styleObjToCss(styleObj)}">${safeText}</span>`;
     }
 
     function insertTextWithCurrentStyle(e) {
@@ -9315,8 +9491,9 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       rememberUndoSnapshot(editor);
       editor.focus?.();
       try { document.execCommand('styleWithCSS', false, true); } catch (err) { /* ignore */ }
+      const styleObj = normalizeStyleLineHeight(activeTypingStyleObj());
       document.execCommand('insertHTML', false, currentTypingStyleHtml(e.data));
-      setEditorLineHeight(editor, lineHeightForFontSize(currentFormatPreset().fontSize));
+      setEditorLineHeight(editor, styleObj.lineHeight || lineHeightForFontSize(currentFormatPreset().fontSize));
       saveCurrentRichSelection();
       setTimeout(() => {
         syncRichEditors();
@@ -9473,6 +9650,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (!Object.keys(styleObj).length) return;
       const nextPreset = Object.assign(currentFormatPreset(), styleObj.backgroundColor ? { highlightColor: styleObj.backgroundColor } : {}, styleObj.color ? { textColor: styleObj.color } : {}, styleObj.fontSize ? { fontSize: styleObj.fontSize } : {});
       app.uiStyle = Object.assign(defaultUiStyle(), app.uiStyle || {}, nextPreset);
+      setActiveFormatMode(styleObj.backgroundColor ? 'highlight' : (styleObj.fontSize || styleObj.fontFamily ? 'font' : 'text'));
       if (styleObj.color) rememberFormatColor('text', styleObj.color, false);
       if (styleObj.backgroundColor) rememberFormatColor('highlight', styleObj.backgroundColor, false);
       applyUiStyle();
@@ -9483,20 +9661,25 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       rememberUndoSnapshot(getCurrentRichEditor());
       const style = currentFormatPreset();
       if (mode === 'highlight') {
+        setActiveFormatMode('highlight');
         if (applyStyleToSelectionOrTyping({ backgroundColor: style.highlightColor })) rememberFormatPreset(style);
       } else {
+        setActiveFormatMode('text');
         if (applyStyleToSelectionOrTyping({ fontFamily: style.fontFamily, fontSize: style.fontSize, color: style.textColor })) rememberFormatPreset(style);
       }
     }
 
     function applyChangedStyleControl(key, value) {
+      rememberUndoSnapshot(getCurrentRichEditor());
       const style = {};
-      if (key === 'fontFamily') style.fontFamily = value;
-      if (key === 'fontSize') style.fontSize = value;
+      if (key === 'fontFamily') { style.fontFamily = value; setActiveFormatMode('font'); }
+      if (key === 'fontSize') { style.fontSize = value; setActiveFormatMode('font'); }
       if (key === 'textColor') {
+        setActiveFormatMode('text');
         style.color = rememberFormatColor('text', value, false);
       }
       if (key === 'highlightColor') {
+        setActiveFormatMode('highlight');
         style.backgroundColor = rememberFormatColor('highlight', value, false);
       }
       if (!Object.keys(style).length) return;
