@@ -3925,6 +3925,159 @@
       overflow: auto !important;
       box-sizing: border-box !important;
     }
+    /* 2026-07-01 follow-up 4: deletable colors, calmer dark mode, black list dropdowns */
+    .recent-color-wrap {
+      position: relative !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 18px !important;
+      min-width: 18px !important;
+      height: 18px !important;
+      min-height: 18px !important;
+    }
+    .recent-color-wrap .format-color-dot {
+      width: 15px !important;
+      min-width: 15px !important;
+      height: 15px !important;
+      min-height: 15px !important;
+    }
+    .format-color-delete {
+      position: absolute !important;
+      right: -4px !important;
+      top: -5px !important;
+      width: 12px !important;
+      min-width: 12px !important;
+      height: 12px !important;
+      min-height: 12px !important;
+      padding: 0 !important;
+      border-radius: 50% !important;
+      border: 1px solid #94a3b8 !important;
+      background: #0f172a !important;
+      color: #fff !important;
+      -webkit-text-fill-color: #fff !important;
+      font-size: 9px !important;
+      line-height: 10px !important;
+      font-weight: 900 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 2 !important;
+    }
+    .format-toolbar-simplified select[data-style-key="fontFamily"],
+    .format-toolbar-simplified .format-font-label,
+    .format-current-item,
+    .format-current-item span:not(.format-current-swatch) {
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      opacity: 1 !important;
+    }
+    body.theme-dark .format-toolbar-simplified select[data-style-key="fontFamily"],
+    body.theme-system .format-toolbar-simplified select[data-style-key="fontFamily"] {
+      background: #f8fafc !important;
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      border-color: #94a3b8 !important;
+    }
+    .op-select,
+    select.op-select,
+    .mini-upload-table .op-select,
+    .main-list-table .op-select,
+    .performance-table .op-select,
+    .latest-table .op-select,
+    .stock-list-table .op-select,
+    .memo-history-table .op-select,
+    .history-detail-table .op-select,
+    .target-color-select,
+    .mini-upload-table .target-color-select,
+    .main-list-table .target-color-select,
+    .memo-history-table .target-color-select {
+      background: #05070b !important;
+      color: #f8fafc !important;
+      -webkit-text-fill-color: #f8fafc !important;
+      border-color: #374151 !important;
+      box-shadow: none !important;
+    }
+    .op-select option,
+    .target-color-select option {
+      background: #05070b !important;
+      color: #f8fafc !important;
+      -webkit-text-fill-color: #f8fafc !important;
+    }
+    body.theme-dark .section-title h2,
+    body.theme-dark .section-title h3,
+    body.theme-dark .card > h2,
+    body.theme-dark .card > h3,
+    body.theme-dark .account-date-line h2,
+    body.theme-dark .upload-box > strong,
+    body.theme-dark .history-panel h3,
+    body.theme-dark .detail-split-panel h4,
+    body.theme-dark .modal-head h3,
+    body.theme-system .section-title h2,
+    body.theme-system .section-title h3,
+    body.theme-system .card > h2,
+    body.theme-system .card > h3,
+    body.theme-system .account-date-line h2,
+    body.theme-system .upload-box > strong,
+    body.theme-system .history-panel h3,
+    body.theme-system .detail-split-panel h4,
+    body.theme-system .modal-head h3 {
+      background: #1f2937 !important;
+      color: #e5edf6 !important;
+      -webkit-text-fill-color: #e5edf6 !important;
+      border-color: #334155 !important;
+    }
+    body.theme-dark .section-title h2 *,
+    body.theme-dark .section-title h3 *,
+    body.theme-dark .upload-box > strong *,
+    body.theme-dark .modal-head h3 *,
+    body.theme-dark .detail-split-panel h4 *,
+    body.theme-system .section-title h2 *,
+    body.theme-system .section-title h3 *,
+    body.theme-system .upload-box > strong *,
+    body.theme-system .modal-head h3 *,
+    body.theme-system .detail-split-panel h4 * {
+      color: #e5edf6 !important;
+      -webkit-text-fill-color: #e5edf6 !important;
+    }
+    body.theme-dark .account-upload-page .upload-box > strong,
+    body.theme-dark .account-trade-list-box > strong,
+    body.theme-dark .account-balance-list-box > strong,
+    body.theme-system .account-upload-page .upload-box > strong,
+    body.theme-system .account-trade-list-box > strong,
+    body.theme-system .account-balance-list-box > strong {
+      display: inline-flex !important;
+      width: fit-content !important;
+      margin-bottom: 4px !important;
+      padding: 2px 8px !important;
+      border-radius: 8px !important;
+      background: #243244 !important;
+      color: #e5edf6 !important;
+      -webkit-text-fill-color: #e5edf6 !important;
+      border: 1px solid #3b4b60 !important;
+    }
+    body.theme-dark .history-panel,
+    body.theme-dark .history-panel .history-add-box,
+    body.theme-dark .history-panel .toolbar,
+    body.theme-system .history-panel,
+    body.theme-system .history-panel .history-add-box,
+    body.theme-system .history-panel .toolbar {
+      background: #111827 !important;
+      border-color: #2f3b4d !important;
+      color: #d7e1ee !important;
+      -webkit-text-fill-color: #d7e1ee !important;
+    }
+    body.theme-dark .history-panel .rich-editor,
+    body.theme-dark .history-panel input,
+    body.theme-dark .history-panel select:not(.op-select):not(.target-color-select),
+    body.theme-system .history-panel .rich-editor,
+    body.theme-system .history-panel input,
+    body.theme-system .history-panel select:not(.op-select):not(.target-color-select) {
+      background: #0b1220 !important;
+      color: #d7e1ee !important;
+      -webkit-text-fill-color: #d7e1ee !important;
+      border-color: #334155 !important;
+    }
 
   </style>
 </head>
@@ -9088,7 +9241,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
         const appendRecent = (group, key, colors) => {
           if (!group) return;
-          group.querySelectorAll(`[data-action="custom-format-color"][data-format-color-kind="${key}"]`).forEach(btn => btn.remove());
+          group.querySelectorAll(`.recent-color-wrap[data-format-color-kind="${key}"], [data-action="custom-format-color"][data-format-color-kind="${key}"], [data-action="delete-format-color"][data-format-color-kind="${key}"]`).forEach(btn => btn.remove());
           const baseColors = new Set();
           group.querySelectorAll('[data-action="quick-format"]').forEach(btn => {
             const styleObj = quickFormatStyle(btn.dataset.kind || '');
@@ -9099,6 +9252,10 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           app.formatColors = app.formatColors && typeof app.formatColors === 'object' ? app.formatColors : { text: [], highlight: [] };
           app.formatColors[key] = uniqueFormatColors(key, colors || []);
           uniqueColors.forEach(color => {
+            const wrap = document.createElement('span');
+            wrap.className = 'recent-color-wrap';
+            wrap.dataset.formatColorKind = key;
+            wrap.dataset.color = color;
             const btn = document.createElement('button');
             btn.type = 'button';
             btn.className = 'format-color-dot recent-user-color';
@@ -9107,7 +9264,17 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
             btn.dataset.color = color;
             btn.title = key === 'highlight' ? `최근 형광 ${color}` : `최근 글자색 ${color}`;
             btn.style.setProperty('--dot-color', color);
-            group.appendChild(btn);
+            const del = document.createElement('button');
+            del.type = 'button';
+            del.className = 'format-color-delete';
+            del.dataset.action = 'delete-format-color';
+            del.dataset.formatColorKind = key;
+            del.dataset.color = color;
+            del.title = key === 'highlight' ? `형광색 ${color} 삭제` : `글자색 ${color} 삭제`;
+            del.textContent = 'x';
+            wrap.appendChild(btn);
+            wrap.appendChild(del);
+            group.appendChild(wrap);
           });
         };
         appendRecent(groups[0], 'text', app.formatColors?.text || []);
@@ -9795,6 +9962,16 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const normalized = rememberFormatColor(kind, color, false);
       setUiStyle(key, normalized);
       applyChangedStyleControl(key, normalized);
+    }
+
+    function deleteFormatColor(kind, color) {
+      const key = kind === 'highlight' ? 'highlight' : 'text';
+      const normalized = normalizeColorValue(color, key === 'highlight' ? '#fff3a3' : '#273447');
+      app.formatColors = app.formatColors && typeof app.formatColors === 'object' ? app.formatColors : { text: [], highlight: [] };
+      app.formatColors[key] = uniqueFormatColors(key, app.formatColors[key] || []).filter(item => normalizeColorValue(item) !== normalized);
+      saveApp();
+      syncFormatToolbarState();
+      toast('색상 삭제 완료');
     }
 
 
@@ -10640,6 +10817,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (action === 'apply-format-preset') applyFormatPreset(el.dataset.index);
       if (action === 'quick-format') applyQuickFormat(el.dataset.kind);
       if (action === 'custom-format-color') applyCustomFormatColor(el.dataset.formatColorKind, el.dataset.color);
+      if (action === 'delete-format-color') deleteFormatColor(el.dataset.formatColorKind, el.dataset.color);
       if (action === 'undo-rich-style') undoRichStyle();
       if (action === 'erase-selected-style') eraseSelectedStyle();
       if (action === 'pick-custom-font') document.getElementById('customFontFile')?.click();
@@ -10999,6 +11177,9 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (settings.memoHistoryState) memoHistoryState = Object.assign(memoHistoryState, settings.memoHistoryState);
       if (settings.uiStyle) app.uiStyle = Object.assign(defaultUiStyle(), app.uiStyle || {}, settings.uiStyle);
       if ((app.uiStyle?.fontSize || '') === '15px') app.uiStyle.fontSize = '11px';
+      app.formatColors = app.formatColors && typeof app.formatColors === 'object' ? app.formatColors : { text: [], highlight: [] };
+      app.formatColors.text = uniqueFormatColors('text', app.formatColors.text || []);
+      app.formatColors.highlight = uniqueFormatColors('highlight', app.formatColors.highlight || []);
       installCustomFonts();
       initHandwriteCanvas();
       applyUiStyle();
