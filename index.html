@@ -3595,7 +3595,7 @@
       padding: 0 1px !important;
       font-size: 9.8px !important;
       line-height: 1.15 !important;
-      font-weight: 700 !important;
+      font-weight: 400 !important;
       border: 0 !important;
       background: transparent !important;
       box-shadow: none !important;
@@ -3605,6 +3605,7 @@
     .list-rich-cell *,
     .list-rich-cell [style*="font-size"] {
       font-size: inherit !important;
+      font-weight: 400 !important;
       line-height: inherit !important;
     }
     .history-inline-editor {
@@ -3624,6 +3625,81 @@
     .rich-editor [style*="color"],
     .rich-editor font[color] {
       -webkit-text-fill-color: currentColor !important;
+    }
+
+    /* 2026-07-01 follow-up: simpler format bar, 11px inputs, normal stock names, colored section titles */
+    .format-toolbar-simplified strong,
+    .format-toolbar-simplified .format-help,
+    .format-toolbar-simplified .format-divider,
+    .format-toolbar-simplified [data-action="apply-selected-style"],
+    .format-toolbar-simplified [data-action="undo-rich-style"],
+    .format-toolbar-simplified [data-action="open-handwrite"],
+    .format-toolbar-simplified [data-action="toggle-note-draw"],
+    .format-toolbar-simplified [data-action="clear-note-draw"],
+    .format-toolbar-simplified [data-action="pick-custom-font"],
+    .format-toolbar-simplified [data-kind="size-large"],
+    .format-toolbar-simplified [data-kind="size-normal"],
+    .format-toolbar-simplified select[data-style-key="fontFamily"],
+    .format-toolbar-simplified .format-font-label {
+      display: none !important;
+    }
+    .format-toolbar-simplified {
+      gap: 5px !important;
+      padding: 5px 7px !important;
+      align-items: center !important;
+    }
+    .format-toolbar-simplified .format-chip-group {
+      border-radius: 8px !important;
+      padding: 2px 4px !important;
+    }
+    .format-toolbar-simplified .format-mini-label {
+      font-size: 9.5px !important;
+      min-width: auto !important;
+    }
+    .format-toolbar-simplified .format-current-chip {
+      margin-left: auto !important;
+    }
+    .rich-editor[contenteditable="true"]:not(.list-rich-cell),
+    .today-item-editor,
+    .watch-item-editor,
+    .memo-rich-editor,
+    .history-inline-editor,
+    .detail-extra-editor {
+      font-size: 11px !important;
+    }
+    .list-rich-cell,
+    .name-link.list-rich-cell,
+    .stock-name-fit.list-rich-cell,
+    .mini-stock-name.list-rich-cell,
+    .memo-line.list-rich-cell,
+    .list-rich-cell * {
+      font-size: 9.8px !important;
+      font-weight: 400 !important;
+      line-height: 1.15 !important;
+    }
+    .section-title h2,
+    .section-title h3,
+    .card > h2,
+    .card > h3,
+    .history-panel h3,
+    .detail-split-panel h4,
+    .modal-head h3 {
+      display: inline-flex !important;
+      align-items: center !important;
+      width: fit-content !important;
+      min-height: 21px !important;
+      padding: 2px 8px !important;
+      border-radius: 8px !important;
+      background: #e0f2fe !important;
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .08) !important;
+    }
+    .card:nth-of-type(2n) > h2,
+    .card:nth-of-type(2n) > h3,
+    .history-panel:nth-of-type(2n) h3,
+    .detail-split-panel:nth-of-type(2n) h4 {
+      background: #fef3c7 !important;
     }
 
   </style>
@@ -3871,7 +3947,7 @@
     function defaultUiStyle() {
       return {
         fontFamily: 'system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", "Malgun Gothic", sans-serif',
-        fontSize: '15px',
+        fontSize: '11px',
         textColor: '#273447',
         highlightColor: '#fff3a3',
         themeMode: 'light'
@@ -6435,7 +6511,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         const dayChangeCell = kind === 'trade' ? '' : `<td class="num rate-compact ${profitClass(row.dayChangeRate)}">${fmtRate2(row.dayChangeRate)}</td>`;
         return `<tr>
           <td class="center row-no">${fmtNum(idx + 1)}</td>
-          <td>${renderListRichCell(['mini',kind,'stockName',row.account,code,row.date], row.stockName, `data-show-history-account="${esc(row.account)}" data-show-history-code="${esc(code)}" data-show-history-name="${esc(row.stockName)}" title="${esc(row.stockName)} · 더블클릭하면 종목 이력을 봅니다."`, 'list-rich-cell name-link mini-stock-name')}</td>
+          <td>${renderListRichCell(['mini',kind,'stockName',row.account,code,row.date], row.stockName, `data-show-history-account="${esc(row.account)}" data-show-history-code="${esc(code)}" data-show-history-name="${esc(row.stockName)}" title="${esc(row.stockName)} · 클릭하면 종목 이력을 봅니다."`, 'list-rich-cell name-link mini-stock-name')}</td>
           <td class="center">${opinionSelect(row.account, code, row.date, 'op1', row.source || kind)}</td>
           <td class="center">${opinionSelect(row.account, code, row.date, 'op2', row.source || kind)}</td>
           <td>${target1Input}</td>
@@ -6729,7 +6805,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         <td>${esc(r.account)}</td>
         <td>${esc(r.stockCode)}</td>
         <td class="center row-no">${fmtNum(idx + 1)}</td>
-        <td>${renderListRichCell(['performance','stockName',r.account,r.stockCode], r.stockName, `data-show-history-account="${esc(r.account)}" data-show-history-code="${esc(r.stockCode)}" data-show-history-name="${esc(r.stockName)}" title="${esc(r.stockName)} · 더블클릭하면 종목 이력을 봅니다." style="${stockNameAutoStyle(r.stockName)}"`, 'list-rich-cell name-link stock-name-fit')}</td>
+        <td>${renderListRichCell(['performance','stockName',r.account,r.stockCode], r.stockName, `data-show-history-account="${esc(r.account)}" data-show-history-code="${esc(r.stockCode)}" data-show-history-name="${esc(r.stockName)}" title="${esc(r.stockName)} · 클릭하면 종목 이력을 봅니다." style="${stockNameAutoStyle(r.stockName)}"`, 'list-rich-cell name-link stock-name-fit')}</td>
         <td class="center">${opinionSelect(r.account, r.stockCode, r.latestDate || selectedDate, 'op1', r.source || 'trade')}</td>
         <td class="center">${opinionSelect(r.account, r.stockCode, r.latestDate || selectedDate, 'op2', r.source || 'trade')}</td>
         <td>${targetInputCellHtml(r.account, r.stockCode, r.latestDate || selectedDate, r.source || 'trade', 'target1', r.target1, 'stock-target-input')}</td>
@@ -6903,7 +6979,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         return `<tr>
           <td>${esc(r.account)}</td><td>${esc(r.date)}</td>
           <td class="center row-no">${fmtNum(idx + 1)}</td>
-          <td>${renderListRichCell(['latest','stockName',r.account,r.stockCode], r.stockName, `data-show-history-account="${esc(r.account)}" data-show-history-code="${esc(r.stockCode)}" data-show-history-name="${esc(r.stockName)}" title="더블클릭하면 종목 이력을 봅니다."`, 'list-rich-cell name-link')}</td>
+          <td>${renderListRichCell(['latest','stockName',r.account,r.stockCode], r.stockName, `data-show-history-account="${esc(r.account)}" data-show-history-code="${esc(r.stockCode)}" data-show-history-name="${esc(r.stockName)}" title="클릭하면 종목 이력을 봅니다."`, 'list-rich-cell name-link')}</td>
           <td class="center">${opinionSelect(r.account, r.stockCode, r.date, 'op1', r.source || 'balance')}</td>
           <td class="center">${opinionSelect(r.account, r.stockCode, r.date, 'op2', r.source || 'balance')}</td>
           <td>${target1Input}</td><td>${target2Input}</td>
@@ -7035,7 +7111,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         const target2Input = targetInputCellHtml(r.account, r.stockCode, r.recentDate, r.source || 'balance', 'target2', r.target2, 'stock-target-input');
         return `<tr>
         <td class="center row-no">${fmtNum(idx + 1)}</td>
-        <td>${renderListRichCell(['stocks','stockName',r.account,r.stockCode], r.stockName, `data-show-history-account="${esc(r.account)}" data-show-history-code="${esc(r.stockCode)}" data-show-history-name="${esc(r.stockName)}" title="${esc(r.stockName)} · 더블클릭하면 종목 이력을 봅니다." style="${stockNameAutoStyle(r.stockName)}"`, 'list-rich-cell name-link stock-name-fit')}</td>
+        <td>${renderListRichCell(['stocks','stockName',r.account,r.stockCode], r.stockName, `data-show-history-account="${esc(r.account)}" data-show-history-code="${esc(r.stockCode)}" data-show-history-name="${esc(r.stockName)}" title="${esc(r.stockName)} · 클릭하면 종목 이력을 봅니다." style="${stockNameAutoStyle(r.stockName)}"`, 'list-rich-cell name-link stock-name-fit')}</td>
         <td>${esc(r.account)}</td><td>${esc(r.firstDate)}</td><td>${esc(r.recentDate)}</td>
         <td class="center">${opinionSelect(r.account, r.stockCode, r.recentDate, 'op1', r.source || 'balance')}</td>
         <td class="center">${opinionSelect(r.account, r.stockCode, r.recentDate, 'op2', r.source || 'balance')}</td>
@@ -7448,7 +7524,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const body = rows.map((row, idx) => {
         const stockCell = row.manual
           ? `${renderListRichCell(['memo','manual','stockName',row.id || idx], row.stockName, `title="직접 추가한 종목명" style="${stockNameAutoStyle(row.stockName)}"`, 'list-rich-cell name-link memo-line stock-name-fit')}<span class="manual-row-label">직접</span>`
-          : renderListRichCell(['memo','stockName',row.account,row.stockCode,row.date,row.source || ''], row.stockName, `data-show-history-account="${esc(row.account)}" data-show-history-code="${esc(row.stockCode)}" data-show-history-name="${esc(row.stockName)}" title="${esc(row.account)} · ${esc(row.stockCode)} · 더블클릭하면 종목 이력을 봅니다." style="${stockNameAutoStyle(row.stockName)}"`, 'list-rich-cell name-link memo-line stock-name-fit');
+          : renderListRichCell(['memo','stockName',row.account,row.stockCode,row.date,row.source || ''], row.stockName, `data-show-history-account="${esc(row.account)}" data-show-history-code="${esc(row.stockCode)}" data-show-history-name="${esc(row.stockName)}" title="${esc(row.account)} · ${esc(row.stockCode)} · 클릭하면 종목 이력을 봅니다." style="${stockNameAutoStyle(row.stockName)}"`, 'list-rich-cell name-link memo-line stock-name-fit');
         const target1Input = row.manual
           ? manualTargetInputCellHtml(row, 'target1', 'stock-target-input')
           : targetInputCellHtml(row.account, row.stockCode, row.date, row.source || '', 'target1', row.target1, 'stock-target-input');
@@ -7581,13 +7657,13 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           </div>
           <div class="detail-split-panel">
             <h4>추가 기록</h4>
-            <div id="detailExtraList">${renderDetailExtraList(storeName, key)}</div>
             ${renderFormatToolbarInline()}
             <div id="detailExtraEditor" class="rich-editor detail-extra-editor" contenteditable="true" spellcheck="false" data-placeholder="이 상세내용에 추가로 기록할 내용을 입력하세요."></div>
             <div class="modal-actions">
               <button class="btn-primary" data-action="save-detail-extra" data-store="${esc(storeName)}" data-key="${esc(key)}">추가기록 저장</button>
               <button data-action="close-modal">닫기</button>
             </div>
+            <div id="detailExtraList">${renderDetailExtraList(storeName, key)}</div>
           </div>
         </div>`;
       modalBackdrop.classList.add('open');
@@ -8716,7 +8792,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         'mark-blue': { backgroundColor: '#dbeafe' },
         'mark-purple': { backgroundColor: '#eadcff' },
         'size-large': { fontSize: '18px' },
-        'size-normal': { fontSize: '15px' }
+        'size-normal': { fontSize: '11px' }
       };
       return map[kind] || {};
     }
@@ -8724,12 +8800,29 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     function syncFormatToolbarState() {
       const style = currentFormatPreset();
       document.querySelectorAll('.global-format-toolbar, .inline-format-toolbar').forEach(toolbar => {
+        toolbar.classList.add('format-toolbar-simplified');
+        if (toolbar.querySelector('strong')) toolbar.querySelector('strong').textContent = '서식';
+        const groups = toolbar.querySelectorAll('.format-chip-group');
+        if (groups[0]?.querySelector('.format-mini-label')) groups[0].querySelector('.format-mini-label').textContent = '글자';
+        if (groups[1]?.querySelector('.format-mini-label')) groups[1].querySelector('.format-mini-label').textContent = '형광';
+        toolbar.querySelectorAll('[data-action="quick-format"]').forEach(btn => {
+          const kind = btn.dataset.kind || '';
+          if (kind === 'bold') btn.textContent = '굵게';
+          if (kind === 'underline') btn.textContent = '밑줄';
+        });
+        toolbar.querySelectorAll('[data-action="apply-highlight-only"]').forEach(btn => { btn.textContent = '형광'; });
+        toolbar.querySelectorAll('[data-action="erase-selected-style"]').forEach(btn => { btn.textContent = '지움'; });
+        toolbar.querySelectorAll('[data-action="insert-rich-link"]').forEach(btn => { btn.textContent = '링크'; });
+        toolbar.querySelectorAll('[data-action="pick-rich-image"]').forEach(btn => { btn.textContent = '그림'; });
+        toolbar.querySelectorAll('select[data-style-key="fontFamily"]').forEach(el => el.previousElementSibling?.classList.add('format-font-label'));
+        toolbar.querySelectorAll('select[data-style-key="fontSize"]').forEach(el => { if (el.previousElementSibling) el.previousElementSibling.textContent = '크기'; });
+        toolbar.querySelectorAll('input[data-style-key="textColor"]').forEach(el => { if (el.previousElementSibling) el.previousElementSibling.textContent = '색'; });
+        toolbar.querySelectorAll('input[data-style-key="highlightColor"]').forEach(el => { if (el.previousElementSibling) el.previousElementSibling.textContent = '형광'; });
         toolbar.querySelectorAll('[data-style-key="fontFamily"]').forEach(el => { if ('value' in el) el.value = style.fontFamily; });
         toolbar.querySelectorAll('[data-style-key="fontSize"]').forEach(el => { if ('value' in el) el.value = style.fontSize; });
         toolbar.querySelectorAll('[data-style-key="textColor"]').forEach(el => { if ('value' in el) el.value = style.textColor; });
         toolbar.querySelectorAll('[data-style-key="highlightColor"]').forEach(el => { if ('value' in el) el.value = style.highlightColor; });
 
-        const groups = toolbar.querySelectorAll('.format-chip-group');
         const appendRecent = (group, key, colors) => {
           if (!group) return;
           group.querySelectorAll(`[data-action="custom-format-color"][data-format-color-kind="${key}"]`).forEach(btn => btn.remove());
@@ -9187,6 +9280,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     function primeEditorTypingStyle(editor) {
       if (!editor || !editor.matches || !editor.matches('.rich-editor[contenteditable="true"]')) return;
+      if (editor.dataset.action === 'list-cell-format') return;
       const preset = currentFormatPreset();
       const styleObj = normalizeStyleLineHeight({
         fontFamily: preset.fontFamily,
@@ -9216,6 +9310,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     function insertTextWithCurrentStyle(e) {
       const editor = e.target && e.target.closest ? e.target.closest('.rich-editor[contenteditable="true"]') : null;
       if (!editor || e.isComposing || e.inputType !== 'insertText' || !e.data) return false;
+      if (editor.dataset.action === 'list-cell-format') return false;
       e.preventDefault();
       rememberUndoSnapshot(editor);
       editor.focus?.();
@@ -10176,6 +10271,14 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         return;
       }
       if (!clickedHanddraw) selectHanddrawWrap(null);
+      const stockNameHistoryEl = e.target.closest && e.target.closest('[data-show-history-code]');
+      if (stockNameHistoryEl) {
+        const sel = window.getSelection();
+        if (sel && !sel.isCollapsed && String(sel).trim()) return;
+        e.preventDefault();
+        showHistory(stockNameHistoryEl.dataset.showHistoryAccount, stockNameHistoryEl.dataset.showHistoryCode, stockNameHistoryEl.dataset.showHistoryName);
+        return;
+      }
       const el = e.target.closest('[data-action], .tab-btn');
       if (!el) return;
       const action = el.dataset.action;
@@ -10319,11 +10422,6 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (dailyDetailEl) { openDailyDetail(dailyDetailEl.dataset.dailyType, dailyDetailEl.dataset.rowId); return; }
       const noteEl = e.target.closest('[data-action="open-note-detail"]');
       if (noteEl) { showNoteDetail(noteEl.dataset.noteId); return; }
-      const listHistoryEl = e.target.closest('[data-show-history-code]');
-      if (listHistoryEl) {
-        showHistory(listHistoryEl.dataset.showHistoryAccount, listHistoryEl.dataset.showHistoryCode, listHistoryEl.dataset.showHistoryName);
-        return;
-      }
       const el = e.target.closest('[data-action="open-memo"]');
       if (el) openMemo(el.dataset.account, el.dataset.code, el.dataset.name, el.dataset.date || selectedDate, el.dataset.source || '');
     });
@@ -10627,6 +10725,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (settings.dailyHistoryState) dailyHistoryState = Object.assign(dailyHistoryState, settings.dailyHistoryState);
       if (settings.memoHistoryState) memoHistoryState = Object.assign(memoHistoryState, settings.memoHistoryState);
       if (settings.uiStyle) app.uiStyle = Object.assign(defaultUiStyle(), app.uiStyle || {}, settings.uiStyle);
+      if ((app.uiStyle?.fontSize || '') === '15px') app.uiStyle.fontSize = '11px';
       installCustomFonts();
       initHandwriteCanvas();
       applyUiStyle();
