@@ -3373,6 +3373,128 @@
       }
     }
 
+    /* 2026-07-01 follow-up: show full today items, colored section titles, richer list cells */
+    .today-page {
+      height: auto !important;
+      min-height: calc(100vh - 152px) !important;
+      grid-template-rows: auto auto auto auto !important;
+      align-items: start !important;
+    }
+    .today-left-stack .today-compact-card {
+      max-height: none !important;
+      overflow: visible !important;
+    }
+    .today-left-stack .today-compact-card > div:last-child {
+      overflow: visible !important;
+      max-height: none !important;
+    }
+    .today-item-editor,
+    .watch-item-editor,
+    .today-left-stack .task-row .today-item-editor.rich-editor,
+    .today-left-stack .watch-row .watch-item-editor.rich-editor {
+      height: auto !important;
+      min-height: 24px !important;
+      max-height: none !important;
+      line-height: 1.42 !important;
+      white-space: pre-wrap !important;
+      overflow: visible !important;
+    }
+    .today-section-title-color {
+      display: inline-flex;
+      align-items: center;
+      min-height: 22px;
+      padding: 2px 8px;
+      border-radius: 8px;
+      color: #0f172a;
+      -webkit-text-fill-color: #0f172a;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .08);
+    }
+    .today-date-half .section-title h2,
+    .today-quote-card .section-title h2,
+    .today-left-stack .today-compact-card .section-title h3,
+    .today-note-card .section-title h3 {
+      display: inline-flex !important;
+      align-items: center !important;
+      min-height: 22px !important;
+      padding: 2px 8px !important;
+      border-radius: 8px !important;
+      color: #0f172a !important;
+      -webkit-text-fill-color: #0f172a !important;
+      box-shadow: inset 0 0 0 1px rgba(15, 23, 42, .08) !important;
+    }
+    .today-date-half .section-title h2 { background: #dbeafe !important; }
+    .today-quote-card .section-title h2 { background: #fef3c7 !important; }
+    .today-left-stack .today-compact-card:nth-child(1) .section-title h3 { background: #dcfce7 !important; }
+    .today-left-stack .today-compact-card:nth-child(2) .section-title h3 { background: #fee2e2 !important; }
+    .today-left-stack .today-compact-card:nth-child(3) .section-title h3 { background: #ede9fe !important; }
+    .today-left-stack .today-compact-card:nth-child(4) .section-title h3 { background: #cffafe !important; }
+    .today-note-card .section-title h3 { background: #fce7f3 !important; }
+    .rich-editor,
+    .rich-editor * {
+      line-height: inherit;
+    }
+    .list-rich-cell {
+      display: inline-block;
+      max-width: 100%;
+      min-height: 17px;
+      padding: 1px 2px;
+      border-radius: 5px;
+      outline: none;
+      cursor: text;
+      line-height: 1.25 !important;
+      white-space: normal !important;
+      word-break: break-word !important;
+      vertical-align: middle;
+    }
+    .list-rich-cell:focus {
+      box-shadow: 0 0 0 2px rgba(23, 105, 209, .24);
+      background: #ffffff;
+    }
+    body.theme-dark .modal,
+    body.theme-dark .modal *,
+    body.theme-dark .detail-split-panel,
+    body.theme-dark .modal-actions,
+    body.theme-dark .modal-unified-toolbar,
+    body.theme-system .modal,
+    body.theme-system .modal *,
+    body.theme-system .detail-split-panel,
+    body.theme-system .modal-actions,
+    body.theme-system .modal-unified-toolbar {
+      border-color: #30363d !important;
+    }
+    body.theme-dark .modal,
+    body.theme-dark .detail-split-panel,
+    body.theme-dark .modal-actions,
+    body.theme-dark .modal-unified-toolbar,
+    body.theme-system .modal,
+    body.theme-system .detail-split-panel,
+    body.theme-system .modal-actions,
+    body.theme-system .modal-unified-toolbar {
+      background: #161b22 !important;
+      color: #f0f6fc !important;
+      -webkit-text-fill-color: #f0f6fc !important;
+    }
+    body.theme-dark .modal .rich-editor,
+    body.theme-dark .modal input,
+    body.theme-dark .modal textarea,
+    body.theme-dark .modal select,
+    body.theme-system .modal .rich-editor,
+    body.theme-system .modal input,
+    body.theme-system .modal textarea,
+    body.theme-system .modal select {
+      background: #0d1117 !important;
+      color: #f0f6fc !important;
+      -webkit-text-fill-color: #f0f6fc !important;
+      border-color: #30363d !important;
+    }
+    body.theme-dark .modal button,
+    body.theme-system .modal button {
+      background: #21262d !important;
+      color: #f0f6fc !important;
+      -webkit-text-fill-color: #f0f6fc !important;
+      border-color: #30363d !important;
+    }
+
   </style>
 </head>
 <body spellcheck="false">
@@ -3648,6 +3770,7 @@
         customFonts: [],
         formatRecents: [],
         routineTemplates: [],
+        listCellFormats: {},
         uiStyle: defaultUiStyle()
       };
     }
@@ -3856,6 +3979,7 @@
         customFonts: Array.isArray(parsed.customFonts) ? parsed.customFonts : [],
         formatRecents: Array.isArray(parsed.formatRecents) ? parsed.formatRecents : [],
         routineTemplates: Array.isArray(parsed.routineTemplates) ? normalizeRoutineTemplates(parsed.routineTemplates) : inferRoutineTemplatesFromRecords(parsed.records || {}),
+        listCellFormats: parsed.listCellFormats || {},
         uiStyle: Object.assign(defaultUiStyle(), parsed.uiStyle || {})
       });
     }
@@ -5860,6 +5984,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         fitAllMoneyInputsToBox();
         initNoteDrawCanvases();
         disableSpellcheck();
+        autoGrowTodayEditors();
         focusPendingTodayEditor();
       });
     }
@@ -6172,7 +6297,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         const dayChangeCell = kind === 'trade' ? '' : `<td class="num rate-compact ${profitClass(row.dayChangeRate)}">${fmtRate2(row.dayChangeRate)}</td>`;
         return `<tr>
           <td class="center row-no">${fmtNum(idx + 1)}</td>
-          <td><span class="name-link mini-stock-name" data-action="show-history" data-account="${esc(row.account)}" data-code="${esc(code)}" data-name="${esc(row.stockName)}" title="${esc(row.stockName)}">${esc(row.stockName)}</span></td>
+          <td>${renderListRichCell(['mini',kind,'stockName',row.account,code,row.date], row.stockName, `data-show-history-account="${esc(row.account)}" data-show-history-code="${esc(code)}" data-show-history-name="${esc(row.stockName)}" title="${esc(row.stockName)} · 더블클릭하면 종목 이력을 봅니다."`, 'list-rich-cell name-link mini-stock-name')}</td>
           <td class="center">${opinionSelect(row.account, code, row.date, 'op1', row.source || kind)}</td>
           <td class="center">${opinionSelect(row.account, code, row.date, 'op2', row.source || kind)}</td>
           <td>${target1Input}</td>
@@ -6466,7 +6591,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         <td>${esc(r.account)}</td>
         <td>${esc(r.stockCode)}</td>
         <td class="center row-no">${fmtNum(idx + 1)}</td>
-        <td><span class="name-link stock-name-fit" style="${stockNameAutoStyle(r.stockName)}" data-action="show-history" data-account="${esc(r.account)}" data-code="${esc(r.stockCode)}" data-name="${esc(r.stockName)}" title="${esc(r.stockName)}">${esc(r.stockName)}</span></td>
+        <td>${renderListRichCell(['performance','stockName',r.account,r.stockCode], r.stockName, `data-show-history-account="${esc(r.account)}" data-show-history-code="${esc(r.stockCode)}" data-show-history-name="${esc(r.stockName)}" title="${esc(r.stockName)} · 더블클릭하면 종목 이력을 봅니다." style="${stockNameAutoStyle(r.stockName)}"`, 'list-rich-cell name-link stock-name-fit')}</td>
         <td class="center">${opinionSelect(r.account, r.stockCode, r.latestDate || selectedDate, 'op1', r.source || 'trade')}</td>
         <td class="center">${opinionSelect(r.account, r.stockCode, r.latestDate || selectedDate, 'op2', r.source || 'trade')}</td>
         <td>${targetInputCellHtml(r.account, r.stockCode, r.latestDate || selectedDate, r.source || 'trade', 'target1', r.target1, 'stock-target-input')}</td>
@@ -6640,7 +6765,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         return `<tr>
           <td>${esc(r.account)}</td><td>${esc(r.date)}</td>
           <td class="center row-no">${fmtNum(idx + 1)}</td>
-          <td><span class="name-link" data-action="show-history" data-account="${esc(r.account)}" data-code="${esc(r.stockCode)}" data-name="${esc(r.stockName)}">${esc(r.stockName)}</span></td>
+          <td>${renderListRichCell(['latest','stockName',r.account,r.stockCode], r.stockName, `data-show-history-account="${esc(r.account)}" data-show-history-code="${esc(r.stockCode)}" data-show-history-name="${esc(r.stockName)}" title="더블클릭하면 종목 이력을 봅니다."`, 'list-rich-cell name-link')}</td>
           <td class="center">${opinionSelect(r.account, r.stockCode, r.date, 'op1', r.source || 'balance')}</td>
           <td class="center">${opinionSelect(r.account, r.stockCode, r.date, 'op2', r.source || 'balance')}</td>
           <td>${target1Input}</td><td>${target2Input}</td>
@@ -6772,7 +6897,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         const target2Input = targetInputCellHtml(r.account, r.stockCode, r.recentDate, r.source || 'balance', 'target2', r.target2, 'stock-target-input');
         return `<tr>
         <td class="center row-no">${fmtNum(idx + 1)}</td>
-        <td><span class="name-link stock-name-fit" style="${stockNameAutoStyle(r.stockName)}" data-action="show-history" data-account="${esc(r.account)}" data-code="${esc(r.stockCode)}" data-name="${esc(r.stockName)}" title="${esc(r.stockName)}">${esc(r.stockName)}</span></td>
+        <td>${renderListRichCell(['stocks','stockName',r.account,r.stockCode], r.stockName, `data-show-history-account="${esc(r.account)}" data-show-history-code="${esc(r.stockCode)}" data-show-history-name="${esc(r.stockName)}" title="${esc(r.stockName)} · 더블클릭하면 종목 이력을 봅니다." style="${stockNameAutoStyle(r.stockName)}"`, 'list-rich-cell name-link stock-name-fit')}</td>
         <td>${esc(r.account)}</td><td>${esc(r.firstDate)}</td><td>${esc(r.recentDate)}</td>
         <td class="center">${opinionSelect(r.account, r.stockCode, r.recentDate, 'op1', r.source || 'balance')}</td>
         <td class="center">${opinionSelect(r.account, r.stockCode, r.recentDate, 'op2', r.source || 'balance')}</td>
@@ -6815,6 +6940,28 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const safe = cleanHtml(html || '');
       if (safe.trim()) return safe;
       return escMultiline(fallbackText || '');
+    }
+
+    function listFormatKey(parts) {
+      return (Array.isArray(parts) ? parts : [parts]).map(part => String(part ?? '').replace(/__/g, '_')).join('__');
+    }
+
+    function renderListRichCell(keyParts, fallbackText, extraAttrs = '', className = 'list-rich-cell') {
+      const key = listFormatKey(keyParts);
+      const html = app.listCellFormats && app.listCellFormats[key] ? app.listCellFormats[key] : '';
+      return `<span class="rich-editor ${esc(className)}" contenteditable="true" spellcheck="false" data-action="list-cell-format" data-list-format-key="${esc(key)}" ${extraAttrs}>${renderRichContent(html, fallbackText)}</span>`;
+    }
+
+    function syncListRichCell(el) {
+      if (!el || el.dataset.action !== 'list-cell-format') return;
+      const key = el.dataset.listFormatKey || '';
+      if (!key) return;
+      app.listCellFormats = app.listCellFormats || {};
+      const html = cleanHtml(el.innerHTML || '');
+      const text = (el.innerText || plainFromHtml(html) || '').trim();
+      if (!text && !plainFromHtml(html).trim()) delete app.listCellFormats[key];
+      else app.listCellFormats[key] = html;
+      saveApp();
     }
 
     function plainFromHtml(html) {
@@ -7162,8 +7309,8 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const rows = filterAndSortMemoRows(getMemoHistoryRows());
       const body = rows.map((row, idx) => {
         const stockCell = row.manual
-          ? `<span class="name-link memo-line stock-name-fit" style="${stockNameAutoStyle(row.stockName)}" title="직접 추가한 종목명">${esc(row.stockName)}<span class="manual-row-label">직접</span></span>`
-          : `<span class="name-link memo-line stock-name-fit" style="${stockNameAutoStyle(row.stockName)}" data-action="show-history" data-account="${esc(row.account)}" data-code="${esc(row.stockCode)}" data-name="${esc(row.stockName)}" title="${esc(row.account)} · ${esc(row.stockCode)}">${esc(row.stockName)}</span>`;
+          ? `${renderListRichCell(['memo','manual','stockName',row.id || idx], row.stockName, `title="직접 추가한 종목명" style="${stockNameAutoStyle(row.stockName)}"`, 'list-rich-cell name-link memo-line stock-name-fit')}<span class="manual-row-label">직접</span>`
+          : renderListRichCell(['memo','stockName',row.account,row.stockCode,row.date,row.source || ''], row.stockName, `data-show-history-account="${esc(row.account)}" data-show-history-code="${esc(row.stockCode)}" data-show-history-name="${esc(row.stockName)}" title="${esc(row.account)} · ${esc(row.stockCode)} · 더블클릭하면 종목 이력을 봅니다." style="${stockNameAutoStyle(row.stockName)}"`, 'list-rich-cell name-link memo-line stock-name-fit');
         const target1Input = row.manual
           ? manualTargetInputCellHtml(row, 'target1', 'stock-target-input')
           : targetInputCellHtml(row.account, row.stockCode, row.date, row.source || '', 'target1', row.target1, 'stock-target-input');
@@ -7385,7 +7532,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         <td class="center compact-col">${esc(row.date)}</td>
         <td class="center compact-col">${esc(row.weekday)}</td>
         <td class="center compact-col">${esc(row.source)}</td>
-        <td class="history-text compact-col"><strong>${esc(row.stockName || '-')}</strong></td>
+        <td class="history-text compact-col">${renderListRichCell(['daily','watch','stockName',row.id], row.stockName || '-', '', 'list-rich-cell')}</td>
         <td class="history-check-col"><input class="history-check-box" type="checkbox" data-action="daily-history-check" data-daily-type="watch" data-row-id="${esc(row.id)}" ${isDailyHistoryChecked('watch', row.id) ? 'checked' : ''} aria-label="관심종목 체크" /></td>
         <td class="history-text content-col detail-content-click" data-action="open-daily-detail" data-daily-type="watch" data-row-id="${esc(row.id)}" title="리스트에서 바로 수정할 수 있고, 더블클릭하면 큰 편집창이 열립니다."><div class="rich-editor history-inline-editor" contenteditable="true" spellcheck="false" data-action="daily-inline-edit" data-daily-type="watch" data-row-id="${esc(row.id)}" data-placeholder="관심 이유 / 가격대">${renderRichContent(row.reasonHtml || '', row.reason || '')}</div></td>
         <td class="center compact-col">${row.extra ? `<button class="btn-small btn-danger" data-action="delete-extra-watch" data-id="${esc(row.id)}">삭제</button>` : `<button class="btn-small btn-danger" data-action="delete-record-watch" data-id="${esc(row.id)}">삭제</button>`}</td>
@@ -8787,7 +8934,24 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return '7';
     }
 
+    function lineHeightForFontSize(pxValue) {
+      const n = Number(String(pxValue || '').replace(/[^0-9.]/g, '')) || 15;
+      return `${Math.max(16, Math.round(n * 1.42))}px`;
+    }
+
+    function normalizeStyleLineHeight(styleObj = {}) {
+      const out = Object.assign({}, styleObj);
+      if (out.fontSize && !out.lineHeight) out.lineHeight = lineHeightForFontSize(out.fontSize);
+      return out;
+    }
+
+    function setEditorLineHeight(editor, lineHeight) {
+      if (!editor || !lineHeight) return;
+      editor.style.setProperty('line-height', lineHeight, 'important');
+    }
+
     function applyTypingStyle(styleObj) {
+      styleObj = normalizeStyleLineHeight(styleObj);
       const editor = getCurrentRichEditor();
       if (!editor) {
         alert('서식을 먼저 선택하려면 노트/메모 등 기록창에 커서를 둔 뒤 사용해 주세요.');
@@ -8803,6 +8967,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         try { document.execCommand('hiliteColor', false, styleObj.backgroundColor); }
         catch (e) { document.execCommand('backColor', false, styleObj.backgroundColor); }
       }
+      setEditorLineHeight(editor, styleObj.lineHeight || editor.style.lineHeight || lineHeightForFontSize(app.uiStyle?.fontSize || '15px'));
       saveCurrentRichSelection();
       toast('서식 선택 완료 · 이어서 입력하세요');
       return true;
@@ -8854,6 +9019,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     }
 
     function wrapSelectionWithStyle(styleObj) {
+      styleObj = normalizeStyleLineHeight(styleObj);
       restoreSavedSelection();
       const sel = window.getSelection();
       if (!sel || !sel.rangeCount || sel.isCollapsed) {
@@ -8890,6 +9056,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       newRange.setStartBefore(wrappers[0]);
       newRange.setEndAfter(wrappers[wrappers.length - 1]);
       sel.addRange(newRange);
+      setEditorLineHeight(editor, styleObj.lineHeight || editor.style.lineHeight || lineHeightForFontSize(app.uiStyle?.fontSize || '15px'));
       saveCurrentRichSelection();
       syncRichEditors();
       autoGrowTodayEditors();
@@ -8979,6 +9146,17 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       } else {
         if (applyStyleToSelectionOrTyping({ fontFamily: style.fontFamily, fontSize: style.fontSize, color: style.textColor })) rememberFormatPreset(style);
       }
+    }
+
+    function applyChangedStyleControl(key, value) {
+      if (!getCurrentRichEditor() && !savedSelectionRange) return;
+      const style = {};
+      if (key === 'fontFamily') style.fontFamily = value;
+      if (key === 'fontSize') style.fontSize = value;
+      if (key === 'textColor') style.color = value;
+      if (key === 'highlightColor') style.backgroundColor = value;
+      if (!Object.keys(style).length) return;
+      if (applyStyleToSelectionOrTyping(style)) rememberFormatPreset(currentFormatPreset());
     }
 
     function applyFormatPreset(index) {
@@ -9152,7 +9330,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     function autoGrowTodayEditors() {
       document.querySelectorAll('.today-item-editor.rich-editor, .watch-item-editor.rich-editor').forEach(el => {
         el.style.height = 'auto';
-        const next = Math.max(30, Math.min(108, el.scrollHeight));
+        const next = Math.max(24, el.scrollHeight);
         el.style.height = `${next}px`;
       });
     }
@@ -9368,6 +9546,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       }
       document.querySelectorAll('[data-action="task-rich-text"]').forEach(el => syncTodayTaskEditor(el));
       document.querySelectorAll('[data-action="watch-rich-name"], [data-action="watch-rich-reason"]').forEach(el => syncTodayWatchEditor(el));
+      document.querySelectorAll('[data-action="list-cell-format"]').forEach(el => syncListRichCell(el));
     }
 
     function getCurrentRichEditor() {
@@ -9877,6 +10056,11 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (dailyDetailEl) { openDailyDetail(dailyDetailEl.dataset.dailyType, dailyDetailEl.dataset.rowId); return; }
       const noteEl = e.target.closest('[data-action="open-note-detail"]');
       if (noteEl) { showNoteDetail(noteEl.dataset.noteId); return; }
+      const listHistoryEl = e.target.closest('[data-show-history-code]');
+      if (listHistoryEl) {
+        showHistory(listHistoryEl.dataset.showHistoryAccount, listHistoryEl.dataset.showHistoryCode, listHistoryEl.dataset.showHistoryName);
+        return;
+      }
       const el = e.target.closest('[data-action="open-memo"]');
       if (el) openMemo(el.dataset.account, el.dataset.code, el.dataset.name, el.dataset.date || selectedDate, el.dataset.source || '');
     });
@@ -9959,6 +10143,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       }
       if (el.dataset.action === 'change-ui-style') {
         setUiStyle(el.dataset.styleKey, el.value);
+        applyChangedStyleControl(el.dataset.styleKey, el.value);
       }
       if (el.id === 'localBackupImportFile') {
         importLocalBackupFile(el.files && el.files[0]).finally(() => { el.value = ''; });
@@ -10001,6 +10186,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         noteDrawState.color = el.value || '#d93025';
       }
       if (el.dataset.action === 'daily-inline-edit') { saveDailyInlineEdit(el); }
+      if (el.dataset.action === 'list-cell-format') { syncListRichCell(el); }
       if (el.dataset.action === 'memo-inline-edit') {
         const html = cleanHtml(el.innerHTML || '');
         const text = el.innerText || plainFromHtml(html);
