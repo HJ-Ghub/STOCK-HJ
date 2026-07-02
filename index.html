@@ -700,6 +700,7 @@
     .inline-format-toolbar button { padding:3px 7px; font-size:10.5px; border-radius:9px; }
     .rich-editor .resizable-img-wrap, .record-rich-content .resizable-img-wrap {
       display:inline-block;
+      position:relative;
       width:260px;
       height:180px;
       max-width:100%;
@@ -713,6 +714,7 @@
       margin:4px 0;
       background:#fff;
       vertical-align:top;
+      cursor:crosshair;
     }
     .rich-editor .resizable-img-wrap img, .record-rich-content .resizable-img-wrap img {
       width:100%;
@@ -723,6 +725,36 @@
       margin:0;
       display:block;
       pointer-events:none;
+    }
+    .rich-editor .resizable-img-wrap .image-annotation, .record-rich-content .resizable-img-wrap .image-annotation {
+      position:absolute;
+      z-index:2;
+      min-width:48px;
+      max-width:calc(100% - 8px);
+      min-height:20px;
+      padding:2px 4px;
+      border-radius:5px;
+      background:rgba(255,255,255,.72);
+      color:var(--record-text-color);
+      font:600 13px/1.35 var(--record-font-family);
+      white-space:pre-wrap;
+      word-break:break-word;
+      outline:1px solid rgba(23,105,209,.18);
+      cursor:text;
+      pointer-events:auto;
+    }
+    .rich-editor .resizable-img-wrap .image-annotation:focus {
+      background:rgba(255,255,255,.9);
+      outline:2px solid rgba(23,105,209,.45);
+      box-shadow:0 2px 8px rgba(15,23,42,.12);
+    }
+    .rich-editor .resizable-img-wrap .image-annotation:empty::before {
+      content: attr(data-placeholder);
+      color:#64748b;
+    }
+    .record-rich-content .resizable-img-wrap .image-annotation {
+      pointer-events:none;
+      cursor:default;
     }
     .rich-editor ::selection, .record-rich-content ::selection, input::selection, textarea::selection {
       background: rgba(134, 188, 233, .35);
@@ -4491,6 +4523,7 @@
     let handwriteUndoStack = [];
     let handwriteEditImage = null;
     let selectedHanddrawWrap = null;
+    let imageResizeState = { wrap: null, active: false };
     let noteDrawState = { activeCanvas: null, drawing: false, lastPoint: null, color: '#d93025', size: 3 };
     let pendingTodayFocus = null;
 
@@ -6752,6 +6785,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         fitAllMoneyInputsToBox();
         initNoteDrawCanvases();
         disableSpellcheck();
+        normalizeRichImageWrappers(document);
         syncFormatToolbarState();
         autoGrowTodayEditors();
         focusPendingTodayEditor();
@@ -10561,6 +10595,129 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return true;
     }
 
+    function richImageHtml(src, alt, options = {}) {
+      const width = Number(options.width || 260);
+      const height = Number(options.height || 180);
+      const wrapClass = `resizable-img-wrap rich-image-wrap${options.handdraw ? ' handdraw-wrap' : ''}`;
+      const imgClass = options.handdraw ? ' class="handdraw-img rich-image-base"' : ' class="rich-image-base"';
+      return `<span class="${wrapClass}" contenteditable="false" data-rich-image="1" style="width:${width}px;height:${height}px;"><img${imgClass} src="${esc(src)}" alt="${esc(alt || 'image')}"></span>&nbsp;`;
+    }
+
+    function normalizeRichImageWrappers(scope = document) {
+      scope.querySelectorAll?.('.rich-editor[contenteditable="true"] img').forEach(img => {
+        if (img.closest('.resizable-img-wrap')) return;
+        const wrap = document.createElement('span');
+        wrap.className = 'resizable-img-wrap rich-image-wrap';
+        wrap.setAttribute('contenteditable', 'false');
+        wrap.dataset.richImage = '1';
+        wrap.style.width = '260px';
+        wrap.style.height = '180px';
+        img.classList.add('rich-image-base');
+        img.replaceWith(wrap);
+        wrap.appendChild(img);
+      });
+    }
+
+    function syncEditorFromNestedElement(el) {
+      const editor = el?.closest?.('.rich-editor[contenteditable="true"]');
+      if (!editor) return;
+      const action = editor.dataset.action;
+      if (action === 'daily-inline-edit') saveDailyInlineEdit(editor);
+      else if (action === 'task-rich-text') syncTodayTaskEditor(editor);
+      else if (action === 'watch-rich-name' || action === 'watch-rich-reason') syncTodayWatchEditor(editor);
+      else if (action === 'list-cell-format') syncListRichCell(editor);
+      else if (editor.id === 'noteText' && action === 'rich-note') {
+        const r = ensureRecord(selectedDate);
+        r.noteHtml = cleanHtml(editor.innerHTML);
+        r.noteText = editor.innerText || '';
+        saveVisibleNoteDrawData(selectedDate);
+        saveApp();
+      } else if (editor.id === 'todayQuote' && action === 'today-quote') {
+        const r = ensureRecord(selectedDate);
+        r.todayQuoteHtml = cleanHtml(editor.innerHTML);
+        r.todayQuoteText = editor.innerText || '';
+        saveApp();
+      } else {
+        syncRichEditors();
+      }
+    }
+
+    function persistRichImageSize(wrap) {
+      if (!wrap) return;
+      const rect = wrap.getBoundingClientRect();
+      const width = Math.max(60, Math.round(rect.width));
+      const height = Math.max(50, Math.round(rect.height));
+      wrap.style.width = `${width}px`;
+      wrap.style.height = `${height}px`;
+      syncEditorFromNestedElement(wrap);
+    }
+
+    function isRichImageResizeHandle(wrap, e) {
+      if (!wrap || !e) return false;
+      const rect = wrap.getBoundingClientRect();
+      return rect.right - e.clientX <= 24 && rect.bottom - e.clientY <= 24;
+    }
+
+    function focusImageAnnotation(note) {
+      if (!note) return;
+      note.focus();
+      const range = document.createRange();
+      range.selectNodeContents(note);
+      range.collapse(false);
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+      saveCurrentRichSelection();
+    }
+
+    function addImageAnnotationAtPoint(wrap, clientX, clientY) {
+      const editor = wrap?.closest?.('.rich-editor[contenteditable="true"]');
+      if (!wrap || !editor) return false;
+      const rect = wrap.getBoundingClientRect();
+      const left = Math.max(1, Math.min(86, ((clientX - rect.left) / rect.width) * 100));
+      const top = Math.max(1, Math.min(90, ((clientY - rect.top) / rect.height) * 100));
+      const note = document.createElement('span');
+      note.className = 'image-annotation';
+      note.setAttribute('contenteditable', 'true');
+      note.setAttribute('spellcheck', 'false');
+      note.setAttribute('tabindex', '0');
+      note.setAttribute('data-placeholder', '입력');
+      note.style.left = `${left}%`;
+      note.style.top = `${top}%`;
+      wrap.appendChild(note);
+      focusImageAnnotation(note);
+      syncEditorFromNestedElement(wrap);
+      return true;
+    }
+
+    function cleanupImageAnnotation(note) {
+      if (!note || !note.classList?.contains('image-annotation')) return;
+      const editor = note.closest('.rich-editor[contenteditable="true"]');
+      const text = String(note.innerText || '').trim();
+      if (!text) note.remove();
+      syncEditorFromNestedElement(editor || note);
+    }
+
+    function handleRichImagePaste(e) {
+      const editor = e.target?.closest?.('.rich-editor[contenteditable="true"]');
+      if (!editor) return;
+      const items = [...(e.clipboardData?.items || [])];
+      const imageFiles = items.filter(item => item.kind === 'file' && /^image\//.test(item.type || '')).map(item => item.getAsFile()).filter(Boolean);
+      if (!imageFiles.length) {
+        setTimeout(() => {
+          normalizeRichImageWrappers(editor);
+          syncEditorFromNestedElement(editor);
+        }, 0);
+        return;
+      }
+      e.preventDefault();
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount && editableRootFromRange(sel.getRangeAt(0)) === editor) savedSelectionRange = sel.getRangeAt(0).cloneRange();
+      imageFiles.forEach(file => insertRichImageFile(file));
+    }
+
     function sanitizeLinkUrl(url) {
       const trimmed = String(url || '').trim();
       if (!trimmed) return '';
@@ -10603,8 +10760,9 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       }
       const reader = new FileReader();
       reader.onload = () => {
-        const alt = esc(file.name || '삽입 이미지');
-        insertHtmlIntoRichEditor(`<span class="resizable-img-wrap" contenteditable="false" style="width:260px;height:180px;"><img src="${String(reader.result)}" alt="${alt}"></span>&nbsp;`);
+        const alt = file.name || '삽입 이미지';
+        insertHtmlIntoRichEditor(richImageHtml(String(reader.result), alt, { width: 260, height: 180 }));
+        normalizeRichImageWrappers(document);
       };
       reader.onerror = () => alert('이미지 파일을 읽지 못했습니다.');
       reader.readAsDataURL(file);
@@ -10899,6 +11057,12 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         return;
       }
       if (!clickedHanddraw) selectHanddrawWrap(null);
+      const clickedRichImage = e.target.closest && e.target.closest('.resizable-img-wrap');
+      if (clickedRichImage && !clickedHanddraw && !e.target.closest('.image-annotation') && clickedRichImage.closest('.rich-editor[contenteditable="true"]') && !isRichImageResizeHandle(clickedRichImage, e)) {
+        e.preventDefault();
+        addImageAnnotationAtPoint(clickedRichImage, e.clientX, e.clientY);
+        return;
+      }
       const stockNameHistoryEl = e.target.closest && e.target.closest('[data-show-history-code]');
       if (stockNameHistoryEl) {
         const sel = window.getSelection();
@@ -11167,6 +11331,8 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (updateSearchStateFromInput(el)) scheduleSearchRender(el.id, 500);
     });
 
+    document.addEventListener('paste', handleRichImagePaste);
+
     document.addEventListener('beforeinput', (e) => {
       if (insertTextWithCurrentStyle(e)) return;
       rememberUndoSnapshot(e.target);
@@ -11180,6 +11346,12 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     document.addEventListener('input', (e) => {
       const el = e.target;
       rememberUndoSnapshot(el);
+      if (el.closest && el.closest('.resizable-img-wrap')) {
+        syncEditorFromNestedElement(el);
+      }
+      if (el.matches && el.matches('.rich-editor[contenteditable="true"]')) {
+        normalizeRichImageWrappers(el);
+      }
       if (el.dataset.action === 'note-draw-color') {
         noteDrawState.color = el.value || '#d93025';
       }
@@ -11265,6 +11437,12 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       }
     });
 
+    document.addEventListener('focusout', (e) => {
+      if (e.target?.classList?.contains('image-annotation')) {
+        cleanupImageAnnotation(e.target);
+      }
+    });
+
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && e.target && e.target.id === 'newAccountName') { e.preventDefault(); addAccount(); return; }
       if (e.key === 'Enter') {
@@ -11313,6 +11491,24 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (e.target && e.target.closest && e.target.closest('.rich-editor[contenteditable="true"]')) saveCurrentRichSelection();
     });
 
+    document.addEventListener('pointerdown', (e) => {
+      const wrap = e.target?.closest?.('.resizable-img-wrap');
+      if (wrap && wrap.closest('.rich-editor[contenteditable="true"]') && isRichImageResizeHandle(wrap, e)) {
+        imageResizeState = { wrap, active: true };
+      }
+    });
+
+    document.addEventListener('pointerup', () => {
+      if (!imageResizeState.active || !imageResizeState.wrap) return;
+      const wrap = imageResizeState.wrap;
+      imageResizeState = { wrap: null, active: false };
+      setTimeout(() => persistRichImageSize(wrap), 0);
+    });
+
+    document.addEventListener('pointercancel', () => {
+      imageResizeState = { wrap: null, active: false };
+    });
+
     document.addEventListener('mousedown', (e) => {
       const toolbar = e.target && e.target.closest ? e.target.closest('.inline-format-toolbar, .global-format-toolbar') : null;
       if (toolbar && e.target.matches('button, input[type="color"], select')) {
@@ -11322,11 +11518,13 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     });
 
     document.addEventListener('mouseup', (e) => {
-      if (e.target && e.target.closest && e.target.closest('.resizable-img-wrap')) syncRichEditors();
+      const wrap = e.target && e.target.closest && e.target.closest('.resizable-img-wrap');
+      if (wrap) syncEditorFromNestedElement(wrap);
     });
 
     document.addEventListener('touchend', (e) => {
-      if (e.target && e.target.closest && e.target.closest('.resizable-img-wrap')) syncRichEditors();
+      const wrap = e.target && e.target.closest && e.target.closest('.resizable-img-wrap');
+      if (wrap) syncEditorFromNestedElement(wrap);
     });
 
     modalBackdrop.addEventListener('click', (e) => {
