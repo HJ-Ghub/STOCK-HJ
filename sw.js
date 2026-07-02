@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stock-journal-app-v20260702-ui1';
+const CACHE_NAME = 'stock-journal-app-v20260702-image-notes1';
 const CORE_ASSETS = [
   './',
   './index.html',
