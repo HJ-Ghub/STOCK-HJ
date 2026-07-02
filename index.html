@@ -414,6 +414,7 @@
     .global-format-toolbar input[type="color"] { width:32px; padding:1px; }
     .global-format-toolbar button { padding:3px 7px; font-size:10.5px; border-radius:9px; }
     .rich-editor {
+      position:relative;
       width:100%;
       min-height:92px;
       max-height:120px;
@@ -430,7 +431,7 @@
       color: inherit;
     }
     .rich-editor:focus { border-color:#86bce9; box-shadow:0 0 0 3px rgba(134,188,233,.22); }
-    .record-rich-content { font-family: inherit; font-size: inherit; color: inherit; }
+    .record-rich-content { position:relative; font-family: inherit; font-size: inherit; color: inherit; }
     .rich-editor img, .record-rich-content img { max-width:100%; height:auto; border-radius:10px; border:1px solid #dce8f4; margin:4px 0; display:block; }
     .rich-editor a, .record-rich-content a { color:#1769d1; text-decoration:underline; text-underline-offset:2px; }
     .memo-rich-editor { min-height:260px; max-height:460px; overflow:auto; }
@@ -755,6 +756,51 @@
     .record-rich-content .resizable-img-wrap .image-annotation {
       pointer-events:none;
       cursor:default;
+    }
+    .rich-editor .free-position-wrap, .record-rich-content .free-position-wrap {
+      position:absolute;
+      z-index:3;
+      cursor:text;
+    }
+    .rich-editor .free-position-note, .record-rich-content .free-position-note {
+      position:absolute;
+      min-width:58px;
+      max-width:min(360px, calc(100% - 12px));
+      min-height:22px;
+      padding:3px 5px;
+      border-radius:5px;
+      background:rgba(255,255,255,.78);
+      color:var(--record-text-color);
+      font:600 13px/1.35 var(--record-font-family);
+      white-space:pre-wrap;
+      word-break:break-word;
+      outline:1px solid rgba(23,105,209,.2);
+      box-shadow:0 1px 4px rgba(15,23,42,.08);
+      cursor:text;
+    }
+    .rich-editor .free-position-wrap .free-position-note, .record-rich-content .free-position-wrap .free-position-note {
+      position:static;
+      display:block;
+      max-width:min(360px, calc(100vw - 40px));
+    }
+    .rich-editor .free-position-note:focus {
+      background:rgba(255,255,255,.94);
+      outline:2px solid rgba(23,105,209,.48);
+      box-shadow:0 3px 10px rgba(15,23,42,.14);
+    }
+    .rich-editor .free-position-note:empty::before {
+      content: attr(data-placeholder);
+      color:#64748b;
+    }
+    .record-rich-content .free-position-wrap, .record-rich-content .free-position-note {
+      pointer-events:none;
+      cursor:default;
+    }
+    .goodnote-btn.free-position-active {
+      background:#dbeafe !important;
+      border-color:#1769d1 !important;
+      color:#0f4da0 !important;
+      box-shadow:0 0 0 2px rgba(23,105,209,.16) inset !important;
     }
     .rich-editor ::selection, .record-rich-content ::selection, input::selection, textarea::selection {
       background: rgba(134, 188, 233, .35);
@@ -4381,6 +4427,7 @@
         <span class="format-divider"></span>
         <button class="goodnote-btn" data-action="insert-rich-link">링크</button>
         <button class="goodnote-btn" data-action="pick-rich-image">그림</button>
+        <button class="goodnote-btn primary-tool" data-action="toggle-free-position">자유입력</button>
         <button class="goodnote-btn primary-tool" data-action="open-handwrite">손글씨</button>
         <button class="goodnote-btn primary-tool" data-action="toggle-note-draw">펜</button>
         <button class="goodnote-btn eraser-tool" data-action="clear-note-draw">펜삭제</button>
@@ -4524,6 +4571,7 @@
     let handwriteEditImage = null;
     let selectedHanddrawWrap = null;
     let imageResizeState = { wrap: null, active: false };
+    let freePositionMode = false;
     let noteDrawState = { activeCanvas: null, drawing: false, lastPoint: null, color: '#d93025', size: 3 };
     let pendingTodayFocus = null;
 
@@ -9442,6 +9490,10 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         toolbar.querySelectorAll('[data-action="erase-selected-style"]').forEach(btn => { btn.textContent = '지움'; });
         toolbar.querySelectorAll('[data-action="insert-rich-link"]').forEach(btn => { btn.textContent = '링크'; });
         toolbar.querySelectorAll('[data-action="pick-rich-image"]').forEach(btn => { btn.textContent = '그림'; });
+        toolbar.querySelectorAll('[data-action="toggle-free-position"]').forEach(btn => {
+          btn.textContent = freePositionMode ? '자유입력 ON' : '자유입력';
+          btn.classList.toggle('free-position-active', freePositionMode);
+        });
         toolbar.querySelectorAll('select[data-style-key="fontFamily"]').forEach(el => el.previousElementSibling?.classList.add('format-font-label'));
         toolbar.querySelectorAll('select[data-style-key="fontSize"]').forEach(el => { if (el.previousElementSibling) el.previousElementSibling.textContent = '크기'; });
         toolbar.querySelectorAll('input[data-style-key="textColor"]').forEach(el => { if (el.previousElementSibling) el.previousElementSibling.textContent = '색'; });
@@ -9532,7 +9584,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         <span class="format-chip-group" aria-label="형광펜 빠른 선택"><span class="format-mini-label">형광</span><button class="format-color-dot dot-yellow" data-action="quick-format" data-kind="mark-yellow" title="노랑 형광"></button><button class="format-color-dot dot-green" data-action="quick-format" data-kind="mark-green" title="초록 형광"></button><button class="format-color-dot dot-mark-pink" data-action="quick-format" data-kind="mark-pink" title="분홍 형광"></button><button class="format-color-dot dot-mark-blue" data-action="quick-format" data-kind="mark-blue" title="파랑 형광"></button><button class="format-color-dot dot-mark-purple" data-action="quick-format" data-kind="mark-purple" title="보라 형광"></button></span>
         <button class="goodnote-btn" data-action="quick-format" data-kind="bold">굵게</button><button class="goodnote-btn" data-action="quick-format" data-kind="underline">밑줄</button><button class="goodnote-btn" data-action="quick-format" data-kind="size-large">크게</button><button class="goodnote-btn" data-action="quick-format" data-kind="size-normal">보통</button>
         <span class="format-divider"></span><button class="goodnote-btn primary-tool" data-action="apply-selected-style">적용</button><button class="goodnote-btn highlighter-tool" data-action="apply-highlight-only">형광</button><button class="goodnote-btn eraser-tool" data-action="erase-selected-style">지움</button><button class="goodnote-btn" data-action="undo-rich-style">이전</button>
-        <span class="format-divider"></span><button class="goodnote-btn" data-action="insert-rich-link">링크</button><button class="goodnote-btn" data-action="pick-rich-image">그림</button><button class="goodnote-btn primary-tool" data-action="open-handwrite">손글씨</button><button class="goodnote-btn primary-tool" data-action="toggle-note-draw">펜</button><button class="goodnote-btn eraser-tool" data-action="clear-note-draw">펜삭제</button>
+        <span class="format-divider"></span><button class="goodnote-btn" data-action="insert-rich-link">링크</button><button class="goodnote-btn" data-action="pick-rich-image">그림</button><button class="goodnote-btn primary-tool" data-action="toggle-free-position">자유입력</button><button class="goodnote-btn primary-tool" data-action="open-handwrite">손글씨</button><button class="goodnote-btn primary-tool" data-action="toggle-note-draw">펜</button><button class="goodnote-btn eraser-tool" data-action="clear-note-draw">펜삭제</button>
         <label class="format-mini-label">글꼴</label><select data-action="change-ui-style" data-style-key="fontFamily">${fontHtml}</select>
         <button class="goodnote-btn" data-action="pick-custom-font">글꼴+</button>
         <label class="format-mini-label">크기</label><select data-action="change-ui-style" data-style-key="fontSize">${sizeHtml}</select>
@@ -9953,6 +10005,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     }
 
     function insertTextWithCurrentStyle(e) {
+      if (isOverlayNoteTarget(e.target)) return false;
       const editor = e.target && e.target.closest ? e.target.closest('.rich-editor[contenteditable="true"]') : null;
       if (!editor || e.isComposing || e.inputType !== 'insertText' || !e.data) return false;
       if (editor.dataset.action === 'list-cell-format') return false;
@@ -10688,6 +10741,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       note.style.top = `${top}%`;
       wrap.appendChild(note);
       focusImageAnnotation(note);
+      setTimeout(() => focusImageAnnotation(note), 0);
       syncEditorFromNestedElement(wrap);
       return true;
     }
@@ -10698,6 +10752,52 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const text = String(note.innerText || '').trim();
       if (!text) note.remove();
       syncEditorFromNestedElement(editor || note);
+    }
+
+    function isOverlayNoteTarget(target) {
+      return !!(target?.closest?.('.image-annotation, .free-position-note'));
+    }
+
+    function cleanupFreePositionNote(note) {
+      if (!note || !note.classList?.contains('free-position-note')) return;
+      const editor = note.closest('.rich-editor[contenteditable="true"]');
+      const text = String(note.innerText || '').trim();
+      if (!text) (note.closest('.free-position-wrap') || note).remove();
+      syncEditorFromNestedElement(editor || note);
+    }
+
+    function addFreePositionNoteAtPoint(editor, clientX, clientY) {
+      if (!editor || !editor.matches?.('.rich-editor[contenteditable="true"]')) return false;
+      const rect = editor.getBoundingClientRect();
+      const left = Math.max(2, Math.min(Math.max(2, editor.scrollWidth - 70), clientX - rect.left + editor.scrollLeft));
+      const top = Math.max(2, Math.min(Math.max(2, editor.scrollHeight - 26), clientY - rect.top + editor.scrollTop));
+      const wrap = document.createElement('span');
+      wrap.className = 'free-position-wrap';
+      wrap.setAttribute('contenteditable', 'false');
+      wrap.style.left = `${Math.round(left)}px`;
+      wrap.style.top = `${Math.round(top)}px`;
+      const note = document.createElement('span');
+      note.className = 'free-position-note';
+      note.setAttribute('contenteditable', 'true');
+      note.setAttribute('spellcheck', 'false');
+      note.setAttribute('tabindex', '0');
+      note.setAttribute('data-placeholder', '입력');
+      wrap.appendChild(note);
+      editor.appendChild(wrap);
+      focusImageAnnotation(note);
+      setTimeout(() => focusImageAnnotation(note), 0);
+      syncEditorFromNestedElement(editor);
+      return true;
+    }
+
+    function setFreePositionMode(active) {
+      freePositionMode = !!active;
+      syncFormatToolbarState();
+      toast(freePositionMode ? '자유입력 ON · 기록창 원하는 위치를 클릭하세요' : '자유입력 OFF');
+    }
+
+    function toggleFreePositionMode() {
+      setFreePositionMode(!freePositionMode);
     }
 
     function handleRichImagePaste(e) {
@@ -11063,6 +11163,13 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         addImageAnnotationAtPoint(clickedRichImage, e.clientX, e.clientY);
         return;
       }
+      const freeEditor = freePositionMode && !isOverlayNoteTarget(e.target) && !clickedRichImage && e.target.closest && e.target.closest('.rich-editor[contenteditable="true"]');
+      if (freeEditor) {
+        e.preventDefault();
+        addFreePositionNoteAtPoint(freeEditor, e.clientX, e.clientY);
+        setFreePositionMode(false);
+        return;
+      }
       const stockNameHistoryEl = e.target.closest && e.target.closest('[data-show-history-code]');
       if (stockNameHistoryEl) {
         const sel = window.getSelection();
@@ -11165,6 +11272,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (action === 'pick-custom-font') document.getElementById('customFontFile')?.click();
       if (action === 'insert-rich-link') insertRichLink();
       if (action === 'pick-rich-image') document.getElementById('recordImageFile')?.click();
+      if (action === 'toggle-free-position') toggleFreePositionMode();
       if (action === 'open-handwrite') openHandwritePad();
       if (action === 'toggle-note-draw') toggleNoteDraw(el);
       if (action === 'clear-note-draw') clearNoteDraw(el);
@@ -11339,6 +11447,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     });
 
     document.addEventListener('focusin', (e) => {
+      if (isOverlayNoteTarget(e.target)) return;
       const editor = e.target && e.target.closest ? e.target.closest('.rich-editor[contenteditable="true"]') : null;
       if (editor) primeEditorTypingStyle(editor);
     });
@@ -11346,7 +11455,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     document.addEventListener('input', (e) => {
       const el = e.target;
       rememberUndoSnapshot(el);
-      if (el.closest && el.closest('.resizable-img-wrap')) {
+      if (el.closest && el.closest('.resizable-img-wrap, .free-position-note')) {
         syncEditorFromNestedElement(el);
       }
       if (el.matches && el.matches('.rich-editor[contenteditable="true"]')) {
@@ -11440,6 +11549,9 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     document.addEventListener('focusout', (e) => {
       if (e.target?.classList?.contains('image-annotation')) {
         cleanupImageAnnotation(e.target);
+      }
+      if (e.target?.classList?.contains('free-position-note')) {
+        cleanupFreePositionNote(e.target);
       }
     });
 
@@ -11574,7 +11686,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=20260702-image-notes1').catch(err => console.warn('서비스워커 등록 실패', err));
+        navigator.serviceWorker.register('./sw.js?v=20260702-free-notes1').catch(err => console.warn('서비스워커 등록 실패', err));
       });
     }
   })();
