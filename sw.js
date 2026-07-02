@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stock-journal-app-v20260702-freebox-move-delete1';
+const CACHE_NAME = 'stock-journal-app-v20260702-freebox-resize1';
 const CORE_ASSETS = [
   './',
   './index.html',
