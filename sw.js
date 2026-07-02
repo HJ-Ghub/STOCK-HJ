@@ -1,4 +1,4 @@
-const CACHE_NAME = 'stock-journal-app-v20260702-free-notes1';
+const CACHE_NAME = 'stock-journal-app-v20260702-overlay-style1';
 const CORE_ASSETS = [
   './',
   './index.html',

@@ -9397,10 +9397,11 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     }
 
     function styleObjToCss(styleObj) {
-      return Object.entries(styleObj || {})
+      const entries = Object.entries(styleObj || {})
         .filter(([, value]) => value !== undefined && value !== null && value !== '')
-        .map(([key, value]) => `${key.replace(/[A-Z]/g, match => `-${match.toLowerCase()}`)}:${esc(value)}`)
-        .join(';');
+        .map(([key, value]) => `${key.replace(/[A-Z]/g, match => `-${match.toLowerCase()}`)}:${esc(value)}`);
+      if (styleObj?.color) entries.push(`-webkit-text-fill-color:${esc(styleObj.color)} !important`);
+      return entries.join(';');
     }
 
     function formatFontSummary(fontFamily) {
@@ -10004,8 +10005,94 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       return `<span style="${styleObjToCss(styleObj)}">${safeText}</span>`;
     }
 
+    function overlayTypingStyleObj() {
+      const preset = currentFormatPreset();
+      const styleObj = {
+        fontFamily: preset.fontFamily,
+        fontSize: preset.fontSize,
+        color: preset.textColor,
+        lineHeight: lineHeightForFontSize(preset.fontSize)
+      };
+      if ((app.activeFormatMode || 'text') === 'highlight') styleObj.backgroundColor = preset.highlightColor;
+      return normalizeStyleLineHeight(styleObj);
+    }
+
+    function overlayTypingStyleHtml(text) {
+      const safeText = esc(text).replace(/ {2}/g, ' &nbsp;');
+      return `<span style="${styleObjToCss(overlayTypingStyleObj())}">${safeText}</span>`;
+    }
+
+    function overlayNoteFromRange(range) {
+      if (!range) return null;
+      const node = range.commonAncestorContainer.nodeType === 1 ? range.commonAncestorContainer : range.commonAncestorContainer.parentElement;
+      return node ? node.closest('.image-annotation, .free-position-note') : null;
+    }
+
+    function getCurrentOverlayNote() {
+      const active = document.activeElement && document.activeElement.closest ? document.activeElement.closest('.image-annotation, .free-position-note') : null;
+      if (active) return active;
+      const sel = window.getSelection();
+      if (sel && sel.rangeCount) {
+        const selected = overlayNoteFromRange(sel.getRangeAt(0));
+        if (selected) return selected;
+      }
+      return savedSelectionRange ? overlayNoteFromRange(savedSelectionRange) : null;
+    }
+
+    function applyOverlayBaseStyle(note, styleObj = overlayTypingStyleObj()) {
+      if (!note) return;
+      const normalized = normalizeStyleLineHeight(styleObj);
+      if (normalized.fontFamily) note.style.setProperty('font-family', normalized.fontFamily, 'important');
+      if (normalized.fontSize) note.style.setProperty('font-size', normalized.fontSize, 'important');
+      if (normalized.lineHeight) note.style.setProperty('line-height', normalized.lineHeight, 'important');
+      if (normalized.color) {
+        note.style.setProperty('color', normalized.color, 'important');
+        note.style.setProperty('-webkit-text-fill-color', normalized.color, 'important');
+      }
+    }
+
+    function applyOverlayStyleToSelectionOrTyping(styleObj) {
+      const note = getCurrentOverlayNote();
+      if (!note) return false;
+      const normalized = normalizeStyleLineHeight(styleObj);
+      const sel = window.getSelection();
+      const hasSelection = !!(sel && sel.rangeCount && !sel.isCollapsed && overlayNoteFromRange(sel.getRangeAt(0)) === note);
+      rememberUndoSnapshot(note.closest('.rich-editor[contenteditable="true"]'));
+      if (hasSelection) {
+        const span = document.createElement('span');
+        span.setAttribute('style', styleObjToCss(normalized));
+        const range = sel.getRangeAt(0);
+        try {
+          range.surroundContents(span);
+        } catch (e) {
+          const fragment = range.extractContents();
+          span.appendChild(fragment);
+          range.insertNode(span);
+        }
+        sel.removeAllRanges();
+        const nextRange = document.createRange();
+        nextRange.selectNodeContents(span);
+        sel.addRange(nextRange);
+      } else {
+        applyOverlayBaseStyle(note, normalized);
+        note.focus();
+      }
+      syncEditorFromNestedElement(note);
+      saveCurrentRichSelection();
+      return true;
+    }
+
     function insertTextWithCurrentStyle(e) {
-      if (isOverlayNoteTarget(e.target)) return false;
+      if (isOverlayNoteTarget(e.target)) {
+        if (e.isComposing || e.inputType !== 'insertText' || !e.data) return false;
+        e.preventDefault();
+        const note = e.target.closest('.image-annotation, .free-position-note');
+        applyOverlayBaseStyle(note);
+        document.execCommand('insertHTML', false, overlayTypingStyleHtml(e.data));
+        syncEditorFromNestedElement(note);
+        saveCurrentRichSelection();
+        return true;
+      }
       const editor = e.target && e.target.closest ? e.target.closest('.rich-editor[contenteditable="true"]') : null;
       if (!editor || e.isComposing || e.inputType !== 'insertText' || !e.data) return false;
       if (editor.dataset.action === 'list-cell-format') return false;
@@ -10025,6 +10112,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     }
 
     function applyStyleToSelectionOrTyping(styleObj) {
+      if (getCurrentOverlayNote()) return applyOverlayStyleToSelectionOrTyping(styleObj);
       restoreSavedSelection();
       const sel = window.getSelection();
       const hasSelection = !!(sel && sel.rangeCount && !sel.isCollapsed && editableRootFromRange(sel.getRangeAt(0)));
@@ -10740,6 +10828,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       note.style.left = `${left}%`;
       note.style.top = `${top}%`;
       wrap.appendChild(note);
+      applyOverlayBaseStyle(note);
       focusImageAnnotation(note);
       setTimeout(() => focusImageAnnotation(note), 0);
       syncEditorFromNestedElement(wrap);
@@ -10784,6 +10873,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       note.setAttribute('data-placeholder', '입력');
       wrap.appendChild(note);
       editor.appendChild(wrap);
+      applyOverlayBaseStyle(note);
       focusImageAnnotation(note);
       setTimeout(() => focusImageAnnotation(note), 0);
       syncEditorFromNestedElement(editor);
@@ -11686,7 +11776,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=20260702-free-notes1').catch(err => console.warn('서비스워커 등록 실패', err));
+        navigator.serviceWorker.register('./sw.js?v=20260702-overlay-style1').catch(err => console.warn('서비스워커 등록 실패', err));
       });
     }
   })();
