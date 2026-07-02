@@ -762,6 +762,51 @@
       z-index:3;
       cursor:text;
     }
+    .rich-editor .free-position-tools {
+      position:absolute;
+      left:0;
+      top:-22px;
+      display:none;
+      align-items:center;
+      gap:3px;
+      height:20px;
+      padding:1px 3px;
+      border:1px solid rgba(23,105,209,.24);
+      border-radius:6px;
+      background:rgba(255,255,255,.95);
+      box-shadow:0 2px 7px rgba(15,23,42,.14);
+      z-index:4;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .rich-editor .free-position-wrap:hover .free-position-tools,
+    .rich-editor .free-position-wrap:focus-within .free-position-tools,
+    .rich-editor .free-position-wrap.moving-free-position .free-position-tools {
+      display:inline-flex;
+    }
+    .rich-editor .free-position-move,
+    .rich-editor .free-position-delete {
+      width:18px;
+      height:18px;
+      min-height:18px;
+      padding:0;
+      border:1px solid #c8d8e8;
+      border-radius:5px;
+      background:#fff;
+      color:#273447;
+      font-size:12px;
+      font-weight:900;
+      line-height:16px;
+      text-align:center;
+      cursor:pointer;
+    }
+    .rich-editor .free-position-move {
+      cursor:move;
+      touch-action:none;
+    }
+    .rich-editor .free-position-delete {
+      color:#b91c1c;
+    }
     .rich-editor .free-position-note, .record-rich-content .free-position-note {
       position:absolute;
       min-width:58px;
@@ -795,6 +840,9 @@
     .record-rich-content .free-position-wrap, .record-rich-content .free-position-note {
       pointer-events:none;
       cursor:default;
+    }
+    .record-rich-content .free-position-tools {
+      display:none !important;
     }
     .goodnote-btn.free-position-active {
       background:#dbeafe !important;
@@ -4631,6 +4679,7 @@
     let selectedHanddrawWrap = null;
     let imageResizeState = { wrap: null, active: false };
     let freePositionMode = false;
+    let freePositionDragState = null;
     let noteDrawState = { activeCanvas: null, drawing: false, lastPoint: null, color: '#d93025', size: 3 };
     let pendingTodayFocus = null;
 
@@ -6893,6 +6942,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         initNoteDrawCanvases();
         disableSpellcheck();
         normalizeRichImageWrappers(document);
+        normalizeFreePositionControls(document);
         syncFormatToolbarState();
         autoGrowTodayEditors();
         focusPendingTodayEditor();
@@ -7841,6 +7891,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const template = document.createElement('template');
       template.innerHTML = String(html || '');
       template.content.querySelectorAll('script, style, iframe, object, embed').forEach(node => node.remove());
+      template.content.querySelectorAll('.free-position-tools').forEach(node => node.remove());
       template.content.querySelectorAll('*').forEach(node => {
         [...node.attributes].forEach(attr => {
           if (/^on/i.test(attr.name)) node.removeAttribute(attr.name);
@@ -7882,6 +7933,11 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const div = document.createElement('div');
       div.innerHTML = cleanHtml(html || '');
       return div.innerText || '';
+    }
+
+    function richEditorPlainText(el, html = '') {
+      if (!el) return '';
+      return plainFromHtml(html || el.innerHTML || '');
     }
 
     function makeId(prefix) {
@@ -8367,7 +8423,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           </div>
         </div>`;
       modalBackdrop.classList.add('open');
-      setTimeout(() => document.getElementById('detailMainEditor')?.focus(), 0);
+      setTimeout(() => { normalizeFreePositionControls(modalContent); document.getElementById('detailMainEditor')?.focus(); }, 0);
     }
 
     function openDailyDetail(type, rowId) {
@@ -8534,6 +8590,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         </div>
       `;
       modalBackdrop.classList.add('open');
+      setTimeout(() => { normalizeFreePositionControls(modalContent); document.getElementById('noteDetailEditor')?.focus(); }, 0);
     }
 
     function addExtraWatch() {
@@ -8553,7 +8610,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const title = document.getElementById('extraNoteTitle')?.value.trim() || '추가 노트';
       const editor = document.getElementById('extraNoteEditor');
       const noteHtml = cleanHtml(editor?.innerHTML || '');
-      const noteText = editor?.innerText?.trim() || plainFromHtml(noteHtml).trim();
+      const noteText = richEditorPlainText(editor, noteHtml).trim();
       if (!noteText) { alert('추가 노트 내용을 입력해 주세요.'); return; }
       app.noteExtras = Array.isArray(app.noteExtras) ? app.noteExtras : [];
       app.noteExtras.push({ id: makeId('note'), date, title, noteHtml, noteText, at: nowStamp() });
@@ -9743,14 +9800,14 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         </div>
       `;
       modalBackdrop.classList.add('open');
-      setTimeout(() => { fitAllMoneyInputsToBox(); document.getElementById('bigMemo')?.focus(); }, 0);
+      setTimeout(() => { fitAllMoneyInputsToBox(); normalizeFreePositionControls(modalContent); document.getElementById('bigMemo')?.focus(); }, 0);
     }
 
     function saveBigMemo() {
       if (!modalMemoContext) return;
       const editor = document.getElementById('bigMemo');
       const html = cleanHtml(editor?.innerHTML || '');
-      const text = editor?.innerText || plainFromHtml(html);
+      const text = richEditorPlainText(editor, html);
       const memoDate = modalMemoContext.date || selectedDate;
       const account = modalMemoContext.account;
       const code = modalMemoContext.code;
@@ -9791,7 +9848,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
         </div>
       `;
       modalBackdrop.classList.add('open');
-      setTimeout(() => { initNoteDrawCanvases(); disableSpellcheck(); document.getElementById('todayNotePopupEditor')?.focus(); }, 0);
+      setTimeout(() => { initNoteDrawCanvases(); disableSpellcheck(); normalizeFreePositionControls(modalContent); document.getElementById('todayNotePopupEditor')?.focus(); }, 0);
     }
 
     function saveTodayNotePopup() {
@@ -9799,7 +9856,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const editor = document.getElementById('todayNotePopupEditor');
       saveVisibleNoteDrawData(ctx.date || selectedDate);
       const html = cleanHtml(editor?.innerHTML || '');
-      const text = editor?.innerText || plainFromHtml(html);
+      const text = richEditorPlainText(editor, html);
       const r = ensureRecord(ctx.date || selectedDate);
       r.noteHtml = html;
       r.noteText = text;
@@ -9831,7 +9888,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
           <button class="btn-primary" data-action="save-extra-note-draft-popup">입력칸에 반영</button>
         </div>`;
       modalBackdrop.classList.add('open');
-      setTimeout(() => document.getElementById('extraNoteDraftPopupEditor')?.focus(), 0);
+      setTimeout(() => { normalizeFreePositionControls(modalContent); document.getElementById('extraNoteDraftPopupEditor')?.focus(); }, 0);
     }
 
     function saveExtraNoteDraftPopup() {
@@ -9926,7 +9983,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (!ctx) return;
       const editor = document.getElementById('detailMainEditor');
       const html = cleanHtml(editor?.innerHTML || '');
-      const text = editor?.innerText || plainFromHtml(html);
+      const text = richEditorPlainText(editor, html);
       let ok = false;
       if (ctx.kind === 'daily') ok = saveDailyMainDetail(ctx, html, text);
       if (ctx.kind === 'memoField') ok = saveMemoFieldMainDetail(ctx, html, text);
@@ -10474,6 +10531,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (!el) return;
       if (el.isContentEditable) {
         el.innerHTML = value;
+        normalizeFreePositionControls(el);
         focusContenteditableEnd(el);
       } else {
         el.value = value;
@@ -10488,12 +10546,12 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       else if (el.id === 'noteText' && el.dataset.action === 'rich-note') {
         const r = ensureRecord(selectedDate);
         r.noteHtml = cleanHtml(el.innerHTML);
-        r.noteText = el.innerText || '';
+        r.noteText = richEditorPlainText(el, r.noteHtml);
         saveApp();
       } else if (el.id === 'todayQuote' && el.dataset.action === 'today-quote') {
         const r = ensureRecord(selectedDate);
         r.todayQuoteHtml = cleanHtml(el.innerHTML);
-        r.todayQuoteText = el.innerText || '';
+        r.todayQuoteText = richEditorPlainText(el, r.todayQuoteHtml);
         saveApp();
       } else {
         syncRichEditors();
@@ -10539,7 +10597,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (!record[type] || !record[type][idx]) return;
       const previous = Object.assign({}, record[type][idx]);
       const html = cleanHtml(el.innerHTML || '');
-      const text = el.innerText || plainFromHtml(html);
+      const text = richEditorPlainText(el, html);
       record[type][idx].textHtml = html;
       record[type][idx].text = text.trim();
       if (type === 'routine') updateRoutineTemplate(previous, record[type][idx], idx);
@@ -10553,7 +10611,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       record.watch = Array.isArray(record.watch) ? record.watch : [];
       if (!record.watch[idx]) return;
       const html = cleanHtml(el.innerHTML || '');
-      const text = el.innerText || plainFromHtml(html);
+      const text = richEditorPlainText(el, html);
       if (el.dataset.action === 'watch-rich-name') {
         record.watch[idx].nameHtml = html;
         record.watch[idx].name = text.trim();
@@ -10808,7 +10866,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (note && note.dataset.action === 'rich-note') {
         const r = ensureRecord(selectedDate);
         r.noteHtml = cleanHtml(note.innerHTML);
-        r.noteText = note.innerText || '';
+        r.noteText = richEditorPlainText(note, r.noteHtml);
         saveVisibleNoteDrawData(selectedDate);
         saveApp();
       }
@@ -10816,7 +10874,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (todayQuote && todayQuote.dataset.action === 'today-quote') {
         const r = ensureRecord(selectedDate);
         r.todayQuoteHtml = cleanHtml(todayQuote.innerHTML);
-        r.todayQuoteText = todayQuote.innerText || '';
+        r.todayQuoteText = richEditorPlainText(todayQuote, r.todayQuoteHtml);
         saveApp();
       }
       document.querySelectorAll('[data-action="task-rich-text"]').forEach(el => syncTodayTaskEditor(el));
@@ -10875,6 +10933,26 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       });
     }
 
+    function createFreePositionTools() {
+      const tools = document.createElement('span');
+      tools.className = 'free-position-tools';
+      tools.setAttribute('contenteditable', 'false');
+      tools.innerHTML = '<button type="button" class="free-position-move" data-action="move-free-position" title="자유입력창 이동">↕</button><button type="button" class="free-position-delete" data-action="delete-free-position" title="자유입력창 삭제">×</button>';
+      return tools;
+    }
+
+    function ensureFreePositionControls(wrap) {
+      if (!wrap || !wrap.classList?.contains('free-position-wrap')) return;
+      const note = wrap.querySelector('.free-position-note');
+      if (!note) return;
+      wrap.setAttribute('contenteditable', 'false');
+      if (!wrap.querySelector('.free-position-tools')) wrap.insertBefore(createFreePositionTools(), wrap.firstChild);
+    }
+
+    function normalizeFreePositionControls(scope = document) {
+      scope.querySelectorAll?.('.rich-editor[contenteditable="true"] .free-position-wrap').forEach(ensureFreePositionControls);
+    }
+
     function syncEditorFromNestedElement(el) {
       const editor = el?.closest?.('.rich-editor[contenteditable="true"]');
       if (!editor) return;
@@ -10886,13 +10964,13 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       else if (editor.id === 'noteText' && action === 'rich-note') {
         const r = ensureRecord(selectedDate);
         r.noteHtml = cleanHtml(editor.innerHTML);
-        r.noteText = editor.innerText || '';
+        r.noteText = richEditorPlainText(editor, r.noteHtml);
         saveVisibleNoteDrawData(selectedDate);
         saveApp();
       } else if (editor.id === 'todayQuote' && action === 'today-quote') {
         const r = ensureRecord(selectedDate);
         r.todayQuoteHtml = cleanHtml(editor.innerHTML);
-        r.todayQuoteText = editor.innerText || '';
+        r.todayQuoteText = richEditorPlainText(editor, r.todayQuoteHtml);
         saveApp();
       } else {
         syncRichEditors();
@@ -10971,6 +11049,60 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       syncEditorFromNestedElement(editor || note);
     }
 
+    function deleteFreePositionWrap(wrap) {
+      if (!wrap || !wrap.classList?.contains('free-position-wrap')) return false;
+      if (!confirm('자유입력창을 삭제할까요?')) return false;
+      const editor = wrap.closest('.rich-editor[contenteditable="true"]');
+      wrap.remove();
+      syncEditorFromNestedElement(editor);
+      saveCurrentRichSelection();
+      toast('자유입력창 삭제 완료');
+      return true;
+    }
+
+    function beginFreePositionMove(handle, e) {
+      const wrap = handle?.closest?.('.free-position-wrap');
+      const editor = wrap?.closest?.('.rich-editor[contenteditable="true"]');
+      if (!wrap || !editor || !e) return false;
+      e.preventDefault();
+      e.stopPropagation();
+      const wrapRect = wrap.getBoundingClientRect();
+      freePositionDragState = {
+        wrap,
+        editor,
+        pointerId: e.pointerId,
+        startX: e.clientX,
+        startY: e.clientY,
+        startLeft: parseFloat(wrap.style.left) || (wrapRect.left - editor.getBoundingClientRect().left + editor.scrollLeft),
+        startTop: parseFloat(wrap.style.top) || (wrapRect.top - editor.getBoundingClientRect().top + editor.scrollTop)
+      };
+      wrap.classList.add('moving-free-position');
+      handle.setPointerCapture?.(e.pointerId);
+      return true;
+    }
+
+    function moveFreePosition(e) {
+      const state = freePositionDragState;
+      if (!state || !state.wrap || !state.editor || (state.pointerId != null && e.pointerId !== state.pointerId)) return;
+      e.preventDefault();
+      const wrapRect = state.wrap.getBoundingClientRect();
+      const maxLeft = Math.max(2, state.editor.scrollWidth - wrapRect.width - 2);
+      const maxTop = Math.max(2, state.editor.scrollHeight - wrapRect.height - 2);
+      const left = Math.max(2, Math.min(maxLeft, state.startLeft + (e.clientX - state.startX)));
+      const top = Math.max(2, Math.min(maxTop, state.startTop + (e.clientY - state.startY)));
+      state.wrap.style.left = `${Math.round(left)}px`;
+      state.wrap.style.top = `${Math.round(top)}px`;
+    }
+
+    function endFreePositionMove(e) {
+      const state = freePositionDragState;
+      if (!state || (e?.pointerId != null && state.pointerId != null && e.pointerId !== state.pointerId)) return;
+      freePositionDragState = null;
+      state.wrap?.classList?.remove('moving-free-position');
+      syncEditorFromNestedElement(state.wrap);
+      saveCurrentRichSelection();
+    }
+
     function addFreePositionNoteAtPoint(editor, clientX, clientY) {
       if (!editor || !editor.matches?.('.rich-editor[contenteditable="true"]')) return false;
       const rect = editor.getBoundingClientRect();
@@ -10988,6 +11120,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       note.setAttribute('tabindex', '0');
       note.setAttribute('data-placeholder', '입력');
       wrap.appendChild(note);
+      ensureFreePositionControls(wrap);
       editor.appendChild(wrap);
       applyOverlayBaseStyle(note);
       focusImageAnnotation(note);
@@ -11286,7 +11419,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       const type = el.dataset.dailyType;
       const rowId = String(el.dataset.rowId || '');
       const html = cleanHtml(el.innerHTML || '');
-      const text = el.innerText || plainFromHtml(html);
+      const text = richEditorPlainText(el, html);
       if (type === 'watch') {
         const extra = (app.watchExtras || []).find(item => String(item.id) === rowId);
         if (extra) {
@@ -11356,6 +11489,13 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     });
 
     document.addEventListener('click', (e) => {
+      const freeDeleteBtn = e.target.closest && e.target.closest('[data-action="delete-free-position"]');
+      if (freeDeleteBtn) {
+        e.preventDefault();
+        e.stopPropagation();
+        deleteFreePositionWrap(freeDeleteBtn.closest('.free-position-wrap'));
+        return;
+      }
       const clickedHanddraw = e.target.closest && e.target.closest('.handdraw-wrap');
       if (clickedHanddraw && !e.target.closest('[data-action]')) {
         selectHanddrawWrap(clickedHanddraw);
@@ -11454,7 +11594,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (action === 'reset-memo-history-filter') { memoHistoryState.account = '전체계좌'; memoHistoryState.search = ''; render(); }
       if (action === 'save-detail-extra') {
         const editor = document.getElementById('detailExtraEditor');
-        if (saveDetailExtra(el.dataset.store, el.dataset.key, editor?.innerHTML || '', editor?.innerText || '')) {
+        if (saveDetailExtra(el.dataset.store, el.dataset.key, editor?.innerHTML || '', richEditorPlainText(editor))) {
           const list = document.getElementById('detailExtraList');
           if (list) list.innerHTML = renderDetailExtraList(el.dataset.store, el.dataset.key);
           if (editor) editor.innerHTML = '';
@@ -11688,20 +11828,20 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
       if (el.dataset.action === 'list-cell-format') { syncListRichCell(el); }
       if (el.dataset.action === 'memo-inline-edit') {
         const html = cleanHtml(el.innerHTML || '');
-        const text = el.innerText || plainFromHtml(html);
+        const text = richEditorPlainText(el, html);
         setMemo(el.dataset.account, el.dataset.code, el.dataset.date || selectedDate, text, html, el.dataset.source || '');
       }
       if (el.id === 'noteText' && el.dataset.action === 'rich-note') {
         const r = ensureRecord(selectedDate);
         r.noteHtml = cleanHtml(el.innerHTML);
-        r.noteText = el.innerText || '';
+        r.noteText = richEditorPlainText(el, r.noteHtml);
         saveVisibleNoteDrawData(selectedDate);
         saveApp();
       }
       if (el.id === 'todayQuote' && el.dataset.action === 'today-quote') {
         const r = ensureRecord(selectedDate);
         r.todayQuoteHtml = cleanHtml(el.innerHTML);
-        r.todayQuoteText = el.innerText || '';
+        r.todayQuoteText = richEditorPlainText(el, r.todayQuoteHtml);
         saveApp();
       }
       if (el.dataset.action === 'task-rich-text') {
@@ -11823,20 +11963,28 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
     });
 
     document.addEventListener('pointerdown', (e) => {
+      const freeMoveHandle = e.target?.closest?.('[data-action="move-free-position"]');
+      if (freeMoveHandle && beginFreePositionMove(freeMoveHandle, e)) return;
       const wrap = e.target?.closest?.('.resizable-img-wrap');
       if (wrap && wrap.closest('.rich-editor[contenteditable="true"]') && isRichImageResizeHandle(wrap, e)) {
         imageResizeState = { wrap, active: true };
       }
     });
 
+    document.addEventListener('pointermove', (e) => {
+      moveFreePosition(e);
+    });
+
     document.addEventListener('pointerup', () => {
+      endFreePositionMove();
       if (!imageResizeState.active || !imageResizeState.wrap) return;
       const wrap = imageResizeState.wrap;
       imageResizeState = { wrap: null, active: false };
       setTimeout(() => persistRichImageSize(wrap), 0);
     });
 
-    document.addEventListener('pointercancel', () => {
+    document.addEventListener('pointercancel', (e) => {
+      endFreePositionMove(e);
       imageResizeState = { wrap: null, active: false };
     });
 
@@ -11905,7 +12053,7 @@ ${message || '알 수 없는 IndexedDB 오류입니다.'}`;
 
     if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
       window.addEventListener('load', () => {
-        navigator.serviceWorker.register('./sw.js?v=20260702-today-layout1').catch(err => console.warn('서비스워커 등록 실패', err));
+        navigator.serviceWorker.register('./sw.js?v=20260702-freebox-move-delete1').catch(err => console.warn('서비스워커 등록 실패', err));
       });
     }
   })();
